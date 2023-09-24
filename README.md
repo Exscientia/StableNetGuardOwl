@@ -1,18 +1,17 @@
-# quams
+# Perform stability tests for Neural Network Potentials
 
-[![Coverage](https://bitbucket.org/exscientia/quams/downloads/coverage.svg)](https://coverage.readthedocs.io)
+[//]: # (Badges)
+[![GitHub Actions Build Status](https://github.com/Exscientia/stability_test/workflows/CI/badge.svg)](https://github.com/Exscientia/stability_test/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/Exscientia/stability_test/branch/main/graph/badge.svg)](https://codecov.io/gh/Exscientia/stability_test/branch/main)
 [![Supported Python versions](https://img.shields.io/badge/python-%5E3.10-blue.svg)](https://docs.python.org/3/whatsnew/index.html)
 [![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![cookiecutter: RSE](https://img.shields.io/badge/cookiecutter-RSE-green?logo=cookiecutter&logoColor=white)](https://bitbucket.org/exscientia/cookiecutter-python-rse)
+[![Github release](https://badgen.net/github/release/Exscientia/stability_test)](https://github.com/Exscientia/stability_test/)
+[![GitHub license](https://img.shields.io/github/license/Exscientia/stability_test?color=green)](https://github.com/Exscientia/stability_test/blob/main/LICENSE)
 
-[//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/stability_test/workflows/CI/badge.svg)](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/stability_test/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/stability_test/branch/main/graph/badge.svg)](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/stability_test/branch/main)
 
 ---
 
-Perform stability tests for Neural Network Potentials
 
 
 # What this package contains
