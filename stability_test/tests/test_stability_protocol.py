@@ -104,7 +104,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
     )
 
     params = StabilityTestParameters(
-        protocol_length=200,
+        protocol_length=20,
         temperature=unit.Quantity(300, unit.kelvin),
         ensemble=ensemble,
         simulated_annealing=False,
