@@ -1,13 +1,27 @@
 name: test
 channels:
-
   - conda-forge
 
   - defaults
 dependencies:
-    # Base depends
+  # Base depends
   - python
   - pip
+  - openmm>=8.0
+  - openmm-ml
+  - openmm-torch
+  - openff-toolkit
+  - openmmtools
+  - nnpops
+  - cudatoolkit=11.6
+  - tqdm
+  - pymbar>=4.0
+  - torchani
+  - seaborn
+  - pytorch=1.11.0
+  # Testing
+  - nglview
+  - fire
 
     # Testing
   - pytest
@@ -15,6 +29,6 @@ dependencies:
   - codecov
 
     # Pip-only installs
-  #- pip:
-  #  - codecov
-
+  - pip:
+      - nvidia-ml-py3
+      - nptyping
