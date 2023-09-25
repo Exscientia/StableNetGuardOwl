@@ -65,11 +65,12 @@ def test_script_execution_vacuum(
     assert ret.returncode == 0
 
     args = generate_args(script)["hipen_vacuum_args"]
-
     ret = subprocess.run(
         args,
         capture_output=True,
     )
+    print(ret.stdout.decode("utf-8"))
+    assert ret.returncode == 0
 
 
 def test_script_execution_waterbox(
