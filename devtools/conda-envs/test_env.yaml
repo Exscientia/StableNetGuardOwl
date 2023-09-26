@@ -15,6 +15,7 @@ dependencies:
   - nnpops>=0.4
   - cudatoolkit
   - tqdm
+  - mdtraj
   - pymbar>=4.0
   - torchani
   - seaborn
