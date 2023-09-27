@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from stability_test.analysis import PropertyCalculator
+import loguru as logger
 
 
 class MonitoringPlotter:
@@ -96,9 +97,7 @@ class MonitoringPlotter:
         """
 
         if bonded_scan is True:
-            assert rdf is False
-            assert water_angle is False
-            assert water_bond_length is False
+            assert (rdf or water_angle or water_bond_length) is False
 
         # generate x axis labels
         if '#"Step"' in self.data.keys():
