@@ -1,19 +1,53 @@
 import mdtraj as md
 import numpy as np
+from typing import List, Tuple
 
 
 class PropertyCalculator:
+    """
+    A class for calculating various properties for a molecular dynamics trajectory.
+
+    Attributes
+    ----------
+    md_traj : md.Trajectory
+        The molecular dynamics trajectory.
+
+    Methods
+    -------
+    calculate_water_rdf()
+        Calculate the radial distribution function of water molecules.
+    monitor_water_bond_length()
+        Monitor the bond length between water molecules.
+    monitor_water_angle()
+        Monitor the angle between water molecules.
+    monitor_bond_length(bond_pairs)
+        Monitor the bond length for specific atom pairs.
+    monitor_angle_length(angle_list)
+        Monitor the angles for specific sets of atoms.
+
+    """
+
     def __init__(self, md_traj: md.Trajectory) -> None:
+        """
+        Initialize the PropertyCalculator with a molecular dynamics trajectory.
+
+        Parameters
+        ----------
+        md_traj : md.Trajectory
+            The molecular dynamics trajectory to be analyzed.
+
+        """
         self.md_traj = md_traj
 
     def calculate_water_rdf(self):  # type: ignore
         """
-        Calculates the radial distribution function (RDF) for water molecules in the trajectory.
+        Calculate the radial distribution function (RDF) for water molecules in the trajectory.
 
-        Returns:
-        - mdtraj_rdf (np.ndarray): The RDF values for the water molecules.
+        Returns
+        -------
+        np.ndarray
+            The RDF values for the water molecules.
         """
-        # Expression selection, a common feature of analysis tools for
         oxygen_pairs = self.md_traj.top.select_pairs(
             "name O and water", "name O and water"
         )
@@ -27,29 +61,49 @@ class PropertyCalculator:
 
         return mdtraj_rdf
 
-    def monitor_water_bond_length(self):  # type: ignore
-        """
-        Monitors the bond length between water molecules in the trajectory.
-
-        Returns:
-        - bond_length (np.ndarray): The bond lengths between water molecules.
-        """
+    def _extract_water_bonds(self) -> List[Tuple[int, int]]:
         bond_list = []
         for bond in self.md_traj.topology.bonds:
             if bond.atom1.residue.name == "HOH" and bond.atom2.residue.name == "HOH":
                 bond_list.append((bond.atom1.index, bond.atom2.index))
+        return bond_list
 
+    def monitor_water_bond_length(self):  # type: ignore
+        """
+        Monitor the bond length between water molecules in the trajectory.
+
+        Returns
+        -------
+        np.ndarray
+            The bond lengths between water molecules.
+
+        """
+
+        bond_list = self._extract_water_bonds()
         return self.monitor_bond_length(bond_list)
 
     def monitor_water_angle(self):  # type: ignore
         """
-        Monitors the angle between water molecules in the trajectory.
+        Monitor the angle between water molecules in the trajectory.
 
-        Returns:
-        - angles (np.ndarray): The angles between water molecules.
+        Returns
+        -------
+        np.ndarray
+            The angles between water molecules.
+
         """
 
         def _extract_angles() -> list:
+            """
+            Helper function to extract angles between water molecules.
+
+            Returns
+            -------
+            List[List[int]]
+                A list of atom index triplets representing the angles to monitor.
+
+            """
+
             angle_list = []
             for bond_1 in self.md_traj.top.bonds:
                 # skip if bond is not a water molecule
@@ -81,26 +135,36 @@ class PropertyCalculator:
 
     def monitor_bond_length(self, bond_pairs: list):  # type: ignore
         """
-        Monitors the bond length between a given set of atoms in the trajectory.
+        Monitor the bond length between specific atom pairs in the trajectory.
 
-        Args:
-        - bond_pairs (list): A list of tuples representing the pairs of atoms to monitor.
+        Parameters
+        ----------
+        bond_pairs : List[Tuple[int, int]]
+            A list of atom index pairs whose bond lengths are to be monitored.
 
-        Returns:
-        - bond_length (np.ndarray): The bond lengths between the specified atoms.
+        Returns
+        -------
+        np.ndarray
+            The bond lengths for the specified atom pairs.
+
         """
         bond_length = md.compute_distances(self.md_traj, bond_pairs)
         return bond_length
 
     def monitor_angle_length(self, angle_list: list):  # type: ignore
         """
-        Monitors the angle between a given set of atoms in the trajectory.
+        Monitor the angles for specific sets of atoms in the trajectory.
 
-        Args:
-        - angle_list (list): A list of tuples representing the sets of atoms to monitor.
+        Parameters
+        ----------
+        angle_list : List[List[int]]
+            A list of atom index triplets whose angles are to be monitored.
 
-        Returns:
-        - angles (np.ndarray): The angles between the specified atoms.
+        Returns
+        -------
+        np.ndarray
+            The angles for the specified sets of atoms.
+
         """
         angles = md.compute_angles(self.md_traj, angle_list) * (180 / np.pi)
         return angles

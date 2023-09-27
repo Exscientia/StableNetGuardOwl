@@ -1,5 +1,5 @@
 import csv
-import logging
+from loguru import logger as log
 import os
 import sys
 from abc import ABC
@@ -14,28 +14,31 @@ from openmmtools.testsystems import TestSystem
 
 from .simulation import SimulationFactory
 
-log = logging.getLogger("stability")
-
 
 # StateDataReporter with custom print function
 class ContinuousProgressReporter(object):
-    """
-    A class for reporting the progress of a simulation in a continuous manner.
+    """A class for reporting the progress of a simulation continuously.
+
+    Parameters
+    ----------
+    iostream : TextIO
+        Output stream to write the progress report to.
+    total_steps : int
+        Total number of steps in the simulation.
+    reportInterval : int
+        Interval at which to report the progress.
+
+    Attributes
+    ----------
+    _out : TextIO
+        The output stream.
+    _reportInterval : int
+        The report interval.
+    _total_steps : int
+        Total number of steps.
     """
 
     def __init__(self, iostream: TextIO, total_steps: int, reportInterval: int):
-        """
-        Initializes a ContinuousProgressReporter object.
-
-        Parameters
-        ----------
-        iostream : TextIO
-            The output stream to write the progress report to.
-        total_steps : int
-            The total number of steps in the simulation.
-        reportInterval : int
-            The interval at which to report the progress.
-        """
         self._out = iostream
         self._reportInterval = reportInterval
         self._total_steps = total_steps
@@ -74,42 +77,79 @@ class ContinuousProgressReporter(object):
 
 
 @dataclass
-class StabilityTestParameters:
-    """
-    A dataclass for storing parameters for a stability test.
+class BaseParameters:
+    system: System
+    platform: Platform
+    testsystem: TestSystem
+    output_folder: str
+    log_file_name: str
+
+
+@dataclass
+class StabilityTestParameters(BaseParameters):
+    """Parameters for a stability test.
+
+    Parameters are stored as attributes.
+
+    Attributes
+    ----------
+    protocol_length : int
+        Length of the protocol in time units.
+    temperature : unit.Quantity
+        Temperature of the simulation.
+    ensemble : str
+        Ensemble type ('NVT', 'NPT', etc.).
+    simulated_annealing : bool
+        Whether simulated annealing is to be used.
+    system : System
+        The OpenMM System object.
+    platform : Platform
+        The OpenMM Platform object.
+    testsystem : TestSystem
+        The test system for the simulation.
+    output_folder : str
+        Path to the output folder.
+    log_file_name : str
+        Name of the log file.
+    state_data_reporter : StateDataReporter
+        The OpenMM StateDataReporter object.
     """
 
     protocol_length: int
     temperature: unit.Quantity
     ensemble: str
     simulated_annealing: bool
-    system: System
-    platform: Platform
-    testsystem: TestSystem
-    output_folder: str
-    log_file_name: str
     state_data_reporter: StateDataReporter
 
 
 @dataclass
-class DOFTestParameters:
-    """
-    A dataclass for storing parameters for a degree of freedom (DOF) test.
+class DOFTestParameters(BaseParameters):
+    """Parameters for a degree of freedom (DOF) test.
+
+    In addition to attributes in StabilityTestParameters, extra attributes for DOF tests are included.
+
+    Attributes
+    ----------
+    bond : List
+        List of atom pairs to be considered as bonds.
+    angle : List
+        List of atom triplets to be considered as angles.
+    torsion : List
+        List of atom quartets to be considered as torsions.
     """
 
-    system: System
-    platform: Platform
-    testsystem: TestSystem
-    output_folder: str
-    log_file_name: str
     bond: List = field(default_factory=lambda: [])
     angle: List = field(default_factory=lambda: [])
     torsion: List = field(default_factory=lambda: [])
 
 
 class DOFTest(ABC):
-    """
-    An abstract base class for degree of freedom (DOF) tests.
+    """Abstract base class for DOF tests.
+
+    Attributes
+    ----------
+    potential_simulation_factory : SimulationFactory
+        Factory to generate simulation instances.
     """
 
     def __init__(self) -> None:
@@ -374,7 +414,7 @@ class StabilityTest(ABC):
         None
         """
         self.potential_simulation_factory = SimulationFactory()
-        self.implemented_ensembles = ["NpT", "NVT", "NVE"]
+        self.implemented_ensembles = ["npt", "nvt", "nve"]
 
     @classmethod
     def _get_name(cls) -> str:
@@ -402,23 +442,22 @@ class StabilityTest(ABC):
         None
         """
         assert parameters.simulated_annealing in [True, False]
-        if parameters.ensemble:
-            assert parameters.ensemble in self.implemented_ensembles
+        ensemble = parameters.ensemble.lower()
+        if ensemble:
+            assert ensemble in self.implemented_ensembles
 
         log.debug(f"{parameters.simulated_annealing=}")
-        log.debug(f"Running {parameters.ensemble} simulation")
+        log.debug(f"Running {ensemble} simulation")
         log.debug(f"Simulation temperature {temperature}")
         system = parameters.system
 
-        if parameters.ensemble == "NpT":  # for NpT add barostat
+        if ensemble == "npt":  # for NpT add barostat
             barostate = MonteCarloBarostat(
                 unit.Quantity(1, unit.atmosphere), temperature
             )
             barostate_force_id = system.addForce(barostate)
 
-        if (
-            parameters.ensemble == "NVE"
-        ):  # for NVE change to integrator without thermostate
+        if ensemble == "nve":  # for NVE change to integrator without thermostate
             qsim = SimulationFactory.create_nvt_simulation(
                 system,
                 parameters.testsystem.topology,
@@ -464,7 +503,7 @@ class StabilityTest(ABC):
                 qsim.step(100)
                 temp = unit.Quantity(temp, unit.kelvin)
                 qsim.integrator.setTemperature(temp)
-                if parameters.ensemble == "NpT":
+                if ensemble == "npt":
                     barostat = parameters.system.getForce(barostate_force_id)
                     barostat.setDefaultTemperature(temp)
 
@@ -540,23 +579,15 @@ class BondProfileProtocol(DOFTest):
 
 
 class PropagationProtocol(StabilityTest):
-    def __init__(self, ensemble: Union[None, str] = None) -> None:
+    def __init__(self) -> None:
         """
         Initializes the PropagationProtocol class by calling the constructor of its parent class and setting the ensemble.
-
-        Parameters:
-        -----------
-        ensemble: Union[None, str], optional
-            The ensemble to use for the simulation. If None, the default ensemble is used.
 
         Returns:
         --------
         None
         """
         super().__init__()
-        if ensemble:
-            assert ensemble in self.implemented_ensembles
-        self.ensemble = ensemble
 
     def perform_stability_test(
         self,
@@ -569,14 +600,9 @@ class PropagationProtocol(StabilityTest):
 
 
 class MultiTemperatureProtocol(PropagationProtocol):
-    def __init__(self, ensemble: Union[None, str] = None) -> None:
+    def __init__(self) -> None:
         """
         Initializes the PropagationProtocol class by calling the constructor of its parent class and setting the temperature protocol.
-
-        Parameters:
-        -----------
-        ensemble: Union[None, str], optional
-            The ensemble to use for the simulation. If None, the default ensemble is used.
 
         Returns:
         --------
@@ -588,10 +614,6 @@ class MultiTemperatureProtocol(PropagationProtocol):
             unit.Quantity(600, unit.kelvin),
             unit.Quantity(1_200, unit.kelvin),
         ]
-
-        if ensemble:
-            assert ensemble in self.implemented_ensembles
-        self.ensemble = ensemble
 
     def perform_stability_test(
         self, StabilityTestParameters: StabilityTestParameters

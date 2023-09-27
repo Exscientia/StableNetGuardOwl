@@ -1,74 +1,103 @@
-import logging
 from typing import List, Union
 
 from loguru import logger as log
 from openff.units.openmm import to_openmm
 from openmm import LangevinIntegrator, Platform, unit
 from openmm.app import Simulation
-from openmmtools.testsystems import (AlanineDipeptideExplicit,
-                                     AlanineDipeptideVacuum, SrcExplicit,
-                                     TestSystem, WaterBox)
+from openmmtools.testsystems import (
+    AlanineDipeptideExplicit,
+    AlanineDipeptideVacuum,
+    SrcExplicit,
+    TestSystem,
+    WaterBox,
+)
 from openmmtools.utils import get_fastest_platform
 
 from .constants import collision_rate, stepsize, temperature
 from .setup import create_system_from_mol, generate_molecule
 
 
-class SmallMoleculeVacuum:
+class BaseMoleculeTestSystem:
+    """Base class for molecule test systems.
+
+    This class encapsulates the common functionality for creating
+    molecule-based test systems.
+    """
+
     def __init__(self, name: str, smiles: str):
-        """Initializes a small molecule testsystem
-
-        Args:
-            zink_id (str)
-            smiles (str)
-        """
-
         self.testsystem_name = name
         self.smiles = smiles
 
         mol = generate_molecule(self.smiles)
-
         self.system, topology = create_system_from_mol(mol)
         self.topology = topology.to_openmm()
-
-        # set position
         self.positions = to_openmm(mol.conformers[0])
         self.mol = mol
 
 
-class HipenSystemVacuum:
+class SmallMoleculeVacuum(BaseMoleculeTestSystem):
+    """Class for small molecule in vacuum test systems.
+
+    Parameters
+    ----------
+    name : str
+        Name of the test system.
+    smiles : str
+        SMILES string of the molecule.
+    """
+
+    pass  # All functionality is currently in the base class
+
+
+class HipenSystemVacuum(BaseMoleculeTestSystem):
+    """Class for HiPen molecule in vacuum test systems.
+
+    Parameters
+    ----------
+    zink_id : str
+        ZINC identifier for the molecule.
+    smiles : str
+        SMILES string of the molecule.
+    """
+
     def __init__(self, zink_id: str, smiles: str):
-        """Initializes a HiPen testsystem
-
-        Args:
-            zink_id (str)
-            smiles (str)
-        """
-
+        super().__init__(zink_id, smiles)
         self.zink_id = zink_id
-        self.testsystem_name = zink_id
-        self.smiles = smiles
-
-        mol = generate_molecule(self.smiles)
-
-        self.system, topology = create_system_from_mol(mol)
-        self.topology = topology.to_openmm()
-
-        # set position
-        self.positions = to_openmm(mol.conformers[0])
 
 
 class HipenTestsystemFactory:
+    """Factory for generating HiPen test systems.
+
+    This factory class provides methods to generate HiPen test systems.
+    """
+
     def __init__(self) -> None:
         """Factory that returns HipenSystemVacuum"""
         self.hipen_systems = hipen_systems
         self.name = "hipen_testsystem"
 
     def generate_testsystems(self, name: str) -> HipenSystemVacuum:
+        """Generate a HiPen test system.
+
+        Parameters
+        ----------
+        name : str
+            Name of the test system to generate.
+
+        Returns
+        -------
+        HipenSystemVacuum
+            Generated test system.
+        """
         return HipenSystemVacuum(name, hipen_systems[name])
 
 
 class SmallMoleculeTestsystemFactory:
+    """Factory for generating SmallMoleculeVacuum test systems.
+
+    This factory class provides methods to generate SmallMoleculeVacuum test systems.
+    """
+
     def __init__(self) -> None:
         """Factory that returns SmallMoleculeTestsystems"""
         self._mols = {
@@ -79,6 +108,18 @@ class SmallMoleculeTestsystemFactory:
         }
 
     def generate_testsystems(self, name: str) -> SmallMoleculeVacuum:
+        """Generate a SmallMoleculeVacuum test system.
+
+        Parameters
+        ----------
+        name : str
+            Name of the test system to generate.
+
+        Returns
+        -------
+        SmallMoleculeVacuum
+            Generated test system.
+        """
         if name not in list(self._mols.keys()):
             raise RuntimeError(
                 f"Molecule is not in the list of available systems: {self._mols.keys()}"
@@ -88,16 +129,27 @@ class SmallMoleculeTestsystemFactory:
 
 
 class WaterboxTestsystemFactory:
-    def __init__(self) -> None:
-        """Factory that returns WaterBox testsystems with different edge lengths (10,20 of 30 Angstrom)
+    """Factory for generating WaterBox test systems.
 
-        Args:
-            nr_of_systems (int, optional): defines the number of WaterBox testsystems that can be generated.
-            Defaults to -1.
-        """
+    This factory class provides methods to generate WaterBox test systems with different edge lengths.
+    """
+
+    def __init__(self) -> None:
         self.name = "waterbox_testsystem"
 
     def _run_sim(self, waterbox: WaterBox) -> WaterBox:
+        """Run a simulation on the waterbox.
+
+        Parameters
+        ----------
+        waterbox : WaterBox
+            Waterbox system to simulate.
+
+        Returns
+        -------
+        WaterBox
+            The waterbox system after simulation.
+        """
         integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
         platform = get_fastest_platform()
 
@@ -116,6 +168,18 @@ class WaterboxTestsystemFactory:
         return waterbox
 
     def generate_testsystems(self, edge_length: unit.Quantity) -> WaterBox:
+        """Generate a WaterBox test system.
+
+        Parameters
+        ----------
+        edge_length : unit.Quantity
+            Edge length for the waterbox.
+
+        Returns
+        -------
+        WaterBox
+            Generated test system.
+        """
         waterbox = WaterBox(
             edge_length, cutoff=((edge_length / 2) - unit.Quantity(0.5, unit.angstrom))
         )
@@ -126,11 +190,33 @@ class WaterboxTestsystemFactory:
 
 
 class AlaninDipeptideTestsystemFactory:
+    """Factory for generating alanine dipeptide test systems.
+
+    This factory class provides methods to generate alanine dipeptide test systems in vacuum or solvent.
+    """
+
     def __init__(self) -> None:
         """Factory that returns AlaninDipteptideTestsystem in vacuum and/or in solution"""
         self.name = "alanin_dipeptide_testsystem"
 
     def generate_testsystems(self, env: str) -> TestSystem:
+        """Generate an alanine dipeptide test system.
+
+        Parameters
+        ----------
+        env : str
+            Environment in which the system should be generated, either 'vacuum' or 'solvent'.
+
+        Returns
+        -------
+        TestSystem
+            Generated test system.
+
+        Raises
+        ------
+        NotImplementedError
+            If the provided environment is neither 'vacuum' nor 'solvent'.
+        """
         if env == "vacuum":
             return AlanineDipeptideVacuum(constraints=None)
         elif env == "solvent":
@@ -140,13 +226,34 @@ class AlaninDipeptideTestsystemFactory:
 
 
 class ProteinTestsystemFactory:
-    """Factory that returns a protein testsystem (currently only the src protein)"""
+    """Factory for generating protein test systems.
+
+    This factory class currently only provides methods to generate the SrcExplicit protein test system.
+    """
 
     def __init__(self) -> None:
         self.protein_testsystems = {"src": SrcExplicit}
         self.name = "protein_testsystem"
 
     def generate_testsystems(self, name: str) -> TestSystem:
+        """Generate a protein test system.
+
+        Parameters
+        ----------
+        name : str
+            Name of the protein test system to generate.
+
+        Returns
+        -------
+        TestSystem
+            Generated test system.
+
+        Raises
+        ------
+        NotImplementedError
+            If the provided name does not match any available test systems.
+        """
+
         if name == "src":
             return self.protein_testsystems["src"]
 
