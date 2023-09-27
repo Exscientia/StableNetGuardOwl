@@ -61,17 +61,20 @@ class PropertyCalculator:
                         continue
                     water = {}
                     for bond in [bond_1, bond_2]:
-                        water[bond.atom1.index] = bond.atom1.index
-                        water[bond.atom2.index] = bond.atom2.index
+                        water[bond.atom1.index] = bond.atom1
+                        water[bond.atom2.index] = bond.atom2
+                    # skip if atoms are not part of the same molecule
                     if len(water.keys()) != 3:
                         continue
 
-                    tmp_water = water.values()
-                    tmp_water_elements = [atom.element.symbol for atom in tmp_water]
-                    # oxy = tmp_water_elements.index("O")
+                    sorted_water = [
+                        water[key].index for key in sorted(water.keys(), reverse=True)
+                    ]  # oxygen is first
+                    angle_list.append(
+                        [sorted_water[1], sorted_water[2], sorted_water[0]]
+                    )
 
-                    angle_list.append([water["H"], water["O"], water["H"]])
-            return angle_list
+            return [list(x) for x in set(tuple(x) for x in angle_list)]
 
         angle_list = _extract_angles()
         return self.monitor_angle_length(angle_list)
