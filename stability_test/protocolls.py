@@ -264,7 +264,7 @@ class StabilityTestParameters:
     """
 
     protocol_length: int
-    temperature: unit.Quantity
+    temperature: Union[int, List[int]]
     ensemble: str
     simulated_annealing: bool
     system: System
@@ -446,9 +446,21 @@ class StabilityTest(ABC):
         if ensemble:
             assert ensemble in self.implemented_ensembles
 
-        log.debug(f"{parameters.simulated_annealing=}")
-        log.debug(f"Running {ensemble} simulation")
-        log.debug(f"Simulation temperature {temperature}")
+        log.info(
+            f""" 
+------------------------------------------------------------------------------------
+Stability test parameters:
+params.protocol_length: {parameters.protocol_length}
+params.temperature: {parameters.temperature}
+params.ensemble: {parameters.ensemble}
+params.simulated_annealing: {parameters.simulated_annealing}
+params.platform: {parameters.platform.getName()}
+params.output_folder: {parameters.output_folder}
+params.log_file_name: {parameters.log_file_name}
+------------------------------------------------------------------------------------
+            """
+        )
+
         system = parameters.system
 
         if ensemble == "npt":  # for NpT add barostat
@@ -524,10 +536,8 @@ class StabilityTest(ABC):
 
         qsim.step(parameters.protocol_length)
 
-    def perform_stability_test(
-        self, StabilityTestParameters: StabilityTestParameters
-    ) -> None:
-        pass
+    def perform_stability_test(self, params: StabilityTestParameters) -> None:
+        raise NotImplementedError()
 
 
 class BondProfileProtocol(DOFTest):
@@ -591,12 +601,11 @@ class PropagationProtocol(StabilityTest):
 
     def perform_stability_test(
         self,
-        StabilityTestParameters: StabilityTestParameters,
+        parms: StabilityTestParameters,
     ) -> None:
-        self._run_simulation(
-            StabilityTestParameters,
-            unit.Quantity(300, unit.kelvin),
-        )
+        assert isinstance(parms.temperature, int)
+
+        self._run_simulation(parms, parms.temperature * unit.kelvin)
 
 
 class MultiTemperatureProtocol(PropagationProtocol):
@@ -609,29 +618,24 @@ class MultiTemperatureProtocol(PropagationProtocol):
         None
         """
         super().__init__()
-        self.temperature_protcol = [
-            unit.Quantity(300, unit.kelvin),
-            unit.Quantity(600, unit.kelvin),
-            unit.Quantity(1_200, unit.kelvin),
-        ]
 
-    def perform_stability_test(
-        self, StabilityTestParameters: StabilityTestParameters
-    ) -> None:
+    def perform_stability_test(self, parms: StabilityTestParameters) -> None:
         """
         Performs a stability test on the molecular system for each temperature in the temperature protocol by running a simulation.
 
         Parameters:
         -----------
-        StabilityTestParameters: StabilityTestParameters
+        parameters: StabilityTestParameters
             The parameters for the stability test.
 
         Returns:
         --------
         None
         """
-        for temperature in self.temperature_protcol:
+        for temperature in parms.temperature:
+            parms.log_file_name = f"{parms.log_file_name}_{temperature}"
+
             self._run_simulation(
-                StabilityTestParameters,
-                temperature,
+                parms,
+                temperature * unit.kelvin,
             )

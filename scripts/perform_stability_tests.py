@@ -2,8 +2,8 @@
 import yaml
 import warnings
 from pathlib import Path
-
-import fire
+import argparse
+from typing import List, Union
 from loguru import logger as log
 from openmm import unit
 from openmm.app import StateDataReporter
@@ -83,6 +83,7 @@ def perform_hipen_protocol(
     hipen_idx: int,
     nnp: str,
     implementation: str,
+    temperature: Union[int, List[int]],
     nr_of_simulation_steps: int = 5_000_000,
 ):
     """
@@ -113,16 +114,18 @@ def perform_hipen_protocol(
         nnp_instance,
         testsystem.topology,
         implementation=implementation,
-        remove_constraints=False,
     )
     log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
-    stability_test = MultiTemperatureProtocol()
+    if isinstance(temperature, int):
+        stability_test = PropagationProtocol()
+    else:
+        stability_test = MultiTemperatureProtocol()
 
     reporter = create_state_data_reporter()
 
     params = StabilityTestParameters(
         protocol_length=nr_of_simulation_steps,
-        temperature=unit.Quantity(300, unit.kelvin),
+        temperature=temperature,
         ensemble="nvt",
         simulated_annealing=False,
         system=system,
@@ -131,21 +134,6 @@ def perform_hipen_protocol(
         output_folder=output_folder,
         log_file_name=log_file_name,
         state_data_reporter=reporter,
-    )
-
-    log.info(
-        f""" 
-------------------------------------------------------------------------------------
-Stability test parameters:
-params.protocol_length: {params.protocol_length}
-params.temperature: {params.temperature}
-params.ensemble: {params.ensemble}
-params.simulated_annealing: {params.simulated_annealing}
-params.platform: {params.platform.getName()}
-params.output_folder: {params.output_folder}
-params.log_file_name: {params.log_file_name}
-------------------------------------------------------------------------------------
-          """
     )
 
     stability_test.perform_stability_test(params)
@@ -201,7 +189,7 @@ def perform_waterbox_protocol(
     reporter = create_state_data_reporter()
     params = StabilityTestParameters(
         protocol_length=nr_of_simulation_steps,
-        temperature=unit.Quantity(300, unit.kelvin),
+        temperature=300,
         ensemble=ensemble,
         simulated_annealing=annealing,
         system=system,
@@ -210,21 +198,6 @@ def perform_waterbox_protocol(
         output_folder=output_folder,
         log_file_name=log_file_name,
         state_data_reporter=reporter,
-    )
-
-    log.info(
-        f""" 
-------------------------------------------------------------------------------------
-Stability test parameters:
-params.protocol_length: {params.protocol_length}
-params.temperature: {params.temperature}
-params.ensemble: {params.ensemble}
-params.simulated_annealing: {params.simulated_annealing}
-params.platform: {params.platform.getName()}
-params.output_folder: {params.output_folder}
-params.log_file_name: {params.log_file_name}
-------------------------------------------------------------------------------------
-          """
     )
 
     stability_test.perform_stability_test(params)
@@ -277,7 +250,7 @@ def perform_alanine_dipeptide_protocol(
     reporter = create_state_data_reporter()
     params = StabilityTestParameters(
         protocol_length=nr_of_simulation_steps,
-        temperature=unit.Quantity(300, unit.kelvin),
+        temperature=300,
         ensemble=ensemble.lower(),
         simulated_annealing=False,
         system=system,
@@ -286,21 +259,6 @@ def perform_alanine_dipeptide_protocol(
         output_folder=output_folder,
         log_file_name=log_file_name,
         state_data_reporter=reporter,
-    )
-
-    log.info(
-        f""" 
-------------------------------------------------------------------------------------
-Stability test parameters:
-params.protocol_length: {params.protocol_length}
-params.temperature: {params.temperature}
-params.ensemble: {params.ensemble}
-params.simulated_annealing: {params.simulated_annealing}
-params.platform: {params.platform.getName()}
-params.output_folder: {params.output_folder}
-params.log_file_name: {params.log_file_name}
-------------------------------------------------------------------------------------
-          """
     )
 
     stability_test.perform_stability_test(params)
@@ -360,19 +318,56 @@ def perform_DOF_scan(
     elif DOF_definition["torsion"]:
         raise NotImplementedError
 
-def read_config(yaml_file_path):
-    with open(yaml_file_path, 'r') as file:
-        config = yaml.safe_load(file)
-    return config
+
+def load_config(config_file_path):
+    with open(config_file_path, "r") as stream:
+        try:
+            return yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Perform stability tests based on the YAML config file."
+    )
+    # Required argument for YAML configuration file
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        required=True,
+        help="Path to the YAML configuration file.",
+    )
+
+    args = parser.parse_args()
+
+    if args.config:
+        config = load_config(args.config)
+        if config is None:
+            log.warning("Error loading configuration.")
+            raise RuntimeError("Error loading configuration.")
+    else:
+        log.warning("No configuration file provided.")
+        raise RuntimeError("No configuration file provided.")
+
+    # Do something with the config
+    log.info(f"Loaded config: {config}")
+
+    for test in config.get("tests", []):
+        protocol = test.get("protocol")
+
+        if protocol == "hipen_protocol":
+            log.info("Performing hipen protocol")
+            perform_hipen_protocol(**{k: test[k] for k in test if k != "protocol"})
+
+        elif protocol == "waterbox_protocol":
+            log.info("Performing waterbox protocol")
+            perform_waterbox_protocol(**{k: test[k] for k in test if k != "protocol"})
+
+        else:
+            log.warning(f"Unknown protocol: {protocol}")
 
 
 if __name__ == "__main__":
-
-    config = read_config("test_config.yaml")
-    
-    hipen_protocol_config = config.get("hipen_protocol", {})
-    perform_hipen_protocol(**hipen_protocol_config)
-
-    waterbox_protocol_config = config.get("waterbox_protocol", {})
-    perform_waterbox_protocol(**waterbox_protocol_config)
-
+    main()
