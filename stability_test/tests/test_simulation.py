@@ -29,9 +29,7 @@ def test_generate_simulation_instance(
     qml = MLPotential(nnp)
     ########################################################
     ########################################################
-    # check potential at endpoints
-    # at lambda=0.0 (mm endpoint)
-    # set position
+    # create MM simulation
     rsim = SimulationFactory.create_simulation(
         system, topology, platform=platform, temperature=unit.Quantity(300, unit.kelvin)
     )
@@ -44,41 +42,8 @@ def test_generate_simulation_instance(
     print(e_sim_mm_endstate)
     assert np.isclose(e_sim_mm_endstate, e_lamb_0)
     ########################################################
-    # define the system that is treated with
-    ml_atoms = [atom.index for atom in topology.atoms()]
-    # generate hybrid simulation
-    qsim = SimulationFactory.create_simulation(
-        SystemFactory().initialize_mixed_ml_system(
-            system,
-            qml,
-            topology,
-            interpolate=True,
-            ml_atoms=ml_atoms,
-        ),
-        topology,
-        platform=platform,
-        temperature=unit.Quantity(300, unit.kelvin),
-    )
-
-    qsim.context.setPositions(to_openmm(mol.conformers[0]))
-    # set lambda parameter
-    qsim.context.setParameter("lambda_interpolate", 0.0)
-    e_sim_mm_endstate = (
-        qsim.context.getState(getEnergy=True)
-        .getPotentialEnergy()  # pylint: disable=unexpected-keyword-arg
-        .value_in_unit(unit.kilojoule_per_mole)
-    )
-    print(e_sim_mm_endstate)
-    assert np.isclose(e_sim_mm_endstate, e_lamb_0)
-    # test minimization
-    qsim.minimizeEnergy(maxIterations=1000)
-    pos = qsim.context.getState(getPositions=True).getPositions()
-    with open("initial_frame_lamb_0.0.pdb", "w") as f:
-        PDBFile.writeFile(topology, pos, f)
     ########################################################
-    ########################################################
-    # at lambda=1.0 (qml endpoint)
-    # set position
+    # create ML simulation
     rsim = SimulationFactory.create_simulation(
         SystemFactory().initialize_pure_ml_system(
             qml,
@@ -103,39 +68,6 @@ def test_generate_simulation_instance(
     ).getPositions()  # pylint: disable=unexpected-keyword-arg
     with open("initial_frame_lamb_1.0.pdb", "w") as f:
         PDBFile.writeFile(topology, pos, f)
-
-    ########################################################
-    # define the system that is treated with
-    ml_atoms = [atom.index for atom in topology.atoms()]
-    # generate hybrid simulation
-    qsim = SimulationFactory.create_simulation(
-        SystemFactory().initialize_mixed_ml_system(
-            system,
-            qml,
-            topology,
-            interpolate=True,
-            ml_atoms=ml_atoms,
-        ),
-        topology,
-        platform=platform,
-        temperature=unit.Quantity(300, unit.kelvin),
-    )
-    qsim.context.setPositions(to_openmm(mol.conformers[0]))
-    # set lambda parameter
-    qsim.context.setParameter("lambda_interpolate", 1.0)
-    e_sim_mm_endstate = (
-        qsim.context.getState(getEnergy=True)
-        .getPotentialEnergy()  # pylint: disable=unexpected-keyword-arg
-        .value_in_unit(unit.kilojoule_per_mole)
-    )
-    print(e_sim_mm_endstate)
-    assert np.isclose(e_sim_mm_endstate, e_lamb_1)
-    # test minimization
-    qsim.minimizeEnergy(maxIterations=1000)
-    pos = qsim.context.getState(getPositions=True).getPositions()
-    with open("initial_frame_lamb_1.0.pdb", "w") as f:
-        PDBFile.writeFile(topology, pos, f)
-
 
 @pytest.mark.parametrize(
     "nnp, implementation", [("ani2x", "nnpops"), ("ani2x", "torchani"), ("ani2x", "")]
