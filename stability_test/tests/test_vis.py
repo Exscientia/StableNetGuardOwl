@@ -1,7 +1,10 @@
+prefix = "stability_test/tests/data/stability_testing"
+
+
 def test_generate_visualization():
     from stability_test.vis import MonitoringPlotter
 
-    prefix_path = "tests/data/stability_testing/ZINC00061095/"
+    prefix_path = f"{prefix}/ZINC00061095/"
     s = MonitoringPlotter(
         f"{prefix_path}/vacuum_ZINC00061095_ani2x_nnpops_300.dcd",
         f"{prefix_path}/vacuum_ZINC00061095_ani2x_nnpops_300.pdb",
@@ -14,7 +17,7 @@ def test_generate_visualization():
 def test_visualize_DOF_scan():
     from stability_test.vis import MonitoringPlotter
 
-    prefix_path = "tests/data/stability_testing/ethanol/"
+    prefix_path = f"{prefix}/ethanol/"
     s = MonitoringPlotter(
         f"{prefix_path}/vacuum_ethanol_ani2x_nnpops.dcd",
         f"{prefix_path}/vacuum_ethanol_ani2x_nnpops.pdb",
@@ -28,7 +31,7 @@ def test_waterbox():
     from stability_test.vis import MonitoringPlotter
 
     system_name = "waterbox"
-    prefix_path = f"tests/data/stability_testing/{system_name}/"
+    prefix_path = f"{prefix}/{system_name}/"
     ensemble = "NVT"
     nnp = "ani2x"
     implementation = "nnpops"
