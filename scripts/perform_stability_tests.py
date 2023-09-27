@@ -1,33 +1,82 @@
 # ------------------ IMPORTS ------------------#
-import logging
+import yaml
 import warnings
 from pathlib import Path
-from loguru import logger as log
+
 import fire
+from loguru import logger as log
 from openmm import unit
 from openmm.app import StateDataReporter
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
-from stability_test.protocolls import (BondProfileProtocol, DOFTestParameters,
-                                       MultiTemperatureProtocol,
-                                       PropagationProtocol,
-                                       StabilityTestParameters)
+from stability_test.protocolls import (
+    BondProfileProtocol,
+    DOFTestParameters,
+    MultiTemperatureProtocol,
+    PropagationProtocol,
+    StabilityTestParameters,
+)
 from stability_test.simulation import SystemFactory
-from stability_test.testsystems import (AlaninDipeptideTestsystemFactory,
-                                        HipenTestsystemFactory,
-                                        SmallMoleculeTestsystemFactory,
-                                        WaterboxTestsystemFactory,
-                                        hipen_systems)
+from stability_test.testsystems import (
+    AlaninDipeptideTestsystemFactory,
+    HipenTestsystemFactory,
+    SmallMoleculeTestsystemFactory,
+    WaterboxTestsystemFactory,
+    hipen_systems,
+)
+
+from stability_test.utils import available_nnps_and_implementation
 
 warnings.filterwarnings("ignore")
 output_folder = "test_stability_protocol"
 
 platform = get_fastest_platform()
+log.info(f"Using platform {platform.getName()}")
 
 
-def _validate_input(nnp: str, implementation: str):
-    pass
+def setup_logging_and_output():
+    output_folder = "test_stability_protocol"
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
+    return output_folder
+
+
+def validate_input(nnp: str, implementation: str):
+    if (nnp, implementation) not in available_nnps_and_implementation:
+        error_message = f"Invalid nnp/implementation combination. Valid combinations are: {available_nnps_and_implementation}. Got {nnp}/{implementation}"
+        log.error(error_message)
+        raise RuntimeError(error_message)
+
+
+def create_test_system(testsystem_factory, *args, **kwargs):
+    return testsystem_factory().generate_testsystems(*args, **kwargs)
+
+
+def initialize_ml_system(nnp, topology, implementation):
+    nnp_instance = MLPotential(nnp)
+    system = SystemFactory().initialize_pure_ml_system(
+        nnp_instance, topology, implementation=implementation
+    )
+    return system
+
+
+def create_state_data_reporter():
+    return StateDataReporter(
+        file=None,
+        reportInterval=500,
+        step=True,
+        time=True,
+        potentialEnergy=True,
+        totalEnergy=True,
+        temperature=True,
+        density=True,
+        speed=True,
+    )
+
+
+def perform_protocol(stability_test, params):
+    log.info(f"Stability test parameters: {params}")
+    stability_test.perform_stability_test(params)
 
 
 def perform_hipen_protocol(
@@ -44,6 +93,8 @@ def perform_hipen_protocol(
     :param implementation: The implementation to use.
     :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
     """
+    validate_input(nnp, implementation)
+    output_folder = setup_logging_and_output()
 
     name = list(hipen_systems.keys())[hipen_idx]
 
@@ -65,25 +116,14 @@ def perform_hipen_protocol(
         remove_constraints=False,
     )
     log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
-    Path(output_folder).mkdir(parents=True, exist_ok=True)
     stability_test = MultiTemperatureProtocol()
 
-    reporter = StateDataReporter(
-        file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
-        reportInterval=100,
-        step=True,  # must be set to true
-        time=True,
-        potentialEnergy=True,
-        totalEnergy=True,
-        temperature=True,
-        density=True,
-        speed=True,
-    )
+    reporter = create_state_data_reporter()
 
     params = StabilityTestParameters(
         protocol_length=nr_of_simulation_steps,
         temperature=unit.Quantity(300, unit.kelvin),
-        ensemble="NVT",
+        ensemble="nvt",
         simulated_annealing=False,
         system=system,
         platform=platform,
@@ -130,6 +170,8 @@ def perform_waterbox_protocol(
     :param annealing: Whether to perform simulated annealing (default=False).
     :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
     """
+    validate_input(nnp, implementation)
+    output_folder = setup_logging_and_output()
 
     print(
         f""" 
@@ -152,22 +194,11 @@ def perform_waterbox_protocol(
     )
 
     log_file_name = f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}"
-    Path(output_folder).mkdir(parents=True, exist_ok=True)
     log.info(f"Writing to {log_file_name}")
 
-    stability_test = PropagationProtocol(ensemble=ensemble)
+    stability_test = PropagationProtocol()
 
-    reporter = StateDataReporter(
-        file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
-        reportInterval=500,
-        step=True,  # must be set to true
-        time=True,
-        potentialEnergy=True,
-        totalEnergy=True,
-        temperature=True,
-        density=True,
-        speed=True,
-    )
+    reporter = create_state_data_reporter()
     params = StabilityTestParameters(
         protocol_length=nr_of_simulation_steps,
         temperature=unit.Quantity(300, unit.kelvin),
@@ -216,6 +247,8 @@ def perform_alanine_dipeptide_protocol(
     :param ensemble: The ensemble to simulate in (default='').
     :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
     """
+    validate_input(nnp, implementation)
+    output_folder = setup_logging_and_output()
 
     print(
         f""" 
@@ -239,23 +272,13 @@ def perform_alanine_dipeptide_protocol(
     Path(output_folder).mkdir(parents=True, exist_ok=True)
     log.info(f"Writing to {log_file_name}")
 
-    stability_test = PropagationProtocol(ensemble=ensemble)
+    stability_test = PropagationProtocol()
 
-    reporter = StateDataReporter(
-        file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
-        reportInterval=500,
-        step=True,  # must be set to true
-        time=True,
-        potentialEnergy=True,
-        totalEnergy=True,
-        temperature=True,
-        density=True,
-        speed=True,
-    )
+    reporter = create_state_data_reporter()
     params = StabilityTestParameters(
         protocol_length=nr_of_simulation_steps,
         temperature=unit.Quantity(300, unit.kelvin),
-        ensemble=ensemble,
+        ensemble=ensemble.lower(),
         simulated_annealing=False,
         system=system,
         platform=platform,
@@ -298,7 +321,8 @@ def perform_DOF_scan(
     :param name: The name of the molecule to simulation (default='ethanol').
     values are a list of appropriate atom indices.
     """
-
+    validate_input(nnp, implementation)
+    output_folder = setup_logging_and_output()
     print(
         f""" 
 ------------------------------------------------------------------------------------
@@ -336,14 +360,19 @@ def perform_DOF_scan(
     elif DOF_definition["torsion"]:
         raise NotImplementedError
 
+def read_config(yaml_file_path):
+    with open(yaml_file_path, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
+
 
 if __name__ == "__main__":
-    fire.Fire(
-        {
-            "waterbox": perform_waterbox_protocol,
-            "vacuum": perform_hipen_protocol,
-            "DOF": perform_DOF_scan,
-            "alanine-dipeptide": perform_alanine_dipeptide_protocol,
-        }
-    )
-    print("Done!")
+
+    config = read_config("test_config.yaml")
+    
+    hipen_protocol_config = config.get("hipen_protocol", {})
+    perform_hipen_protocol(**hipen_protocol_config)
+
+    waterbox_protocol_config = config.get("waterbox_protocol", {})
+    perform_waterbox_protocol(**waterbox_protocol_config)
+
