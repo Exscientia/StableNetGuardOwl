@@ -490,6 +490,7 @@ class StabilityTest(ABC):
     ) -> None:
         pass
 
+
 class BondProfileProtocol(DOFTest):
     def __init__(self) -> None:
         """
@@ -538,58 +539,6 @@ class BondProfileProtocol(DOFTest):
             writer.writerows(zip(bond_length, potential_energy))
 
 
-class MultiTemperatureProtocol(StabilityTest):
-    class PropagationProtocol(StabilityTest):
-        """
-        A class representing a propagation protocol for stability tests on molecular systems.
-        """
-
-        def __init__(self, ensemble: Union[None, str] = None) -> None:
-            """
-            Initializes the PropagationProtocol class by calling the constructor of its parent class and setting the temperature protocol.
-
-            Parameters:
-            -----------
-            ensemble: Union[None, str], optional
-                The ensemble to use for the simulation. If None, the default ensemble is used.
-
-            Returns:
-            --------
-            None
-            """
-            super().__init__()
-            self.temperature_protcol = [
-                unit.Quantity(300, unit.kelvin),
-                unit.Quantity(600, unit.kelvin),
-                unit.Quantity(1_200, unit.kelvin),
-            ]
-
-            if ensemble:
-                assert ensemble in self.implemented_ensembles
-            self.ensemble = ensemble
-
-    def perform_stability_test(
-        self, StabilityTestParameters: StabilityTestParameters
-    ) -> None:
-        """
-        Performs a stability test on the molecular system for each temperature in the temperature protocol by running a simulation.
-
-        Parameters:
-        -----------
-        StabilityTestParameters: StabilityTestParameters
-            The parameters for the stability test.
-
-        Returns:
-        --------
-        None
-        """
-        for temperature in self.temperature_protcol:
-            self._run_simulation(
-                StabilityTestParameters,
-                temperature,
-            )
-
-
 class PropagationProtocol(StabilityTest):
     def __init__(self, ensemble: Union[None, str] = None) -> None:
         """
@@ -617,3 +566,50 @@ class PropagationProtocol(StabilityTest):
             StabilityTestParameters,
             unit.Quantity(300, unit.kelvin),
         )
+
+
+class MultiTemperatureProtocol(PropagationProtocol):
+    def __init__(self, ensemble: Union[None, str] = None) -> None:
+        """
+        Initializes the PropagationProtocol class by calling the constructor of its parent class and setting the temperature protocol.
+
+        Parameters:
+        -----------
+        ensemble: Union[None, str], optional
+            The ensemble to use for the simulation. If None, the default ensemble is used.
+
+        Returns:
+        --------
+        None
+        """
+        super().__init__()
+        self.temperature_protcol = [
+            unit.Quantity(300, unit.kelvin),
+            unit.Quantity(600, unit.kelvin),
+            unit.Quantity(1_200, unit.kelvin),
+        ]
+
+        if ensemble:
+            assert ensemble in self.implemented_ensembles
+        self.ensemble = ensemble
+
+    def perform_stability_test(
+        self, StabilityTestParameters: StabilityTestParameters
+    ) -> None:
+        """
+        Performs a stability test on the molecular system for each temperature in the temperature protocol by running a simulation.
+
+        Parameters:
+        -----------
+        StabilityTestParameters: StabilityTestParameters
+            The parameters for the stability test.
+
+        Returns:
+        --------
+        None
+        """
+        for temperature in self.temperature_protcol:
+            self._run_simulation(
+                StabilityTestParameters,
+                temperature,
+            )

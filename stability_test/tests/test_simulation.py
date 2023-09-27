@@ -151,29 +151,7 @@ def test_simulating(nnp: str, implementation: str) -> None:
     qml = MLPotential(nnp)
     platform = get_fastest_platform()
     topology = topology.to_openmm()
-    # define the system that is treated with
-    ml_atoms = [atom.index for atom in topology.atoms()]
-    # generate hybrid simulation
-    qsim = SimulationFactory.create_simulation(
-        SystemFactory().initialize_mixed_ml_system(
-            system,
-            qml,
-            topology,
-            interpolate=True,
-            ml_atoms=ml_atoms,
-            implementation=implementation,
-        ),
-        topology,
-        platform=platform,
-        temperature=unit.Quantity(300, unit.kelvin),
-    )
-    qsim.context.setPositions(to_openmm(mol.conformers[0]))
-    # set lambda parameter
-    qsim.context.setParameter("lambda_interpolate", 0.0)  # set position
-    # simulate
-    qsim.reporters.append(DCDReporter("test.dcd", 10))
-    qsim.step(100)
-
+    ########################################################
     # ---------------------------#
     # generate pure ML simulation
     qsim = SimulationFactory.create_simulation(

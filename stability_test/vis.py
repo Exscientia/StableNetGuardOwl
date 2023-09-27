@@ -7,7 +7,7 @@ import nglview as nv
 import numpy as np
 import pandas as pd
 
-from exs.quams.analysis import PropertyCalculator
+from stability_test.analysis import PropertyCalculator
 
 
 class MonitoringPlotter:

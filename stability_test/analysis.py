@@ -48,6 +48,7 @@ class PropertyCalculator:
         Returns:
         - angles (np.ndarray): The angles between water molecules.
         """
+
         def _extract_angles() -> list:
             angle_list = []
             for bond_1 in self.md_traj.top.bonds:
