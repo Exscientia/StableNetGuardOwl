@@ -1,6 +1,6 @@
 <p align="center">
-<img src="https://github.com/Exscientia/StableNetGuard/assets/31651017/6e72dbdd-3fae-4463-bde3-bbaf54b459a7" alt="Simple Icons" width=100>
-<h3 align="center">StableNetGuard: Perform stability tests for Neural Network Potentials</h3>
+<img src="https://github.com/Exscientia/StableNetGuardOwl/assets/31651017/6e72dbdd-3fae-4463-bde3-bbaf54b459a7" alt="Simple Icons" width=150>
+<h3 align="center">StableNetGuardOwl: Perform stability tests for Neural Network Potentials</h3>
 </p>
 <p align="center">
   
@@ -16,16 +16,14 @@
 
 ---
 
-
-
 # What this package contains
 
 ## Stability testing
 
-This repository provides the essential code for performing a variety of stability tests on test systems. The tests and systems can be customized or redefined by inheriting from the appropriate base classes. Key components include:
+This repository provides the essential code for performing a variety of stability tests with Neural Network Potentials. Tests are currently limited to `openMM`` and the Neural Network Potentials implemented in `openmm-ml`. The tests and systems can be customized or redefined by inheriting from the appropriate base classes. Key components include:
 
-- Script for Stability Testing: Located in the scripts directory (perform_stability_tests.py).
-- Results Visualization Notebook: Found in the notebooks directory (visualize_stability_tests.ipynb).
+- Script for stability testing: located in the scripts directory (`perform_stability_tests.py``).
+- Results visualization notebook: found in the notebooks directory (`visualize_stability_tests.ipynb``).
 
 Each stability test produces three types of output files:
 
@@ -33,6 +31,7 @@ Each stability test produces three types of output files:
 2. A CSV file containing the monitored properties.
 3. A DCD trajectory file to visualize the system's temporal evolution.
 
+To perform a stability test the general syntax is as follows:
 Command Syntax
 ```bash
 python scripts/perform_stability_tests.py -c config.yaml
@@ -43,14 +42,14 @@ There is an example `config.yaml` file provided in the `scripts` directory that 
 For a stability test using a pure 15 Angstrom waterbox the config.yaml file looks like shown below
 ```
 tests:
-  - protocol: "waterbox_protocol"
-    edge_length: 15
-    ensemble: "NVT"
-    nnp: "ani2x"
-    implementation: "nnpops"
-    annealing: false
-    nr_of_simulation_steps: 10_000
-    temperature: 300
+  - protocol: "waterbox_protocol" # which protocol is performed
+    edge_length: 15 # waterbox edge length in Angstrom
+    ensemble: "NVT" # thermodynamic esamble that is used. Oter options are 'NpT' and 'NVE'.
+    nnp: "ani2x" # the NNP used
+    implementation: "nnpops" # the implementation if multiple are available
+    annealing: false # simulated annealing to slowly reheat the system at the beginning of a simulation
+    nr_of_simulation_steps: 10_000 # number of simulation steps
+    temperature: 300 # in Kelvin
 ```
 It defines the potential (nnp and implementation), the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_stability_tests.py` script runs the tests
 
@@ -63,7 +62,7 @@ MonitoringPlotter("trajectory.dcd",
 ```
 
 ### Other Test Systems
-Options for TESTSYSTEM include vacuum, alanine-dipeptide, and DOF (Degree Of Freedom scan, e.g., bond, angle, or torsion scan).
+Test systems that can be used for different protocols include small molecules in vacuum (either defined with SMILES string or taken from the HiPen dataset), alanine-dipeptide in vacuum and solution, pure waterbox and degree of freedom potential energy scan, e.g., along a bond, angle, or torsion angle.
 
 ### Protocols
 Currently, the following protocols are available:
