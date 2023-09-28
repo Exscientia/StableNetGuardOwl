@@ -36,12 +36,12 @@ jobs:
 
       # More info on options: https://github.com/marketplace/actions/provision-with-micromamba
       - uses: mamba-org/provision-with-micromamba@main
+        env:
+          CONDA_OVERRIDE_CUDA: "11.4"
         with:
+          python-version: ${{ matrix.python-version }}
           environment-file: devtools/conda-envs/test_env.yaml
-          environment-name: test
           channels: conda-forge,defaults
-          extra-specs: |
-            python=${{ matrix.python-version }}
 
       - name: Install package
         # conda setup requires this special shell
