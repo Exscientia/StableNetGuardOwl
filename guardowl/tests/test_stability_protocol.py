@@ -6,7 +6,6 @@ from openmm.app import StateDataReporter
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
-from guardowl.utils import available_nnps_and_implementation
 from guardowl.protocols import (
     BondProfileProtocol,
     DOFTestParameters,
@@ -20,9 +19,10 @@ from guardowl.testsystems import (
     SmallMoleculeTestsystemFactory,
     WaterboxTestsystemFactory,
 )
+from guardowl.utils import get_available_nnps_and_implementation
 
 
-@pytest.mark.parametrize("nnp, implementation", available_nnps_and_implementation)
+@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
 def test_setup_vacuum_protocol(nnp: str, implementation: str) -> None:
     """Test if we can run a simulation for a number of steps"""
 
@@ -71,7 +71,7 @@ def test_setup_vacuum_protocol(nnp: str, implementation: str) -> None:
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp, implementation", available_nnps_and_implementation)
+@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
 def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> None:
     """Test if we can run a simulation for a number of steps"""
 
@@ -126,7 +126,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
     )
 
 
-@pytest.mark.parametrize("nnp, implementation", available_nnps_and_implementation)
+@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
 def test_DOF_protocol(nnp: str, implementation: str) -> None:
     """Test if we can run a simulation for a number of steps"""
 
