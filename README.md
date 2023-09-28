@@ -5,13 +5,13 @@
 <p align="center">
   
 [//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/Exscientia/stability_test/workflows/CI/badge.svg)](https://github.com/Exscientia/stability_test/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/Exscientia/stability_test/branch/main/graph/badge.svg)](https://codecov.io/gh/Exscientia/stability_test/branch/main)
+[![GitHub Actions Build Status](https://github.com/Exscientia/guardowl/workflows/CI/badge.svg)](https://github.com/Exscientia/guardowl/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/Exscientia/guardowl/branch/main/graph/badge.svg)](https://codecov.io/gh/Exscientia/guardowl/branch/main)
 [![Supported Python versions](https://img.shields.io/badge/python-%5E3.10-blue.svg)](https://docs.python.org/3/whatsnew/index.html)
 [![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Github release](https://badgen.net/github/release/Exscientia/stability_test)](https://github.com/Exscientia/stability_test/)
-[![GitHub license](https://img.shields.io/github/license/Exscientia/stability_test?color=green)](https://github.com/Exscientia/stability_test/blob/main/LICENSE)
+[![Github release](https://badgen.net/github/release/Exscientia/guardowl)](https://github.com/Exscientia/guardowl/)
+[![GitHub license](https://img.shields.io/github/license/Exscientia/guardowl?color=green)](https://github.com/Exscientia/guardowl/blob/main/LICENSE)
 </p>
 
 ---
@@ -22,8 +22,8 @@
 
 This repository provides the essential code for performing a variety of stability tests with Neural Network Potentials. Tests are currently limited to `openMM`` and the Neural Network Potentials implemented in `openmm-ml`. The tests and systems can be customized or redefined by inheriting from the appropriate base classes. Key components include:
 
-- Script for stability testing: located in the scripts directory (`perform_stability_tests.py``).
-- Results visualization notebook: found in the notebooks directory (`visualize_stability_tests.ipynb``).
+- Script for stability testing: located in the scripts directory (`perform_guardowls.py``).
+- Results visualization notebook: found in the notebooks directory (`visualize_guardowls.ipynb``).
 
 Each stability test produces three types of output files:
 
@@ -34,7 +34,7 @@ Each stability test produces three types of output files:
 To perform a stability test the general syntax is as follows:
 Command Syntax
 ```bash
-python scripts/perform_stability_tests.py -c config.yaml
+python scripts/perform_guardowls.py -c config.yaml
 ```
 There is an example `config.yaml` file provided in the `scripts` directory that provides default parameters for the most common test systems.
 
@@ -51,9 +51,9 @@ tests:
     nr_of_simulation_steps: 10_000 # number of simulation steps
     temperature: 300               # in Kelvin
 ```
-It defines the potential (nnp and implementation), the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_stability_tests.py` script runs the tests
+It defines the potential (nnp and implementation), the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_guardowls.py` script runs the tests
 
-To visualize the results, use the visualize_stability_tests.ipynb notebook.
+To visualize the results, use the visualize_guardowls.ipynb notebook.
 
 ```python
 MonitoringPlotter("trajectory.dcd", 

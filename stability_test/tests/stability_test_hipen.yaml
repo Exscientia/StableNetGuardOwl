@@ -1,8 +1,0 @@
-# config.yaml
-tests:
-  - protocol: "hipen_protocol"
-    hipen_idx: 0
-    nnp: "ani2x"
-    implementation: "nnpops"
-    temperature: 300
-    nr_of_simulation_steps: 100
