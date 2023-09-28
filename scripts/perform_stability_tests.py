@@ -10,15 +10,15 @@ from openmm.app import StateDataReporter
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
-from stability_test.protocolls import (
+from guardowl.protocols import (
     BondProfileProtocol,
     DOFTestParameters,
     MultiTemperatureProtocol,
     PropagationProtocol,
     StabilityTestParameters,
 )
-from stability_test.simulation import SystemFactory
-from stability_test.testsystems import (
+from guardowl.simulation import SystemFactory
+from guardowl.testsystems import (
     AlaninDipeptideTestsystemFactory,
     HipenTestsystemFactory,
     SmallMoleculeTestsystemFactory,
@@ -26,7 +26,7 @@ from stability_test.testsystems import (
     hipen_systems,
 )
 
-from stability_test.utils import available_nnps_and_implementation
+from guardowl.utils import available_nnps_and_implementation
 
 warnings.filterwarnings("ignore")
 output_folder = "test_stability_protocol"
@@ -76,7 +76,7 @@ def create_state_data_reporter():
 
 def perform_protocol(stability_test, params):
     log.info(f"Stability test parameters: {params}")
-    stability_test.perform_stability_test(params)
+    guardowl.perform_stability_test(params)
 
 
 def perform_hipen_protocol(

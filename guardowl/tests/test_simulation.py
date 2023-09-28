@@ -6,9 +6,9 @@ from openmm.app import DCDReporter, PDBFile
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
-from stability_test.setup import create_system_from_mol, generate_molecule
-from stability_test.simulation import SimulationFactory, SystemFactory
-from stability_test.testsystems import hipen_systems
+from guardowl.setup import create_system_from_mol, generate_molecule
+from guardowl.simulation import SimulationFactory, SystemFactory
+from guardowl.testsystems import hipen_systems
 
 
 @pytest.mark.parametrize(

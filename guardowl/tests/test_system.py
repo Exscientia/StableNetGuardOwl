@@ -1,5 +1,5 @@
-from stability_test.setup import create_system_from_mol, generate_molecule
-from stability_test.testsystems import hipen_systems
+from guardowl.setup import create_system_from_mol, generate_molecule
+from guardowl.testsystems import hipen_systems
 
 
 def test_generate_molecule() -> None:

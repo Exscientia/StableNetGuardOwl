@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=stability_test
+set SPHINXPROJ=guardowl
 
 if "%1" == "" goto help
 

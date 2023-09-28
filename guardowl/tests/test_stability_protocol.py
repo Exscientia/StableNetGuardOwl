@@ -6,16 +6,16 @@ from openmm.app import StateDataReporter
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
-from stability_test.utils import available_nnps_and_implementation
-from stability_test.protocolls import (
+from guardowl.utils import available_nnps_and_implementation
+from guardowl.protocols import (
     BondProfileProtocol,
     DOFTestParameters,
     MultiTemperatureProtocol,
     PropagationProtocol,
     StabilityTestParameters,
 )
-from stability_test.simulation import SystemFactory
-from stability_test.testsystems import (
+from guardowl.simulation import SystemFactory
+from guardowl.testsystems import (
     HipenTestsystemFactory,
     SmallMoleculeTestsystemFactory,
     WaterboxTestsystemFactory,
