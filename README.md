@@ -5,13 +5,13 @@
 <p align="center">
   
 [//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/Exscientia/guardowl/workflows/CI/badge.svg)](https://github.com/Exscientia/guardowl/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/Exscientia/guardowl/branch/main/graph/badge.svg)](https://codecov.io/gh/Exscientia/guardowl/branch/main)
+[![GitHub Actions Build Status](https://github.com/Exscientia/StableNetGuardOwl/workflows/CI/badge.svg)](https://github.com/Exscientia/StableNetGuardOwl/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/Exscientia/StableNetGuardOwl/branch/main/graph/badge.svg)](https://codecov.io/gh/Exscientia/StableNetGuardOwl/branch/main)
 [![Supported Python versions](https://img.shields.io/badge/python-%5E3.10-blue.svg)](https://docs.python.org/3/whatsnew/index.html)
 [![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Github release](https://badgen.net/github/release/Exscientia/guardowl)](https://github.com/Exscientia/guardowl/)
-[![GitHub license](https://img.shields.io/github/license/Exscientia/guardowl?color=green)](https://github.com/Exscientia/guardowl/blob/main/LICENSE)
+[![Github release](https://badgen.net/github/release/Exscientia/StableNetGuardOwl)](https://github.com/Exscientia/StableNetGuardOwl/)
+[![GitHub license](https://img.shields.io/github/license/Exscientia/StableNetGuardOwl?color=green)](https://github.com/Exscientia/StableNetGuardOwl/blob/main/LICENSE)
 </p>
 
 ---
