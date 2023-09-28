@@ -42,14 +42,14 @@ There is an example `config.yaml` file provided in the `scripts` directory that 
 For a stability test using a pure 15 Angstrom waterbox the config.yaml file looks like shown below
 ```
 tests:
-  - protocol: "waterbox_protocol" # which protocol is performed
-    edge_length: 15 # waterbox edge length in Angstrom
-    ensemble: "NVT" # thermodynamic esamble that is used. Oter options are 'NpT' and 'NVE'.
-    nnp: "ani2x" # the NNP used
-    implementation: "nnpops" # the implementation if multiple are available
-    annealing: false # simulated annealing to slowly reheat the system at the beginning of a simulation
+  - protocol: "waterbox_protocol"  # which protocol is performed
+    edge_length: 15                # waterbox edge length in Angstrom
+    ensemble: "NVT"                # thermodynamic esamble that is used. Oter options are 'NpT' and 'NVE'.
+    nnp: "ani2x"                   # the NNP used
+    implementation: "nnpops"       # the implementation if multiple are available
+    annealing: false               # simulated annealing to slowly reheat the system at the beginning of a simulation
     nr_of_simulation_steps: 10_000 # number of simulation steps
-    temperature: 300 # in Kelvin
+    temperature: 300               # in Kelvin
 ```
 It defines the potential (nnp and implementation), the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_stability_tests.py` script runs the tests
 
