@@ -145,6 +145,7 @@ def perform_waterbox_protocol(
     ensemble: str,
     nnp: str,
     implementation: str,
+    temperature: Union[int, List[int]],
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
 ):
@@ -189,7 +190,7 @@ def perform_waterbox_protocol(
     reporter = create_state_data_reporter()
     params = StabilityTestParameters(
         protocol_length=nr_of_simulation_steps,
-        temperature=300,
+        temperature=temperature,
         ensemble=ensemble,
         simulated_annealing=annealing,
         system=system,

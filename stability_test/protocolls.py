@@ -632,8 +632,9 @@ class MultiTemperatureProtocol(PropagationProtocol):
         --------
         None
         """
+        log_file_name_ = parms.log_file_name
         for temperature in parms.temperature:
-            parms.log_file_name = f"{parms.log_file_name}_{temperature}"
+            parms.log_file_name = f"{log_file_name_}_{temperature}"
 
             self._run_simulation(
                 parms,
