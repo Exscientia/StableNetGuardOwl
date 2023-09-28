@@ -12,13 +12,15 @@ dependencies:
   - openmm-torch
   - openff-toolkit
   - openmmtools
-  - nnpops
-  - cudatoolkit=11.6
+  - nnpops>=0.4
+  - cudatoolkit
   - tqdm
+  - mdtraj
   - pymbar>=4.0
   - torchani
   - seaborn
-  - pytorch=1.11.0
+  - pytorch #=1.11.0
+  - loguru
   # Testing
   - nglview
   - fire

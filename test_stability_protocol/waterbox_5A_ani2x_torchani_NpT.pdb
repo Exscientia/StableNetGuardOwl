@@ -1,0 +1,10 @@
+REMARK   1 CREATED WITH OPENMM 8.0, 2023-09-25
+CRYST1    5.000    5.000    5.000  90.00  90.00  90.00 P 1           1 
+HETATM    1  O   HOH A   1      24.627 -13.442  34.526  1.00  0.00           O  
+HETATM    2  H1  HOH A   1      24.587 -13.498  33.571  1.00  0.00           H  
+HETATM    3  H2  HOH A   1      25.563 -13.446  34.728  1.00  0.00           H  
+HETATM    4  O   HOH A   2      31.454 -13.642  34.870  1.00  0.00           O  
+HETATM    5  H1  HOH A   2      32.403 -13.544  34.799  1.00  0.00           H  
+HETATM    6  H2  HOH A   2      31.332 -14.460  35.352  1.00  0.00           H  
+TER       7      HOH A   2
+END

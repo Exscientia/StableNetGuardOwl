@@ -1,82 +1,34 @@
 import subprocess
+import pytest
 
 
-def test_stability_tests_script(
-    script: str = "scripts/perform_stability_tests.py",
-) -> None:
-    print(f"Testing {script}")
+@pytest.mark.parametrize(
+    "config_file_path",
+    [
+        "stability_test/tests/stability_test_hipen.yaml",
+        "stability_test/tests/stability_test_waterbox.yaml",
+        "stability_test/tests/stability_test_alanine_dipeptide.yaml",
+    ],
+)
+@pytest.mark.parametrize("script_file_path", ["scripts/perform_stability_tests.py"])
+def test_script_execution(config_file_path: str, script_file_path: str) -> None:
+    print(f"Testing {script_file_path}")
+    print(f"Using {config_file_path}")
     # Check if script exists and can be executed
-    ret = subprocess.run(["python", script, "--help"], capture_output=True)
+    ret = subprocess.run(["python", script_file_path, "--help"], capture_output=True)
+    print("Output from --help:")
     print(ret.stdout.decode("utf-8"))
+    print("Error from --help:")
+    print(ret.stderr.decode("utf-8"))
     assert ret.returncode == 0
 
-    # Check if script can be executed with the correct arguments for a HiPen molecule
-    hipen_vacuum_args = [
-        "python",
-        script,
-        "vacuum",
-        "1",
-        "ani2x",
-        "nnpops",
-        "50",
-    ]
-    # Check if script can be executed with the correct arguments for a waterbox
+    # Update the arguments to match your argparse in the script
+    args = f"python {script_file_path} --config {config_file_path}".split()
+    ret = subprocess.run(args, capture_output=True)
+    print("Script Output:")
+    print(ret.stdout.decode("utf-8"))
 
-    waterbox_args = [
-        "python",
-        script,
-        "waterbox",
-        "20",
-        "NpT",
-        "ani2x",
-        "torchani",
-        "False",
-        "10",
-    ]
-    # Check if script can be executed with the correct arguments for a alanine dipeptide in solvent
-    alanine_dipeptide_solvent_args = [
-        "python",
-        script,
-        "alanine-dipeptide",
-        "solvent",
-        "ani2x",
-        "torchani",
-        "NpT",
-        "10",
-    ]
-    # Check if script can be executed with the correct arguments for a alanine dipeptide in vacuum
-    alanine_dipeptide_vacuum_args = [
-        "python",
-        script,
-        "alanine-dipeptide",
-        "vacuum",
-        "ani2x",
-        "torchani",
-        "",
-        "10",
-    ]
-    # Check if script can be executed with the correct arguments for a alanine dipeptide in vacuum
-    DOF_ethane_args = [
-        "python",
-        script,
-        "DOF",
-        "ani2x",
-        "torchani",
-        "{'bond' : [0, 2]}",
-        "ethanol",
-    ]
+    print("Script Error:")
+    print(ret.stderr.decode("utf-8"))
 
-    for args in [
-        hipen_vacuum_args,
-        # waterbox_args,
-        # alanine_dipeptide_solvent_args,
-        alanine_dipeptide_vacuum_args,
-        DOF_ethane_args,
-    ]:
-        print(ret.stdout.decode("utf-8"))
-        assert ret.returncode == 0
-
-        ret = subprocess.run(
-            args,
-            capture_output=True,
-        )
+    assert ret.returncode == 0

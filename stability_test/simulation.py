@@ -19,16 +19,24 @@ class SimulationFactory:
         temperature: unit.Quantity,
     ) -> Simulation:
         """
-        Returns an encapsulated OpenMM simulation instance
+        Create and return an OpenMM simulation instance using LangevinIntegrator.
 
+        Parameters
+        ----------
+        system : System
+            The OpenMM system object.
+        topology : Topology
+            The OpenMM topology object.
+        platform : Platform
+            The OpenMM Platform object for simulation.
+        temperature : unit.Quantity
+            The temperature at which to run the simulation.
 
-        Args:
-            system (System)
-            topology (Topology)
-            platform (str)
+        Returns
+        -------
+        Simulation
+            The OpenMM simulation instance.
 
-        Returns:
-            _type_: PotentialSimulation
         """
         integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
 
@@ -47,16 +55,24 @@ class SimulationFactory:
         temperature: unit.Quantity,
     ) -> Simulation:
         """
-        Returns an encapsulated OpenMM simulation instance
+        Create and return an OpenMM NVT simulation instance using BAOABIntegrator.
 
+        Parameters
+        ----------
+        system : System
+            The OpenMM system object.
+        topology : Topology
+            The OpenMM topology object.
+        platform : Platform
+            The OpenMM Platform object for simulation.
+        temperature : unit.Quantity
+            The temperature at which to run the simulation.
 
-        Args:
-            system (System)
-            topology (Topology)
-            platform (str)
+        Returns
+        -------
+        Simulation
+            The OpenMM simulation instance.
 
-        Returns:
-            _type_: PotentialSimulation
         """
 
         integrator = BAOABIntegrator(temperature, collision_rate, stepsize)
@@ -77,17 +93,25 @@ class SystemFactory:
         remove_constraints: bool = True,
         implementation: str = "",
     ) -> System:
-        """Returns an OpenMM simulation instance with a QML potential energy function
+        """
+        Initialize an OpenMM system using a machine learning potential.
 
-        Args:
-            potential (Type[MLPotential])
-            topology (Topology)
-            remove_constraints (bool, optional): Defaults to True.
-            platform (str, optional): Defaults to "CUDA".
-            implementation (str, optional): Defaults to "".
+        Parameters
+        ----------
+        potential : Type[MLPotential]
+            The machine learning potential class.
+        topology : Topology
+            The OpenMM topology object.
+        remove_constraints : bool, optional
+            Whether to remove constraints from the system, by default True.
+        implementation : str, optional
+            The specific implementation of the ML potential, by default "".
 
-        Returns:
-            Simulation
+        Returns
+        -------
+        System
+            The OpenMM System object.
+
         """
         # create system & simulation instance
         if implementation:
@@ -116,21 +140,30 @@ class SystemFactory:
         implementation: str = "",
     ) -> System:
         """
-        Returns an OpenMM simulation instance with a QML and MM potential energy function
+        Initialize an OpenMM system using both QML and MM potentials.
 
+        Parameters
+        ----------
+        system : System
+            The existing OpenMM System object.
+        potential : Type[MLPotential]
+            The machine learning potential class.
+        topology : Topology
+            The OpenMM topology object.
+        interpolate : bool
+            Whether to interpolate between the QML and MM potentials.
+        ml_atoms : List[int]
+            List of atom indices for which the ML potential will be applied.
+        remove_constraints : bool, optional
+            Whether to remove constraints from the system, by default True.
+        implementation : str, optional
+            The specific implementation of the ML potential, by default "".
 
-        Args:
-            system (System)
-            potential (Type[MLPotential])
-            topology (Topology)
-            interpolate (bool)
-            ml_atoms (List[int])
-            remove_constraints (bool, optional): Defaults to True.
-            platform (str, optional): Defaults to "CUDA".
-            implementation (str, optional): Defaults to "".
+        Returns
+        -------
+        System
+            The OpenMM System object.
 
-        Returns:
-            Simulation
         """
         # create system & simulation instance
         if implementation:
@@ -154,6 +187,3 @@ class SystemFactory:
             constraints=None,
             rigidWater=False,
         )
-
-    def initialize_interaction_interpolation_ml_system(self) -> None:
-        pass

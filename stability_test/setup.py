@@ -1,4 +1,3 @@
-import logging
 from typing import Tuple
 from loguru import logger as log
 
@@ -12,14 +11,20 @@ forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
 
 def generate_molecule(smiles: str, nr_of_conformations: int = 10) -> Molecule:
     """
-    generate a molecule using openff
+    Generate an openFF Molecule instance from a SMILES string and generate conformers.
 
-    Args:
-        smiles (str): SMILES string of the molecule
-        nr_of_conformations (int, optional): Generates a number of conformation. Defaults to 10.
+    Parameters
+    ----------
+    smiles : str
+        The SMILES string representing the molecule.
+    nr_of_conformations : int, optional
+        The number of conformers to generate for the molecule. Defaults to 10.
 
-    Returns:
-        Molecule: openff molecule instance
+    Returns
+    -------
+    Molecule
+        The generated openFF Molecule instance with conformers.
+
     """
     molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
     molecule.generate_conformers(n_conformers=nr_of_conformations)
@@ -31,14 +36,25 @@ def generate_molecule(smiles: str, nr_of_conformations: int = 10) -> Molecule:
 def create_system_from_mol(
     mol: Molecule, env: str = "vacuum"
 ) -> Tuple[System, Topology]:
-    """Given a openFF Molecule instance an openMM system and topology instance is created
+    """
+    Create an OpenMM System and Topology instance from an openFF Molecule.
 
-    Args:
-        mol (Molecule): _description_
-        env (str, optional): _description_. Defaults to 'vacuum'.
+    Parameters
+    ----------
+    mol : Molecule
+        The openFF Molecule instance to convert into an OpenMM system.
+    env : str, optional
+        The environment in which the system should be generated. Must be one of 'waterbox', 'vacuum', or 'complex'. Defaults to 'vacuum'.
 
-    Returns:
-        _type_: _description_
+    Returns
+    -------
+    Tuple[System, Topology]
+        A tuple containing the generated OpenMM System and Topology instances.
+
+    Raises
+    ------
+    AssertionError
+        If the environment is not one of 'waterbox', 'vacuum', or 'complex'.
     """
     assert mol.n_conformers > 0
     log.debug("Using openff ...")
