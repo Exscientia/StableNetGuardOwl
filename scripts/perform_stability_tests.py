@@ -209,7 +209,9 @@ def perform_alanine_dipeptide_protocol(
     env: str,
     nnp: str,
     implementation: str,
+    temperature: int,
     ensemble: str = "",
+    annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
 ):
     """
@@ -251,9 +253,9 @@ def perform_alanine_dipeptide_protocol(
     reporter = create_state_data_reporter()
     params = StabilityTestParameters(
         protocol_length=nr_of_simulation_steps,
-        temperature=300,
+        temperature=temperature,
         ensemble=ensemble.lower(),
-        simulated_annealing=False,
+        simulated_annealing=annealing,
         system=system,
         platform=platform,
         testsystem=testsystem,
@@ -366,6 +368,9 @@ def main():
             log.info("Performing waterbox protocol")
             perform_waterbox_protocol(**{k: test[k] for k in test if k != "protocol"})
 
+        elif protocol == "alanine_dipeptide_protocol":
+            log.info("Performing waterbox protocol")
+            perform_waterbox_protocol(**{k: test[k] for k in test if k != "protocol"})
         else:
             log.warning(f"Unknown protocol: {protocol}")
 

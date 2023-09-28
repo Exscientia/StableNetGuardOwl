@@ -633,6 +633,10 @@ class MultiTemperatureProtocol(PropagationProtocol):
         None
         """
         log_file_name_ = parms.log_file_name
+        if not isinstance(parms.temperature, list):
+            raise RuntimeError(
+                "You need to provide mutliple temperatures to run the MultiTemperatureProtocol."
+            )
         for temperature in parms.temperature:
             parms.log_file_name = f"{log_file_name_}_{temperature}"
 

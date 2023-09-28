@@ -1,124 +1,34 @@
 import subprocess
+import pytest
 
 
-def generate_args(script: str):
-    args = {
-        "hipen_vacuum_args": [  # Check if script can be executed with the correct arguments for a HiPen molecule
-            "python",
-            script,
-            "vacuum",
-            "1",
-            "ani2x",
-            "nnpops",
-            "50",
-        ],
-        "waterbox_args": [  # Check if script can be executed with the correct arguments for a waterbox
-            "python",
-            script,
-            "waterbox",
-            "20",
-            "NpT",
-            "ani2x",
-            "torchani",
-            "False",
-            "10",
-        ],
-        "alanine_dipeptide_solvent_args": [  # Check if script can be executed with the correct arguments for a alanine dipeptide in solvent
-            "python",
-            script,
-            "alanine-dipeptide",
-            "solvent",
-            "ani2x",
-            "torchani",
-            "NpT",
-            "10",
-        ],
-        "alanine_dipeptide_vacuum_args": [  # Check if script can be executed with the correct arguments for a alanine dipeptide in vacuum
-            "python",
-            script,
-            "alanine-dipeptide",
-            "vacuum",
-            "ani2x",
-            "torchani",
-            "",
-            "10",
-        ],
-        "DOF_ethane_args": [  # Check if script can be executed with the correct arguments for a alanine dipeptide in vacuum        "python",
-            script,
-            "DOF",
-            "ani2x",
-            "torchani",
-            "{'bond' : [0, 2]}",
-            "ethanol",
-        ],
-    }
-    return args
-
-
-def test_script_execution_vacuum(
-    script: str = "scripts/perform_stability_tests.py",
-) -> None:
-    print(f"Testing {script}")
+@pytest.mark.parametrize(
+    "config_file_path",
+    [
+        "stability_test/tests/stability_test_hipen.yaml",
+        "stability_test/tests/stability_test_waterbox.yaml",
+        "stability_test/tests/stability_test_alanine_dipeptide.yaml",
+    ],
+)
+@pytest.mark.parametrize("script_file_path", ["scripts/perform_stability_tests.py"])
+def test_script_execution(config_file_path: str, script_file_path: str) -> None:
+    print(f"Testing {script_file_path}")
+    print(f"Using {config_file_path}")
     # Check if script exists and can be executed
-    ret = subprocess.run(["python", script, "--help"], capture_output=True)
+    ret = subprocess.run(["python", script_file_path, "--help"], capture_output=True)
+    print("Output from --help:")
     print(ret.stdout.decode("utf-8"))
+    print("Error from --help:")
+    print(ret.stderr.decode("utf-8"))
     assert ret.returncode == 0
 
-    args = generate_args(script)["hipen_vacuum_args"]
-    ret = subprocess.run(
-        args,
-        capture_output=True,
-    )
+    # Update the arguments to match your argparse in the script
+    args = f"python {script_file_path} --config {config_file_path}".split()
+    ret = subprocess.run(args, capture_output=True)
+    print("Script Output:")
     print(ret.stdout.decode("utf-8"))
+
+    print("Script Error:")
+    print(ret.stderr.decode("utf-8"))
+
     assert ret.returncode == 0
-
-
-def test_script_execution_waterbox(
-    script: str = "scripts/perform_stability_tests.py",
-) -> None:
-    print(f"Testing {script}")
-    # Check if script exists and can be executed
-    ret = subprocess.run(["python", script, "--help"], capture_output=True)
-    print(ret.stdout.decode("utf-8"))
-    assert ret.returncode == 0
-
-    args = generate_args(script)["waterbox_args"]
-
-    ret = subprocess.run(
-        args,
-        capture_output=True,
-    )
-
-
-def test_script_execution_dipeptide_solvent(
-    script: str = "scripts/perform_stability_tests.py",
-) -> None:
-    print(f"Testing {script}")
-    # Check if script exists and can be executed
-    ret = subprocess.run(["python", script, "--help"], capture_output=True)
-    print(ret.stdout.decode("utf-8"))
-    assert ret.returncode == 0
-
-    args = generate_args(script)["alanine_dipeptide_solvent_args"]
-
-    ret = subprocess.run(
-        args,
-        capture_output=True,
-    )
-
-
-def test_script_execution_dipeptide_vacuum(
-    script: str = "scripts/perform_stability_tests.py",
-) -> None:
-    print(f"Testing {script}")
-    # Check if script exists and can be executed
-    ret = subprocess.run(["python", script, "--help"], capture_output=True)
-    print(ret.stdout.decode("utf-8"))
-    assert ret.returncode == 0
-
-    args = generate_args(script)["alanine_dipeptide_vacuum_args"]
-
-    ret = subprocess.run(
-        args,
-        capture_output=True,
-    )

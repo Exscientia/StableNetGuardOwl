@@ -6,15 +6,20 @@ from openmm.app import StateDataReporter
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
-from stability_test.constants import available_nnps_and_implementation
-from stability_test.protocolls import (BondProfileProtocol, DOFTestParameters,
-                                       MultiTemperatureProtocol,
-                                       PropagationProtocol,
-                                       StabilityTestParameters)
+from stability_test.utils import available_nnps_and_implementation
+from stability_test.protocolls import (
+    BondProfileProtocol,
+    DOFTestParameters,
+    MultiTemperatureProtocol,
+    PropagationProtocol,
+    StabilityTestParameters,
+)
 from stability_test.simulation import SystemFactory
-from stability_test.testsystems import (HipenTestsystemFactory,
-                                        SmallMoleculeTestsystemFactory,
-                                        WaterboxTestsystemFactory)
+from stability_test.testsystems import (
+    HipenTestsystemFactory,
+    SmallMoleculeTestsystemFactory,
+    WaterboxTestsystemFactory,
+)
 
 
 @pytest.mark.parametrize("nnp, implementation", available_nnps_and_implementation)
@@ -51,7 +56,7 @@ def test_setup_vacuum_protocol(nnp: str, implementation: str) -> None:
     )
     params = StabilityTestParameters(
         protocol_length=200,
-        temperature=unit.Quantity(300, unit.kelvin),
+        temperature=[300, 400],
         ensemble="NVT",
         simulated_annealing=False,
         system=system,
@@ -89,7 +94,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
     log_file_name = f"waterbox_{edge_size}A_{nnp}_{implementation}_{ensemble}"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
-    stability_test = PropagationProtocol(ensemble=ensemble)
+    stability_test = PropagationProtocol()
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -105,7 +110,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
 
     params = StabilityTestParameters(
         protocol_length=20,
-        temperature=unit.Quantity(300, unit.kelvin),
+        temperature=300,
         ensemble=ensemble,
         simulated_annealing=False,
         system=system,
