@@ -16,9 +16,33 @@ tests:
 
   - protocol: "waterbox_protocol"
     edge_length: 15
-    ensemble: "npt"
+    ensemble: "NVT"
     nnp: "ani2x"
-    implementation: "torchani"
+    implementation: "nnpops"
     annealing: false
     nr_of_simulation_steps: 10_000
     temperature: 300
+
+  - protocol: "waterbox_protocol"
+    edge_length: 15
+    ensemble: "npt"
+    nnp: "ani2x"
+    implementation: "nnpops"
+    annealing: false
+    nr_of_simulation_steps: 10_000
+    temperature: 300
+
+  - protocol: "perform_alanine_dipeptide_protocol"
+    env: "solvent"
+    ensemble: "npt"
+    nnp: "ani2x"
+    implementation: "nnpops"
+    annealing: false
+    nr_of_simulation_steps: 10_000
+    temperature: 300
+
+  - protocol: "perform_DOF_scan"
+    nnp: "ani2x"
+    implementation: "torchani"
+    DOF_definition: { "bond": [0, 2] }
+    molecule_name: "ethanol"
