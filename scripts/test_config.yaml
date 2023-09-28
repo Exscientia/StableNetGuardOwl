@@ -4,9 +4,9 @@ tests:
     env: "solvent"
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "nnpops"
+    implementation: "torchani"
     annealing: false
-    nr_of_simulation_steps: 10_000
+    nr_of_simulation_steps: 50_000
     temperature: 300
 
   - protocol: "hipen_protocol"
@@ -14,14 +14,14 @@ tests:
     nnp: "ani2x"
     implementation: "torchani"
     temperature: 300
-    nr_of_simulation_steps: 10_000
+    nr_of_simulation_steps: 50_000
 
   - protocol: "hipen_protocol"
     hipen_idx: 1
     nnp: "ani2x"
     implementation: "nnpops"
     temperature: [300, 400, 500]
-    nr_of_simulation_steps: 10_000
+    nr_of_simulation_steps: 100_000
 
   - protocol: "waterbox_protocol"
     edge_length: 15
@@ -29,7 +29,7 @@ tests:
     nnp: "ani2x"
     implementation: "nnpops"
     annealing: false
-    nr_of_simulation_steps: 10_000
+    nr_of_simulation_steps: 50_000
     temperature: 300
 
   - protocol: "waterbox_protocol"
@@ -38,7 +38,7 @@ tests:
     nnp: "ani2x"
     implementation: "nnpops"
     annealing: false
-    nr_of_simulation_steps: 10_000
+    nr_of_simulation_steps: 50_000
     temperature: 300
 
   - protocol: "perform_DOF_scan"
