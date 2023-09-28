@@ -19,7 +19,7 @@ dependencies:
   - pymbar>=4.0
   - torchani
   - seaborn
-  - pytorch #=1.11.0
+  - pytorch=1.11.0
   - loguru
   # Testing
   - nglview
