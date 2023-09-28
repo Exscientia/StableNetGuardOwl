@@ -12,6 +12,8 @@
 
 ---
 
+
+
 # What this package contains
 
 ## Stability testing
@@ -28,27 +30,33 @@ Each stability test produces three types of output files:
 3. A DCD trajectory file to visualize the system's temporal evolution.
 
 Command Syntax
-'''bash
-python perform_stability_tests.py TESTSYSTEM OPTIONS
-'''
-Different TESTSYSTEM options provide varying control parameters.
+```bash
+python scripts/perform_stability_tests.py -c config.yaml
+```
+There is an example `config.yaml` file provided in the `scripts` directory that provides default parameters for the most common test systems.
 
 ### Example
-For a stability test using a pure waterbox:
-
-
-'''bash
-python perform_stability_tests.py waterbox 20 NpT ani2x torchani --nr_of_simulation_steps 1000
-'''
-This runs a NpT simulation in a 20-angstrom waterbox using the ani-2x potential and its torchani implementation.
+For a stability test using a pure 15 Angstrom waterbox the config.yaml file looks like shown below
+```
+tests:
+  - protocol: "waterbox_protocol"
+    edge_length: 15
+    ensemble: "NVT"
+    nnp: "ani2x"
+    implementation: "nnpops"
+    annealing: false
+    nr_of_simulation_steps: 10_000
+    temperature: 300
+```
+It defines the potential (nnp and implementation), the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_stability_tests.py` script runs the tests
 
 To visualize the results, use the visualize_stability_tests.ipynb notebook.
 
-'''python
+```python
 MonitoringPlotter("trajectory.dcd", 
                   "topology.pdb", 
                   "data.csv")
-'''
+```
 
 ### Other Test Systems
 Options for TESTSYSTEM include vacuum, alanine-dipeptide, and DOF (Degree Of Freedom scan, e.g., bond, angle, or torsion scan).
@@ -56,17 +64,22 @@ Options for TESTSYSTEM include vacuum, alanine-dipeptide, and DOF (Degree Of Fre
 ### Protocols
 Currently, the following protocols are available:
 
-MultiTemperatureProtocol
-PropagationProtocol
-BondProfileProtocol
+- MultiTemperatureProtocol. Perform simulations at different temperatures.
+- PropagationProtocol. Perform MD simulation in a given thermodynamic ensemble (NpT, NVT, NVE).
+- BondProfileProtocol. Stretch bond along its bond axis starting with 0.5 to 5 Angstrom.
 
+### Examples
+To perform a DOF scan over a bond in ethanol you need to generate a yaml file containing the following (scan over bond connecting atom index 0 and 2. 
 
-###Examples
-DOF Scan Over a Bond in Ethanol:
+```yaml
+tests:
+  - protocol: "perform_DOF_scan"
+    nnp: "ani2x"
+    implementation: "torchani"
+    DOF_definition: { "bond": [0, 2] }
+    molecule_name: "ethanol"
+```
 
-'''bash
-python perform_stability_tests.py DOF ani2x torchani "{'bond' : [0, 2]}" ethanol
-'''
 
 ### Copyright
 
