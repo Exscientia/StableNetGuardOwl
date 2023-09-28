@@ -1,5 +1,9 @@
-# Perform stability tests for Neural Network Potentials
-
+<p align="center">
+<img src="https://github.com/Exscientia/StableNetGuard/assets/31651017/6e72dbdd-3fae-4463-bde3-bbaf54b459a7" alt="Simple Icons" width=100>
+<h3 align="center">StableNetGuard: Perform stability tests for Neural Network Potentials</h3>
+</p>
+<p align="center">
+  
 [//]: # (Badges)
 [![GitHub Actions Build Status](https://github.com/Exscientia/stability_test/workflows/CI/badge.svg)](https://github.com/Exscientia/stability_test/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/Exscientia/stability_test/branch/main/graph/badge.svg)](https://codecov.io/gh/Exscientia/stability_test/branch/main)
@@ -8,7 +12,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Github release](https://badgen.net/github/release/Exscientia/stability_test)](https://github.com/Exscientia/stability_test/)
 [![GitHub license](https://img.shields.io/github/license/Exscientia/stability_test?color=green)](https://github.com/Exscientia/stability_test/blob/main/LICENSE)
-
+</p>
 
 ---
 
