@@ -5,7 +5,7 @@
 <p align="center">
   
 [//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/Exscientia/StableNetGuardOwl/workflows/CI/badge.svg)](https://github.com/Exscientia/StableNetGuardOwl/actions?query=workflow%3ACI)
+[![GitHub Actions Build Status](https://github.com/Exscientia/StableNetGuardOwl/workflows/CI/badge.svg)](https://github.com/Exscientia/StableNetGuardOwl/actions)
 [![codecov](https://codecov.io/gh/Exscientia/StableNetGuardOwl/branch/main/graph/badge.svg)](https://codecov.io/gh/Exscientia/StableNetGuardOwl/branch/main)
 [![Supported Python versions](https://img.shields.io/badge/python-%5E3.10-blue.svg)](https://docs.python.org/3/whatsnew/index.html)
 [![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
