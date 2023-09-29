@@ -7,7 +7,7 @@ import nglview as nv
 import numpy as np
 import pandas as pd
 
-from stability_test.analysis import PropertyCalculator
+from guardowl.analysis import PropertyCalculator
 import loguru as logger
 
 

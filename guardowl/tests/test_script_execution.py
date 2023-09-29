@@ -5,9 +5,9 @@ import pytest
 @pytest.mark.parametrize(
     "config_file_path",
     [
-        "stability_test/tests/stability_test_hipen.yaml",
-        "stability_test/tests/stability_test_waterbox.yaml",
-        "stability_test/tests/stability_test_alanine_dipeptide.yaml",
+        "guardowl/tests/stability_test_hipen.yaml",
+        "guardowl/tests/stability_test_waterbox.yaml",
+        "guardowl/tests/stability_test_alanine_dipeptide.yaml",
     ],
 )
 @pytest.mark.parametrize("script_file_path", ["scripts/perform_stability_tests.py"])

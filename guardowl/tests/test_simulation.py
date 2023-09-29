@@ -6,9 +6,10 @@ from openmm.app import DCDReporter, PDBFile
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
-from stability_test.setup import create_system_from_mol, generate_molecule
-from stability_test.simulation import SimulationFactory, SystemFactory
-from stability_test.testsystems import hipen_systems
+from guardowl.setup import create_system_from_mol, generate_molecule
+from guardowl.simulation import SimulationFactory, SystemFactory
+from guardowl.testsystems import hipen_systems
+from guardowl.utils import get_available_nnps_and_implementation
 
 
 @pytest.mark.parametrize(
@@ -69,9 +70,8 @@ def test_generate_simulation_instance(
     with open("initial_frame_lamb_1.0.pdb", "w") as f:
         PDBFile.writeFile(topology, pos, f)
 
-@pytest.mark.parametrize(
-    "nnp, implementation", [("ani2x", "nnpops"), ("ani2x", "torchani"), ("ani2x", "")]
-)
+
+@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
 def test_simulating(nnp: str, implementation: str) -> None:
     """Test if we can run a simulation for a number of steps"""
 

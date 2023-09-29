@@ -36,12 +36,12 @@ jobs:
 
       # More info on options: https://github.com/marketplace/actions/provision-with-micromamba
       - uses: mamba-org/provision-with-micromamba@main
+        env:
+          CONDA_OVERRIDE_CUDA: "11.4"
         with:
+          python-version: ${{ matrix.python-version }}
           environment-file: devtools/conda-envs/test_env.yaml
-          environment-name: test
           channels: conda-forge,defaults
-          extra-specs: |
-            python=${{ matrix.python-version }}
 
       - name: Install package
         # conda setup requires this special shell
@@ -54,7 +54,7 @@ jobs:
         # conda setup requires this special shell
         shell: bash -l {0}
         run: |
-          pytest -v --cov=stability_test --cov-report=xml --color=yes stability_test/tests/
+          pytest -v --cov=guardowl --cov-report=xml --color=yes guardowl/tests/
 
       - name: CodeCov
         uses: codecov/codecov-action@v1

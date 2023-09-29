@@ -1,8 +1,8 @@
-prefix = "stability_test/tests/data/stability_testing"
+prefix = "guardowl/tests/data/stability_testing"
 
 
 def test_generate_visualization():
-    from stability_test.vis import MonitoringPlotter
+    from guardowl.vis import MonitoringPlotter
 
     prefix_path = f"{prefix}/ZINC00061095/"
     s = MonitoringPlotter(
@@ -15,7 +15,7 @@ def test_generate_visualization():
 
 
 def test_visualize_DOF_scan():
-    from stability_test.vis import MonitoringPlotter
+    from guardowl.vis import MonitoringPlotter
 
     prefix_path = f"{prefix}/ethanol/"
     s = MonitoringPlotter(
@@ -28,7 +28,7 @@ def test_visualize_DOF_scan():
 
 
 def test_waterbox():
-    from stability_test.vis import MonitoringPlotter
+    from guardowl.vis import MonitoringPlotter
 
     system_name = "waterbox"
     prefix_path = f"{prefix}/{system_name}/"
