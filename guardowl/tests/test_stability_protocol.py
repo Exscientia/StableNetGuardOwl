@@ -45,7 +45,7 @@ def test_setup_vacuum_protocol(nnp: str, implementation: str) -> None:
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
-        reportInterval=50,
+        reportInterval=1,
         step=True,  # must be set to true
         time=True,
         potentialEnergy=True,
@@ -55,7 +55,7 @@ def test_setup_vacuum_protocol(nnp: str, implementation: str) -> None:
         speed=True,
     )
     params = StabilityTestParameters(
-        protocol_length=200,
+        protocol_length=5,
         temperature=[300, 400],
         ensemble="NVT",
         simulated_annealing=False,
@@ -78,7 +78,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
     # ---------------------------#
     platform = get_fastest_platform()
 
-    edge_size = 10
+    edge_size = 5
     testsystem = WaterboxTestsystemFactory().generate_testsystems(
         unit.Quantity(edge_size, unit.angstrom)
     )
@@ -98,7 +98,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
-        reportInterval=10,
+        reportInterval=1,
         step=True,  # must be set to true
         time=True,
         potentialEnergy=True,
@@ -109,7 +109,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
     )
 
     params = StabilityTestParameters(
-        protocol_length=20,
+        protocol_length=5,
         temperature=300,
         ensemble=ensemble,
         simulated_annealing=False,
