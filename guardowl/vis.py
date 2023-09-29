@@ -23,6 +23,9 @@ class MonitoringPlotter:
         self.data = self._set_data(data_file)
         self.property_calculator = PropertyCalculator(self.md_traj_instance)
 
+        
+
+
     def set_nglview(
         self, superpose: bool = False, periodic: bool = False, wrap: bool = False
     ) -> None:

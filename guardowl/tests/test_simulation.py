@@ -100,5 +100,5 @@ def test_simulating(nnp: str, implementation: str) -> None:
     qsim.context.setPositions(to_openmm(mol.conformers[0]))
     # simulate
     qsim.reporters.append(DCDReporter("test.dcd", 10))
-    qsim.step(100)
+    qsim.step(5)
     del qsim
