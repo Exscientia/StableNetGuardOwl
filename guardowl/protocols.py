@@ -446,7 +446,7 @@ class StabilityTest(ABC):
         if ensemble:
             assert ensemble in self.implemented_ensembles
 
-        log.info(
+        log.debug(
             f""" 
 ------------------------------------------------------------------------------------
 Stability test parameters:

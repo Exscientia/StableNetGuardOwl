@@ -74,11 +74,6 @@ def create_state_data_reporter():
     )
 
 
-def perform_protocol(stability_test, params):
-    log.info(f"Stability test parameters: {params}")
-    guardowl.perform_stability_test(params)
-
-
 def perform_hipen_protocol(
     hipen_idx: int,
     nnp: str,
@@ -355,7 +350,7 @@ def main():
         raise RuntimeError("No configuration file provided.")
 
     # Do something with the config
-    log.info(f"Loaded config: {config}")
+    log.debug(f"Loaded config: {config}")
 
     for test in config.get("tests", []):
         protocol = test.get("protocol")
@@ -384,4 +379,9 @@ def main():
 
 
 if __name__ == "__main__":
+    from guardowl.utils import _logo, _set_loglevel
+
+    _set_loglevel("INFO")
+
+    print(_logo())
     main()

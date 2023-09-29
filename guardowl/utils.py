@@ -17,3 +17,21 @@ def get_available_nnps_and_implementation() -> list:
         return gh_available_nnps_and_implementation
     else:
         return available_nnps_and_implementation
+
+
+def _logo():
+    logo = r"""
+           ^...^  
+          / o,o \
+          |):::(|
+        ====w=w===
+          """
+    return logo
+
+
+def _set_loglevel(level="WARNING"):
+    from loguru import logger
+    import sys
+
+    logger.remove()  # Remove all handlers added so far, including the default one.
+    logger.add(sys.stderr, level=level)
