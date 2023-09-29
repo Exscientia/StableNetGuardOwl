@@ -368,11 +368,19 @@ def main():
             log.info("Performing waterbox protocol")
             perform_waterbox_protocol(**{k: test[k] for k in test if k != "protocol"})
 
-        elif protocol == "alanine_dipeptide_protocol":
-            log.info("Performing waterbox protocol")
-            perform_waterbox_protocol(**{k: test[k] for k in test if k != "protocol"})
+        elif protocol == "perform_alanine_dipeptide_protocol":
+            log.info("Performing alanine dipeptide protocol")
+            perform_alanine_dipeptide_protocol(
+                **{k: test[k] for k in test if k != "protocol"}
+            )
+
+        elif protocol == "DOF_scan":
+            log.info("Performing DOF protocol")
+            perform_DOF_scan(**{k: test[k] for k in test if k != "protocol"})
+
         else:
             log.warning(f"Unknown protocol: {protocol}")
+            raise NotImplementedError(f"Unknown protocol: {protocol}")
 
 
 if __name__ == "__main__":
