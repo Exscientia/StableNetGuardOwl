@@ -168,3 +168,8 @@ class PropertyCalculator:
         """
         angles = md.compute_angles(self.md_traj, angle_list) * (180 / np.pi)
         return angles
+
+    def monitor_phi_psi(self) -> Tuple[np.ndarray, np.ndarray]:
+        phi = md.compute_phi(self.md_traj)[1]
+        psi = md.compute_psi(self.md_traj)[1]
+        return (phi, psi)

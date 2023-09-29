@@ -8,7 +8,10 @@ import numpy as np
 import pandas as pd
 
 from guardowl.analysis import PropertyCalculator
-import loguru as logger
+from loguru import logger as log
+import matplotlib as mpl
+
+mpl.rcParams["figure.constrained_layout.use"] = True
 
 
 class MonitoringPlotter:
@@ -23,8 +26,14 @@ class MonitoringPlotter:
         self.data = self._set_data(data_file)
         self.property_calculator = PropertyCalculator(self.md_traj_instance)
 
-        
-
+        if len(self.md_traj_instance.top.select("water")) > 0:
+            self.water_present = True
+        else:
+            self.water_present = False
+        if len(self.md_traj_instance.top.select("resname ALA")) > 0:
+            self.dipeptide = True
+        else:
+            self.dipeptide = False
 
     def set_nglview(
         self, superpose: bool = False, periodic: bool = False, wrap: bool = False
@@ -59,9 +68,7 @@ class MonitoringPlotter:
             data = pd.read_csv(f)
         return data
 
-    def _generate_report_data(
-        self, rdf: bool, water_bond_length: bool, water_angle: bool
-    ) -> Tuple[list, list]:
+    def _generate_report_data(self) -> Tuple[list, list]:
         # read for each observable the label and data
         labels = []
         observable_data = []
@@ -74,33 +81,29 @@ class MonitoringPlotter:
             else:
                 observable_data.append(self.data[obs])
 
-        if rdf is True:
+        if self.water_present is True:
             labels.append("water-rdf")
             observable_data.append(self.property_calculator.calculate_water_rdf())
-        if water_bond_length is True:
+        if self.water_present is True:
             labels.append("water-bond-length")
             observable_data.append(self.property_calculator.monitor_water_bond_length())
-        if water_angle is True:
+        if self.water_present is True:
             labels.append("water-angle")
             observable_data.append(self.property_calculator.monitor_water_angle())
-
+        if self.dipeptide is True:
+            labels.append("phi/psi")
+            observable_data.append(self.property_calculator.monitor_phi_psi())
         return labels, observable_data
 
     def generate_summary(
         self,
         bonded_scan: bool = False,
-        rdf: bool = False,
-        water_bond_length: bool = False,
-        water_angle: bool = False,
     ) -> widgets.HBox:
         """Generates the interactive plot
 
         Returns:
             _type_: _description_
         """
-
-        if bonded_scan is True:
-            assert (rdf or water_angle or water_bond_length) is False
 
         # generate x axis labels
         if '#"Step"' in self.data.keys():
@@ -109,9 +112,7 @@ class MonitoringPlotter:
             # frames = self.data["bond distance [A]"]
             frames = [idx for idx, _ in enumerate(self.data["bond distance [A]"])]
 
-        labels, observable_data = self._generate_report_data(
-            rdf, water_bond_length, water_angle
-        )
+        labels, observable_data = self._generate_report_data()
         # generate the subplots
         with self.canvas:
             if bonded_scan:
@@ -149,6 +150,15 @@ class MonitoringPlotter:
             elif l == "water-angle":
                 axs[row][column].hist(d.flatten())
                 axs[row][column].set_title("water H-O-H angle")
+            elif l == "phi/psi":
+                axs[row][column].scatter(
+                    d[0], d[1], marker="x", c=self.md_traj_instance.time
+                )
+                axs[row][column].set_title("dihedral map")
+                axs[row][column].set_xlabel(r"$\Phi$ Angle [radians]")
+                axs[row][column].set_ylabel(r"$\Psi$ Angle [radians]")
+                axs[row][column].set_xlim(-np.pi, np.pi)
+                axs[row][column].set_ylim(-np.pi, np.pi)
             else:
                 if bonded_scan:
                     lines.append(axs.axvline(x=0, color="r", lw=2))
@@ -169,6 +179,7 @@ class MonitoringPlotter:
 
         fig.tight_layout()
         plt.gca().set_title("title")
+        plt.show()
 
         # callback functions
         def _update(change: str):  # type: ignore
