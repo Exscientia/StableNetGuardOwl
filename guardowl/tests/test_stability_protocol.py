@@ -78,7 +78,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
     # ---------------------------#
     platform = get_fastest_platform()
 
-    edge_size = 10
+    edge_size = 5
     testsystem = WaterboxTestsystemFactory().generate_testsystems(
         unit.Quantity(edge_size, unit.angstrom)
     )

@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import List, Union
 
 from loguru import logger as log
@@ -107,6 +108,7 @@ class SmallMoleculeTestsystemFactory:
             "methane": "C",
         }
 
+    @lru_cache(maxsize=None)
     def generate_testsystems(self, name: str) -> SmallMoleculeVacuum:
         """Generate a SmallMoleculeVacuum test system.
 
