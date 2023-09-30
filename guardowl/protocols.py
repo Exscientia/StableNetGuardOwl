@@ -778,7 +778,7 @@ def run_waterbox_protocol(
         state_data_reporter=reporter,
     )
 
-    # stability_test.perform_stability_test(params)
+    stability_test.perform_stability_test(params)
     print(f"\nSaving {params.log_file_name} files to {params.output_folder}")
 
 
