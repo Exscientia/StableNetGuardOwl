@@ -105,10 +105,14 @@ if __name__ == "__main__":
     import typer
     import warnings
     import logging
+    from guardowl.utils import _logo, _set_loglevel
+
+    print(_logo())
 
     logging.getLogger().setLevel(logging.CRITICAL)
-
     output_folder = "test_stability_protocol"
+
+    _set_loglevel("INFO")
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
