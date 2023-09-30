@@ -31,7 +31,7 @@ def test_script_execution(config_file_path: str, script_file_path: str) -> None:
     assert ret.returncode == 0
 
     # Update the arguments to match your argparse in the script
-    args = f"python {script_file_path} --config {config_file_path}".split()
+    args = f"python {script_file_path} {config_file_path}".split()
     ret = subprocess.run(args, capture_output=True)
     print("Script Output:")
     print(ret.stdout.decode("utf-8"))
