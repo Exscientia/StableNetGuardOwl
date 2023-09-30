@@ -677,6 +677,12 @@ def run_hipen_protocol(
     :param implementation: The implementation to use.
     :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
     """
+    from guardowl.protocols import (
+        MultiTemperatureProtocol,
+        PropagationProtocol,
+        StabilityTestParameters,
+    )
+    from guardowl.testsystems import HipenTestsystemFactory, hipen_systems
 
     name = list(hipen_systems.keys())[hipen_idx]
 
@@ -688,12 +694,6 @@ def run_hipen_protocol(
 ------------------------------------------------------------------------------------
           """
     )
-    from guardowl.protocols import (
-        MultiTemperatureProtocol,
-        PropagationProtocol,
-        StabilityTestParameters,
-    )
-    from guardowl.testsystems import HipenTestsystemFactory, hipen_systems
 
     testsystem = HipenTestsystemFactory().generate_testsystems(name)
     system = initialize_ml_system(nnp, testsystem.topology, implementation)
