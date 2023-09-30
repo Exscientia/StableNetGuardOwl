@@ -17,6 +17,7 @@ dependencies:
   - mdtraj
   - pymbar>=4.0
   - torchani
+  - typer
   - seaborn
   - pytorch #=1.11.0
   - loguru
@@ -34,6 +35,6 @@ dependencies:
 
     # Pip-only installs
   - pip:
-     - nvidia-ml-py3
-     - nptyping
-     - git+https://github.com/openmm/openmm-ml.git
+      - nvidia-ml-py3
+      - nptyping
+      - git+https://github.com/openmm/openmm-ml.git
