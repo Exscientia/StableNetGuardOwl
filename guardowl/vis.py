@@ -26,10 +26,20 @@ class MonitoringPlotter:
         self.data = self._set_data(data_file)
         self.property_calculator = PropertyCalculator(self.md_traj_instance)
 
+        nr_of_waters = len(self.md_traj_instance.top.select("water"))
+        nr_of_atoms = self.md_traj_instance.top.n_atoms
+
         if len(self.md_traj_instance.top.select("water")) > 0:
             self.water_present = True
         else:
             self.water_present = False
+
+        if nr_of_waters == nr_of_atoms:
+            log.debug("water only system")
+            self.water_only_system = True
+        else:
+            self.water_only_system = False
+
         if len(self.md_traj_instance.top.select("resname ALA")) > 0:
             self.dipeptide = True
         else:
@@ -68,7 +78,7 @@ class MonitoringPlotter:
             data = pd.read_csv(f)
         return data
 
-    def _generate_report_data(self) -> Tuple[list, list]:
+    def _generate_report_data(self, bonded_scan: bool) -> Tuple[list, list]:
         # read for each observable the label and data
         labels = []
         observable_data = []
@@ -93,6 +103,12 @@ class MonitoringPlotter:
         if self.dipeptide is True:
             labels.append("phi/psi")
             observable_data.append(self.property_calculator.monitor_phi_psi())
+        if bonded_scan is False and self.water_only_system is False:
+            labels.append("bond deviation")
+            observable_data.append(
+                self.property_calculator.monitor_bond_length_except_water()
+            )
+
         return labels, observable_data
 
     def generate_summary(
@@ -112,7 +128,7 @@ class MonitoringPlotter:
             # frames = self.data["bond distance [A]"]
             frames = [idx for idx, _ in enumerate(self.data["bond distance [A]"])]
 
-        labels, observable_data = self._generate_report_data()
+        labels, observable_data = self._generate_report_data(bonded_scan=bonded_scan)
         # generate the subplots
         with self.canvas:
             if bonded_scan:
@@ -145,11 +161,17 @@ class MonitoringPlotter:
                 axs[row][column].set_ylabel("$g(r)$")
                 axs[row][column].set_title("water-rdf")
             elif l == "water-bond-length":
-                axs[row][column].hist(d.flatten())
+                axs[row][column].hist(d.flatten() * 10)
                 axs[row][column].set_title("water O-H bond length")
+                axs[row][column].set_xlabel("d [A]")
             elif l == "water-angle":
                 axs[row][column].hist(d.flatten())
                 axs[row][column].set_title("water H-O-H angle")
+                axs[row][column].set_xlabel("angle [degrees]")
+            elif l == "bond deviation":
+                axs[row][column].hist(d.flatten() * 10)
+                axs[row][column].set_title("bond deviation to initial length")
+                axs[row][column].set_xlabel("d [A]")
             elif l == "phi/psi":
                 axs[row][column].scatter(
                     d[0], d[1], marker="x", c=self.md_traj_instance.time

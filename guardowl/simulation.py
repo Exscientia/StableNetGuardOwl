@@ -13,10 +13,12 @@ from .constants import collision_rate, stepsize
 class SimulationFactory:
     @staticmethod
     def create_simulation(
+        ensemble: str,
         system: System,
         topology: Topology,
         platform: Platform,
         temperature: unit.Quantity,
+        device_index: int = 0,
     ) -> Simulation:
         """
         Create and return an OpenMM simulation instance using LangevinIntegrator.
@@ -38,50 +40,25 @@ class SimulationFactory:
             The OpenMM simulation instance.
 
         """
-        integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
+        from openmm import MonteCarloBarostat
+
+        if ensemble.lower() == "nve":
+            integrator = BAOABIntegrator(temperature, collision_rate, stepsize)
+        elif ensemble.lower() == "nvt" or ensemble.lower() == "npt":
+            integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
+
+        if ensemble == "npt":  # for NpT add barostat
+            barostate = MonteCarloBarostat(
+                unit.Quantity(1, unit.atmosphere), temperature
+            )
+            barostate_force_id = system.addForce(barostate)
 
         return Simulation(
             topology,
             system,
             integrator,
             platform=platform,
-        )
-
-    @staticmethod
-    def create_nvt_simulation(
-        system: System,
-        topology: Topology,
-        platform: Platform,
-        temperature: unit.Quantity,
-    ) -> Simulation:
-        """
-        Create and return an OpenMM NVT simulation instance using BAOABIntegrator.
-
-        Parameters
-        ----------
-        system : System
-            The OpenMM system object.
-        topology : Topology
-            The OpenMM topology object.
-        platform : Platform
-            The OpenMM Platform object for simulation.
-        temperature : unit.Quantity
-            The temperature at which to run the simulation.
-
-        Returns
-        -------
-        Simulation
-            The OpenMM simulation instance.
-
-        """
-
-        integrator = BAOABIntegrator(temperature, collision_rate, stepsize)
-
-        return Simulation(
-            topology,
-            system,
-            integrator,
-            platform=platform,
+            platformProperties={"Precision": "mixed", "DeviceIndex": str(device_index)},
         )
 
 
