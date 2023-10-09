@@ -3,7 +3,7 @@ import os
 import sys
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import List, TextIO, Tuple, Union
+from typing import List, TextIO, Tuple, Union, Optional
 
 import mdtraj as md
 import numpy as np
@@ -130,10 +130,11 @@ class StabilityTestParameters(BaseParameters):
 
     protocol_length: int
     temperature: Union[int, List[int]]
-    ensemble: str
+    env: str
     simulated_annealing: bool
     state_data_reporter: StateDataReporter
     device_index: int = 0
+    ensemble: Optional[str] = None
 
 
 @dataclass
@@ -415,8 +416,10 @@ class StabilityTest(ABC):
         None
         """
         assert parameters.simulated_annealing in [True, False]
-        ensemble = parameters.ensemble.lower()
+        assert parameters.env in ["vacuum", "solution"]
+
         if ensemble:
+            ensemble = parameters.ensemble.lower()
             assert ensemble in self.implemented_ensembles
 
         log.debug(
@@ -426,6 +429,7 @@ Stability test parameters:
 params.protocol_length: {parameters.protocol_length}
 params.temperature: {parameters.temperature}
 params.ensemble: {parameters.ensemble}
+params.env: {parameters.env}
 params.simulated_annealing: {parameters.simulated_annealing}
 params.platform: {parameters.platform.getName()}
 params.device_index: {parameters.device_index}
@@ -518,7 +522,6 @@ class BondProfileProtocol(DOFTest):
         None
         """
         qsim = SimulationFactory.create_simulation(
-            "nvt",
             parameters.system,
             parameters.testsystem.topology,
             platform=parameters.platform,
@@ -649,6 +652,7 @@ def run_hipen_protocol(
         temperature=temperature,
         ensemble="nvt",
         simulated_annealing=False,
+        env="vacuum",
         system=system,
         platform=platform,
         testsystem=testsystem,
@@ -719,6 +723,7 @@ def run_waterbox_protocol(
         log_file_name=log_file_name,
         state_data_reporter=reporter,
         device_index=device_index,
+        env="solution",
     )
 
     stability_test.perform_stability_test(params)
@@ -734,7 +739,7 @@ def run_alanine_dipeptide_protocol(
     platform: openmm.Platform,
     output_folder: str,
     device_index: int = 0,
-    ensemble: str = "",
+    ensemble: Optional[str] = None,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
 ):
@@ -752,7 +757,7 @@ def run_alanine_dipeptide_protocol(
     print(
         f""" 
 ------------------------------------------------------------------------------------
-|  Performing alanine dipeptide stability test with PBC.
+|  Performing alanine dipeptide stability test in {env}.
 |  The simulation will use the {nnp} potential with the {implementation} implementation.
 ------------------------------------------------------------------------------------
           """
@@ -761,7 +766,11 @@ def run_alanine_dipeptide_protocol(
     testsystem = AlaninDipeptideTestsystemFactory().generate_testsystems(env=env)
     system = initialize_ml_system(nnp, testsystem.topology, implementation)
 
-    log_file_name = f"alanine_dipeptide_{env}_{nnp}_{implementation}_{ensemble}"
+    if env == "vacuum":
+        log_file_name = f"alanine_dipeptide_{env}_{nnp}_{implementation}"
+    else:
+        log_file_name = f"alanine_dipeptide_{env}_{nnp}_{implementation}_{ensemble}"
+
     log.info(f"Writing to {log_file_name}")
 
     stability_test = PropagationProtocol()
@@ -769,7 +778,7 @@ def run_alanine_dipeptide_protocol(
     params = StabilityTestParameters(
         protocol_length=nr_of_simulation_steps,
         temperature=temperature,
-        ensemble=ensemble.lower(),
+        ensemble=ensemble,
         simulated_annealing=annealing,
         system=system,
         platform=platform,
@@ -778,6 +787,7 @@ def run_alanine_dipeptide_protocol(
         log_file_name=log_file_name,
         state_data_reporter=reporter,
         device_index=device_index,
+        env=env,
     )
 
     stability_test.perform_stability_test(params)
