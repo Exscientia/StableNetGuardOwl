@@ -417,7 +417,8 @@ class StabilityTest(ABC):
         """
         assert parameters.simulated_annealing in [True, False]
         assert parameters.env in ["vacuum", "solution"]
-
+        ensemble = parameters.ensemble
+        
         if ensemble:
             ensemble = parameters.ensemble.lower()
             assert ensemble in self.implemented_ensembles
