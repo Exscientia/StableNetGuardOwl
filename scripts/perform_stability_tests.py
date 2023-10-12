@@ -101,9 +101,7 @@ def main(config: str):
             raise NotImplementedError(f"Unknown protocol: {protocol}")
 
 
-if __name__ == "__main__":
-    import typer
-    import warnings
+def _setup_logging():
     import logging
     from guardowl.utils import _logo, _set_loglevel
 
@@ -114,6 +112,12 @@ if __name__ == "__main__":
 
     _set_loglevel("INFO")
 
+
+if __name__ == "__main__":
+    import typer
+    import warnings
+
+    _setup_logging()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         typer.run(main)

@@ -27,7 +27,12 @@ def test_generate_simulation_instance(
     ########################################################
     # create MM simulation
     rsim = SimulationFactory.create_simulation(
-        system, topology, platform=platform, temperature=unit.Quantity(300, unit.kelvin)
+        system,
+        topology,
+        platform=platform,
+        env="vacuum",
+        ensemble="NVT",
+        temperature=unit.Quantity(300, unit.kelvin),
     )
     rsim.context.setPositions(to_openmm(mol.conformers[0]))
     e_sim_mm_endstate = (
@@ -47,6 +52,8 @@ def test_generate_simulation_instance(
         ),
         topology,
         platform=platform,
+        ensemble="NVT",
+        env="vacuum",
         temperature=unit.Quantity(300, unit.kelvin),
     )
     rsim.context.setPositions(to_openmm(mol.conformers[0]))
@@ -85,7 +92,9 @@ def test_simulating(nnp: str, implementation: str, generate_hipen_system) -> Non
             implementation=implementation,
         ),
         topology,
+        env="vacuum",
         platform=platform,
+        ensemble="NVT",
         temperature=unit.Quantity(300, unit.kelvin),
     )
     # set position

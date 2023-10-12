@@ -1,5 +1,5 @@
 import logging
-from typing import List, Type
+from typing import List, Type, Optional
 
 from loguru import logger as log
 from openmm import LangevinIntegrator, Platform, System, unit
@@ -17,6 +17,9 @@ class SimulationFactory:
         topology: Topology,
         platform: Platform,
         temperature: unit.Quantity,
+        env: str,
+        device_index: int = 0,
+        ensemble: str = "NVT",
     ) -> Simulation:
         """
         Create and return an OpenMM simulation instance using LangevinIntegrator.
@@ -31,6 +34,8 @@ class SimulationFactory:
             The OpenMM Platform object for simulation.
         temperature : unit.Quantity
             The temperature at which to run the simulation.
+        env: str
+            The environment in which the simulation is run, either "vacuum" or "solution".
 
         Returns
         -------
@@ -38,51 +43,37 @@ class SimulationFactory:
             The OpenMM simulation instance.
 
         """
-        integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
+        from openmm import MonteCarloBarostat
 
-        return Simulation(
-            topology,
-            system,
-            integrator,
-            platform=platform,
-        )
+        if ensemble.lower() == "nve":
+            integrator = BAOABIntegrator(temperature, collision_rate, stepsize)
+        else:
+            integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
 
-    @staticmethod
-    def create_nvt_simulation(
-        system: System,
-        topology: Topology,
-        platform: Platform,
-        temperature: unit.Quantity,
-    ) -> Simulation:
-        """
-        Create and return an OpenMM NVT simulation instance using BAOABIntegrator.
+        if ensemble == "npt" and env != "vacuum":  # for NpT add barostat
+            barostate = MonteCarloBarostat(
+                unit.Quantity(1, unit.atmosphere), temperature
+            )
+            barostate_force_id = system.addForce(barostate)
 
-        Parameters
-        ----------
-        system : System
-            The OpenMM system object.
-        topology : Topology
-            The OpenMM topology object.
-        platform : Platform
-            The OpenMM Platform object for simulation.
-        temperature : unit.Quantity
-            The temperature at which to run the simulation.
-
-        Returns
-        -------
-        Simulation
-            The OpenMM simulation instance.
-
-        """
-
-        integrator = BAOABIntegrator(temperature, collision_rate, stepsize)
-
-        return Simulation(
-            topology,
-            system,
-            integrator,
-            platform=platform,
-        )
+        if platform.getName() == "CUDA":
+            return Simulation(
+                topology,
+                system,
+                integrator,
+                platform=platform,
+                platformProperties={
+                    "Precision": "mixed",
+                    "DeviceIndex": str(device_index),
+                },
+            )
+        else:
+            return Simulation(
+                topology,
+                system,
+                integrator,
+                platform=platform,
+            )
 
 
 class SystemFactory:
