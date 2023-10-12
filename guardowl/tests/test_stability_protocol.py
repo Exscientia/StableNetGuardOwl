@@ -65,6 +65,7 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -
         output_folder=output_folder,
         log_file_name=log_file_name,
         state_data_reporter=reporter,
+        env="vacuum",
     )
 
     stability_test.perform_stability_test(params)
@@ -151,6 +152,7 @@ def test_setup_waterbox_protocol_individual_parts(
         output_folder=output_folder,
         log_file_name=log_file_name,
         state_data_reporter=reporter,
+        env="solution",
     )
 
     stability_test.perform_stability_test(
@@ -212,7 +214,6 @@ def test_run_alanine_dipeptide_protocol(
     output_folder = "test_stability_protocol"
 
     run_alanine_dipeptide_protocol(
-        "vacuum",
         nnp,
         implementation,
         300,
@@ -221,6 +222,7 @@ def test_run_alanine_dipeptide_protocol(
         output_folder,
         ensemble=ensemble,
         nr_of_simulation_steps=2,
+        env="vacuum",
     )
 
 

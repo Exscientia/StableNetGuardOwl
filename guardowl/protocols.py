@@ -418,7 +418,7 @@ class StabilityTest(ABC):
         assert parameters.simulated_annealing in [True, False]
         assert parameters.env in ["vacuum", "solution"]
         ensemble = parameters.ensemble
-        
+
         if ensemble:
             ensemble = parameters.ensemble.lower()
             assert ensemble in self.implemented_ensembles
@@ -443,12 +443,13 @@ params.log_file_name: {parameters.log_file_name}
         system = parameters.system
 
         qsim = SimulationFactory.create_simulation(
-            ensemble,
             system,
             parameters.testsystem.topology,
             platform=parameters.platform,
             temperature=temperature,
+            env=parameters.env,
             device_index=parameters.device_index,
+            ensemble=ensemble,
         )
 
         os.makedirs(parameters.output_folder, exist_ok=True)
@@ -527,6 +528,7 @@ class BondProfileProtocol(DOFTest):
             parameters.testsystem.topology,
             platform=parameters.platform,
             temperature=unit.Quantity(300, unit.kelvin),
+            env="vacuum",
         )
 
         PDBFile.writeFile(
@@ -732,7 +734,6 @@ def run_waterbox_protocol(
 
 
 def run_alanine_dipeptide_protocol(
-    env: str,
     nnp: str,
     implementation: str,
     temperature: int,
@@ -743,6 +744,7 @@ def run_alanine_dipeptide_protocol(
     ensemble: Optional[str] = None,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
+    env: str = "vacuum"
 ):
     """
     Perform a stability test for an alanine dipeptide in water

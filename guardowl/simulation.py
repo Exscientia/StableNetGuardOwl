@@ -13,12 +13,13 @@ from .constants import collision_rate, stepsize
 class SimulationFactory:
     @staticmethod
     def create_simulation(
-        ensemble: Optional[str],
         system: System,
         topology: Topology,
         platform: Platform,
         temperature: unit.Quantity,
+        env: str,
         device_index: int = 0,
+        ensemble: str = "NVT",
     ) -> Simulation:
         """
         Create and return an OpenMM simulation instance using LangevinIntegrator.
@@ -33,6 +34,8 @@ class SimulationFactory:
             The OpenMM Platform object for simulation.
         temperature : unit.Quantity
             The temperature at which to run the simulation.
+        env: str
+            The environment in which the simulation is run, either "vacuum" or "solution".
 
         Returns
         -------
@@ -42,15 +45,12 @@ class SimulationFactory:
         """
         from openmm import MonteCarloBarostat
 
-        if ensemble:
-            if ensemble.lower() == "nve":
-                integrator = BAOABIntegrator(temperature, collision_rate, stepsize)
-            elif ensemble.lower() == "nvt" or ensemble.lower() == "npt":
-                integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
+        if ensemble.lower() == "nve":
+            integrator = BAOABIntegrator(temperature, collision_rate, stepsize)
         else:
             integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
 
-        if ensemble == "npt":  # for NpT add barostat
+        if ensemble == "npt" and env != "vacuum":  # for NpT add barostat
             barostate = MonteCarloBarostat(
                 unit.Quantity(1, unit.atmosphere), temperature
             )
