@@ -108,7 +108,6 @@ def _setup_logging():
     print(_logo())
 
     logging.getLogger().setLevel(logging.CRITICAL)
-    output_folder = "test_stability_protocol"
 
     _set_loglevel("INFO")
 
