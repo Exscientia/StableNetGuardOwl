@@ -611,7 +611,7 @@ class MultiTemperatureProtocol(PropagationProtocol):
 
 
 def run_hipen_protocol(
-    hipen_idx: int,
+    hipen_idx: Union[int, List[int]],
     nnp: str,
     implementation: str,
     temperature: Union[int, List[int]],
@@ -631,42 +631,49 @@ def run_hipen_protocol(
     """
     from guardowl.testsystems import HipenTestsystemFactory, hipen_systems
 
-    name = list(hipen_systems.keys())[hipen_idx]
+    def _run_protocol(idx: int):
+        name = list(hipen_systems.keys())[hipen_idx]
 
-    print(
-        f""" 
+        print(
+            f""" 
 ------------------------------------------------------------------------------------
 |  Performing vacuum stability test for {name} from the hipen dataset in vacuum.
 |  The simulation will use the {nnp} potential with the {implementation} implementation.
 ------------------------------------------------------------------------------------
-          """
-    )
+            """
+        )
 
-    testsystem = HipenTestsystemFactory().generate_testsystems(name)
-    system = initialize_ml_system(nnp, testsystem.topology, implementation)
-    log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
-    if isinstance(temperature, int):
-        stability_test = PropagationProtocol()
+        testsystem = HipenTestsystemFactory().generate_testsystems(name)
+        system = initialize_ml_system(nnp, testsystem.topology, implementation)
+        log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
+        if isinstance(temperature, int):
+            stability_test = PropagationProtocol()
+        else:
+            stability_test = MultiTemperatureProtocol()
+
+        params = StabilityTestParameters(
+            protocol_length=nr_of_simulation_steps,
+            temperature=temperature,
+            ensemble="nvt",
+            simulated_annealing=False,
+            env="vacuum",
+            system=system,
+            platform=platform,
+            testsystem=testsystem,
+            output_folder=output_folder,
+            log_file_name=log_file_name,
+            state_data_reporter=reporter,
+            device_index=device_index,
+        )
+
+        stability_test.perform_stability_test(params)
+        print(f"\nSaving {params.log_file_name} files to {params.output_folder}")
+
+    if isinstance(hipen_idx, int):
+        _run_protocol(hipen_idx)
     else:
-        stability_test = MultiTemperatureProtocol()
-
-    params = StabilityTestParameters(
-        protocol_length=nr_of_simulation_steps,
-        temperature=temperature,
-        ensemble="nvt",
-        simulated_annealing=False,
-        env="vacuum",
-        system=system,
-        platform=platform,
-        testsystem=testsystem,
-        output_folder=output_folder,
-        log_file_name=log_file_name,
-        state_data_reporter=reporter,
-        device_index=device_index,
-    )
-
-    stability_test.perform_stability_test(params)
-    print(f"\nSaving {params.log_file_name} files to {params.output_folder}")
+        for hipen_idx_ in hipen_idx:
+            _run_protocol(hipen_idx_)
 
 
 def run_waterbox_protocol(
@@ -744,7 +751,7 @@ def run_alanine_dipeptide_protocol(
     ensemble: Optional[str] = None,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
-    env: str = "vacuum"
+    env: str = "vacuum",
 ):
     """
     Perform a stability test for an alanine dipeptide in water
