@@ -609,7 +609,7 @@ class MultiTemperatureProtocol(PropagationProtocol):
             )
         for temperature in parms.temperature:
             parms.log_file_name = f"{log_file_name_}_{temperature}"
-
+            log.info('Running simulation at temperature: {temperature} K')
             self._run_simulation(
                 parms,
                 temperature * unit.kelvin,
