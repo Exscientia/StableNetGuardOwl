@@ -28,8 +28,10 @@ The tests currently focus on small molecules in vacuum and bulk properties of wa
 | --- | ----------- | ----------- | ----------- |
 | Vacuum | HiPen set | - | Bond/angle deviation, potential energy convergence |
 | Vacuum | Example molecules for relevant functional groups | - | Bond/angle deviation, potential energy convergence |
+| Vacuum | Dipeptide alanine |  | relaxed 2D torsion scan around phi/psi dihedral |
+| Vacuum/Water | Dipeptide alanine | NpT, NVE, NVT | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE], phi/psi distribution |
 | Water | Waterbox | NpT, NVE, NVT | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE] |
-| Water/vacuum | Dipeptide alanine | NpT, NVE, NVT | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE], phi/psi distribution |
+| Organic solvent | n-octanol, cyclohexane | NpT | potential energy convergence, density |
 
 
 
