@@ -24,14 +24,14 @@ This repository provides the essential code for performing various stability tes
 
 The tests currently focus on small molecules in vacuum and bulk properties of water.
 
-| Environment | Test system | Thermodynamic ensemble | Test property |
-| --- | ----------- | ----------- | ----------- |
-| Vacuum | HiPen set | - | Bond/angle deviation, potential energy convergence |
-| Vacuum | Example molecules for relevant functional groups | - | Bond/angle deviation, potential energy convergence |
-| Vacuum | Dipeptide alanine |  | relaxed 2D torsion scan around phi/psi dihedral |
-| Vacuum/Water | Dipeptide alanine | NpT, NVE, NVT | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE], phi/psi distribution |
-| Water | Waterbox | NpT, NVE, NVT | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE] |
-| Organic solvent | n-octanol, cyclohexane | NpT | potential energy convergence, density |
+| Environment     | Test system                                              | Thermodynamic ensemble | Test property                                                                                                               |
+| --------------- | -------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Vacuum          | HiPen set                                                | -                      | Bond/angle deviation, potential energy convergence                                                                          |
+| Vacuum          | Example molecules for relevant functional groups         | -                      | Bond/angle deviation, potential energy convergence                                                                          |
+| Vacuum          | Dipeptide alanine                                        |                        | relaxed 2D torsion scan around phi/psi dihedral                                                                             |
+| Vacuum/Water    | Dipeptide alanine                                        | NpT, NVE, NVT          | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE], phi/psi distribution |
+| Water           | Waterbox                                                 | NpT, NVE, NVT          | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE]                       |
+| Organic solvent | butan, cyclohexane, ethane, isobutane, methanol, propane | NpT                    | potential energy convergence, density, heat of vaporization, heat capacity, compressibility                                 |
 
 
 
