@@ -5,26 +5,9 @@ from pathlib import Path
 import argparse
 from typing import List, Union
 from loguru import logger as log
-from openmm import unit
-from openmm.app import StateDataReporter
-from openmmml import MLPotential
-from openmmtools.utils import get_fastest_platform
-
-from guardowl.protocols import (
-    BondProfileProtocol,
-    DOFTestParameters,
-    MultiTemperatureProtocol,
-    PropagationProtocol,
-    StabilityTestParameters,
-)
-from guardowl.simulation import SystemFactory
-from guardowl.testsystems import (
-    AlaninDipeptideTestsystemFactory,
-    HipenTestsystemFactory,
-    SmallMoleculeTestsystemFactory,
-    WaterboxTestsystemFactory,
-    hipen_systems,
-)
+import torch
+torch._C._jit_set_nvfuser_enabled(False)
+# ------------------ IMPORTS ------------------#
 
 from guardowl.utils import available_nnps_and_implementation
 
@@ -39,7 +22,6 @@ def setup_logging_and_output():
     output_folder = "test_stability_protocol"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
     return output_folder
-
 
 def validate_input(nnp: str, implementation: str):
     if (nnp, implementation) not in available_nnps_and_implementation:

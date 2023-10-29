@@ -118,6 +118,7 @@ class SystemFactory:
             return potential.createSystem(
                 topology,
                 implementation=implementation,
+                removeConstraints=remove_constraints,
                 constraints=None,
                 rigidWater=False,
             )
