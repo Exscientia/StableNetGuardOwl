@@ -21,7 +21,7 @@ def get_available_nnps_and_implementation() -> list:
 
 def _logo():
     logo = r"""
-           ^...^  
+           ^...^                    
           / o,o \
           |):::(|
         ====w=w===

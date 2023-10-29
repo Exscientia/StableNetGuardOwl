@@ -1,15 +1,16 @@
 # ------------------ IMPORTS ------------------#
 from loguru import logger as log
-
+import torch
+torch._C._jit_set_nvfuser_enabled(False)
 # ------------------ IMPORTS ------------------#
 
+from guardowl.utils import available_nnps_and_implementation
 
-def get_fastest_platform():
-    from openmmtools.utils import get_fastest_platform
+warnings.filterwarnings("ignore")
+output_folder = "test_stability_protocol"
 
-    platform = get_fastest_platform()
-    log.info(f"Using platform {platform.getName()}")
-    return platform
+platform = get_fastest_platform()
+log.info(f"Using platform {platform.getName()}")
 
 
 def setup_logging_and_output():
@@ -18,7 +19,6 @@ def setup_logging_and_output():
     output_folder = "test_stability_protocol"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
     return output_folder
-
 
 def validate_input(nnp: str, implementation: str):
     from guardowl.utils import available_nnps_and_implementation
@@ -95,10 +95,6 @@ def main(config: str):
         elif protocol == "DOF_scan":
             log.info("Performing DOF protocol")
             run_DOF_scan(**{k: test[k] for k in test if k != "protocol"})
-
-        else:
-            log.warning(f"Unknown protocol: {protocol}")
-            raise NotImplementedError(f"Unknown protocol: {protocol}")
 
 
 def _setup_logging():

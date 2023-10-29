@@ -1,4 +1,4 @@
-REMARK   1 CREATED WITH OPENMM 8.0, 2023-09-25
+REMARK   1 CREATED WITH OPENMM 8.0, 2023-10-21
 HETATM    1  O1x UNK A   1       1.410   0.566  -0.266  1.00  0.00           O  
 HETATM    2  C1x UNK A   1       0.458  -0.318   0.200  1.00  0.00           C  
 HETATM    3  C2x UNK A   1      -0.956   0.211   0.057  1.00  0.00           C  
