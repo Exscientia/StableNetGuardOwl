@@ -11,7 +11,7 @@ def test_generate_visualization():
         f"{prefix_path}/vacuum_ZINC00061095_ani2x_nnpops_300.csv",
     )
     s.set_nglview()
-    s.generate_summary(rdf=False)
+    s.generate_summary()
 
 
 def test_visualize_DOF_scan():
@@ -43,4 +43,4 @@ def test_waterbox():
 
     s.set_nglview(wrap=True, periodic=True)
     s.nglview.add_representation("licorice", selection="water")
-    s.generate_summary(water_bond_length=True, rdf=True)
+    s.generate_summary()

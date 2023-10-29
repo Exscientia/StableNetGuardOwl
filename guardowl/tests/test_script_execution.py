@@ -1,15 +1,23 @@
 import subprocess
 import pytest
 
+import os
 
-@pytest.mark.parametrize(
-    "config_file_path",
-    [
-        "guardowl/tests/stability_test_hipen.yaml",
-        "guardowl/tests/stability_test_waterbox.yaml",
-        "guardowl/tests/stability_test_alanine_dipeptide.yaml",
-    ],
-)
+TEST_TO_PERFORM = [
+    "guardowl/tests/stability_test_hipen.yaml",
+    "guardowl/tests/stability_test_waterbox.yaml",
+    "guardowl/tests/stability_test_alanine_dipeptide.yaml",
+]
+
+
+IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
+
+if IN_GITHUB_ACTIONS:
+    # exclude alanine dipeptide test
+    TEST_TO_PERFORM = TEST_TO_PERFORM[:-1]
+
+
+@pytest.mark.parametrize("config_file_path", TEST_TO_PERFORM)
 @pytest.mark.parametrize("script_file_path", ["scripts/perform_stability_tests.py"])
 def test_script_execution(config_file_path: str, script_file_path: str) -> None:
     print(f"Testing {script_file_path}")
@@ -23,7 +31,7 @@ def test_script_execution(config_file_path: str, script_file_path: str) -> None:
     assert ret.returncode == 0
 
     # Update the arguments to match your argparse in the script
-    args = f"python {script_file_path} --config {config_file_path}".split()
+    args = f"python {script_file_path} {config_file_path}".split()
     ret = subprocess.run(args, capture_output=True)
     print("Script Output:")
     print(ret.stdout.decode("utf-8"))

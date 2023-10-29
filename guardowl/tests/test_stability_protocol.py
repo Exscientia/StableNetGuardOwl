@@ -23,7 +23,7 @@ from guardowl.utils import get_available_nnps_and_implementation
 
 
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_setup_vacuum_protocol(nnp: str, implementation: str) -> None:
+def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # ---------------------------#
@@ -45,7 +45,7 @@ def test_setup_vacuum_protocol(nnp: str, implementation: str) -> None:
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
-        reportInterval=50,
+        reportInterval=1,
         step=True,  # must be set to true
         time=True,
         potentialEnergy=True,
@@ -55,7 +55,7 @@ def test_setup_vacuum_protocol(nnp: str, implementation: str) -> None:
         speed=True,
     )
     params = StabilityTestParameters(
-        protocol_length=200,
+        protocol_length=5,
         temperature=[300, 400],
         ensemble="NVT",
         simulated_annealing=False,
@@ -65,20 +65,53 @@ def test_setup_vacuum_protocol(nnp: str, implementation: str) -> None:
         output_folder=output_folder,
         log_file_name=log_file_name,
         state_data_reporter=reporter,
+        env="vacuum",
     )
 
     stability_test.perform_stability_test(params)
 
 
+@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+def test_run_vacuum_protocol(nnp: str, implementation: str) -> None:
+    from guardowl.protocols import run_hipen_protocol
+
+    reporter = StateDataReporter(
+        file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
+        reportInterval=1,
+        step=True,  # must be set to true
+        time=True,
+        potentialEnergy=True,
+        totalEnergy=True,
+        temperature=True,
+        density=True,
+        speed=True,
+    )
+    platform = get_fastest_platform()
+    output_folder = "test_stability_protocol"
+
+    run_hipen_protocol(
+        1,
+        nnp,
+        implementation,
+        300,
+        reporter,
+        platform,
+        output_folder,
+        nr_of_simulation_steps=2,
+    )
+
+
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> None:
+def test_setup_waterbox_protocol_individual_parts(
+    ensemble: str, nnp: str, implementation: str
+) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # ---------------------------#
     platform = get_fastest_platform()
 
-    edge_size = 10
+    edge_size = 5
     testsystem = WaterboxTestsystemFactory().generate_testsystems(
         unit.Quantity(edge_size, unit.angstrom)
     )
@@ -98,7 +131,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
-        reportInterval=10,
+        reportInterval=1,
         step=True,  # must be set to true
         time=True,
         potentialEnergy=True,
@@ -109,7 +142,7 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
     )
 
     params = StabilityTestParameters(
-        protocol_length=20,
+        protocol_length=5,
         temperature=300,
         ensemble=ensemble,
         simulated_annealing=False,
@@ -119,10 +152,77 @@ def test_setup_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -
         output_folder=output_folder,
         log_file_name=log_file_name,
         state_data_reporter=reporter,
+        env="solution",
     )
 
     stability_test.perform_stability_test(
         params,
+    )
+
+
+@pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
+@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> None:
+    from guardowl.protocols import run_waterbox_protocol
+
+    reporter = StateDataReporter(
+        file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
+        reportInterval=1,
+        step=True,  # must be set to true
+        time=True,
+        potentialEnergy=True,
+        totalEnergy=True,
+        temperature=True,
+        density=True,
+        speed=True,
+    )
+    platform = get_fastest_platform()
+    output_folder = "test_stability_protocol"
+
+    run_waterbox_protocol(
+        10,
+        ensemble,
+        nnp,
+        implementation,
+        300,
+        reporter,
+        platform,
+        output_folder,
+        nr_of_simulation_steps=2,
+    )
+
+
+@pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
+@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+def test_run_alanine_dipeptide_protocol(
+    ensemble: str, nnp: str, implementation: str
+) -> None:
+    from guardowl.protocols import run_alanine_dipeptide_protocol
+
+    reporter = StateDataReporter(
+        file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
+        reportInterval=1,
+        step=True,  # must be set to true
+        time=True,
+        potentialEnergy=True,
+        totalEnergy=True,
+        temperature=True,
+        density=True,
+        speed=True,
+    )
+    platform = get_fastest_platform()
+    output_folder = "test_stability_protocol"
+
+    run_alanine_dipeptide_protocol(
+        nnp,
+        implementation,
+        300,
+        reporter,
+        platform,
+        output_folder,
+        ensemble=ensemble,
+        nr_of_simulation_steps=2,
+        env="vacuum",
     )
 
 

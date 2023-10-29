@@ -68,6 +68,13 @@ class PropertyCalculator:
                 bond_list.append((bond.atom1.index, bond.atom2.index))
         return bond_list
 
+    def _extract_bonds_except_water(self) -> List[Tuple[int, int]]:
+        bond_list = []
+        for bond in self.md_traj.topology.bonds:
+            if bond.atom1.residue.name != "HOH" and bond.atom2.residue.name != "HOH":
+                bond_list.append((bond.atom1.index, bond.atom2.index))
+        return bond_list
+
     def monitor_water_bond_length(self):  # type: ignore
         """
         Monitor the bond length between water molecules in the trajectory.
@@ -81,6 +88,13 @@ class PropertyCalculator:
 
         bond_list = self._extract_water_bonds()
         return self.monitor_bond_length(bond_list)
+
+    def monitor_bond_length_except_water(self):  # type: ignore
+        bond_list = self._extract_bonds_except_water()
+        bond_length = self.monitor_bond_length(bond_list)
+        compare_to = bond_length[0]
+        bond_diff = np.abs(bond_length - compare_to)
+        return bond_diff
 
     def monitor_water_angle(self):  # type: ignore
         """
@@ -168,3 +182,8 @@ class PropertyCalculator:
         """
         angles = md.compute_angles(self.md_traj, angle_list) * (180 / np.pi)
         return angles
+
+    def monitor_phi_psi(self) -> Tuple[np.ndarray, np.ndarray]:
+        phi = md.compute_phi(self.md_traj)[1]
+        psi = md.compute_psi(self.md_traj)[1]
+        return (phi, psi)

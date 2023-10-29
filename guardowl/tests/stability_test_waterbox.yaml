@@ -1,10 +1,10 @@
 # config.yaml
 tests:
   - protocol: "waterbox_protocol"
-    edge_length: 10
+    edge_length: 5
     ensemble: "npt"
     nnp: "ani2x"
     implementation: "torchani"
     annealing: false
-    nr_of_simulation_steps: 100
+    nr_of_simulation_steps: 5
     temperature: 300

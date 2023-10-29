@@ -5,7 +5,7 @@
 <p align="center">
   
 [//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/Exscientia/StableNetGuardOwl/workflows/CI/badge.svg)](https://github.com/Exscientia/StableNetGuardOwl/actions?query=workflow%3ACI)
+[![CI](https://github.com/Exscientia/StableNetGuardOwl/actions/workflows/CI.yaml/badge.svg?branch=main)](https://github.com/Exscientia/StableNetGuardOwl/actions/workflows/CI.yaml)
 [![codecov](https://codecov.io/gh/Exscientia/StableNetGuardOwl/branch/main/graph/badge.svg)](https://codecov.io/gh/Exscientia/StableNetGuardOwl/branch/main)
 [![Supported Python versions](https://img.shields.io/badge/python-%5E3.10-blue.svg)](https://docs.python.org/3/whatsnew/index.html)
 [![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
@@ -20,7 +20,23 @@
 
 ## Stability testing
 
-This repository provides the essential code for performing a variety of stability tests with Neural Network Potentials. Tests are currently limited to `openMM`` and the Neural Network Potentials implemented in `openmm-ml`. The tests and systems can be customized or redefined by inheriting from the appropriate base classes. Key components include:
+This repository provides the essential code for performing various stability tests with Neural Network Potentials (NNPs). Tests are currently limited to `openMM` and the Neural Network Potentials implemented in `openmm-ml`. The `physics-ml` package of Exscientia provides models trained on the `SPICE` dataset including implementation in `openmm-ml` for the following NNPs: `SchNET`, `PaiNN`, `MACE` and `nequip`.
+
+The tests currently focus on small molecules in vacuum and bulk properties of water.
+
+| Environment | Test system | Thermodynamic ensemble | Test property |
+| --- | ----------- | ----------- | ----------- |
+| Vacuum | HiPen set | - | Bond/angle deviation, potential energy convergence |
+| Vacuum | Example molecules for relevant functional groups | - | Bond/angle deviation, potential energy convergence |
+| Vacuum | Dipeptide alanine |  | relaxed 2D torsion scan around phi/psi dihedral |
+| Vacuum/Water | Dipeptide alanine | NpT, NVE, NVT | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE], phi/psi distribution |
+| Water | Waterbox | NpT, NVE, NVT | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE] |
+| Organic solvent | n-octanol, cyclohexane | NpT | potential energy convergence, density |
+
+
+
+
+The tests and systems can be customized or redefined by inheriting from the appropriate base classes. Key components include:
 
 - Script for stability testing: located in the scripts directory (`perform_guardowls.py``).
 - Results visualization notebook: found in the notebooks directory (`visualize_guardowls.ipynb``).

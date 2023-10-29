@@ -1,18 +1,31 @@
 import csv
-from loguru import logger as log
 import os
 import sys
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import List, TextIO, Tuple, Union
+from typing import List, TextIO, Tuple, Union, Optional
 
 import mdtraj as md
 import numpy as np
-from openmm import MonteCarloBarostat, Platform, State, System, unit
-from openmm.app import DCDReporter, PDBFile, Simulation, StateDataReporter
+import openmm
+from loguru import logger as log
+from openmm import Platform, State, System, unit
+from openmm.app import DCDReporter, PDBFile, Simulation, StateDataReporter, Topology
 from openmmtools.testsystems import TestSystem
 
 from .simulation import SimulationFactory
+
+
+def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> System:
+    from openmmml import MLPotential
+
+    from guardowl.simulation import SystemFactory
+
+    nnp_instance = MLPotential(nnp)
+    system = SystemFactory().initialize_pure_ml_system(
+        nnp_instance, topology, implementation=implementation
+    )
+    return system
 
 
 # StateDataReporter with custom print function
@@ -116,10 +129,12 @@ class StabilityTestParameters(BaseParameters):
     """
 
     protocol_length: int
-    temperature: unit.Quantity
-    ensemble: str
+    temperature: Union[int, List[int]]
+    env: str
     simulated_annealing: bool
     state_data_reporter: StateDataReporter
+    device_index: int = 0
+    ensemble: Optional[str] = None
 
 
 @dataclass
@@ -232,47 +247,6 @@ class DOFTest(ABC):
         progress = 100.0 * simulation.currentStep / self._total_steps
         self._out.write(f"\rProgress: {progress:.2f}")
         self._out.flush()
-
-
-@dataclass
-class StabilityTestParameters:
-    """
-    A dataclass for storing parameters for a stability test.
-
-    Attributes
-    ----------
-    protocol_length : int
-        The length of the protocol to run.
-    temperature : unit.Quantity
-        The temperature to run the simulation at.
-    ensemble : str
-        The ensemble to simulate.
-    simulated_annealing : bool
-        Whether to use simulated annealing.
-    system : System
-        The system to simulate.
-    platform : Platform
-        The platform to run the simulation on.
-    testsystem : TestSystem
-        The test system to simulate.
-    output_folder : str
-        The path to the output folder.
-    log_file_name : str
-        The name of the log file.
-    state_data_reporter : StateDataReporter
-        The reporter to use for state data.
-    """
-
-    protocol_length: int
-    temperature: Union[int, List[int]]
-    ensemble: str
-    simulated_annealing: bool
-    system: System
-    platform: Platform
-    testsystem: TestSystem
-    output_folder: str
-    log_file_name: str
-    state_data_reporter: StateDataReporter
 
 
 @dataclass
@@ -442,19 +416,24 @@ class StabilityTest(ABC):
         None
         """
         assert parameters.simulated_annealing in [True, False]
-        ensemble = parameters.ensemble.lower()
+        assert parameters.env in ["vacuum", "solution"]
+        ensemble = parameters.ensemble
+
         if ensemble:
+            ensemble = parameters.ensemble.lower()
             assert ensemble in self.implemented_ensembles
 
-        log.info(
+        log.debug(
             f""" 
 ------------------------------------------------------------------------------------
 Stability test parameters:
 params.protocol_length: {parameters.protocol_length}
 params.temperature: {parameters.temperature}
 params.ensemble: {parameters.ensemble}
+params.env: {parameters.env}
 params.simulated_annealing: {parameters.simulated_annealing}
 params.platform: {parameters.platform.getName()}
+params.device_index: {parameters.device_index}
 params.output_folder: {parameters.output_folder}
 params.log_file_name: {parameters.log_file_name}
 ------------------------------------------------------------------------------------
@@ -463,35 +442,19 @@ params.log_file_name: {parameters.log_file_name}
 
         system = parameters.system
 
-        if ensemble == "npt":  # for NpT add barostat
-            barostate = MonteCarloBarostat(
-                unit.Quantity(1, unit.atmosphere), temperature
-            )
-            barostate_force_id = system.addForce(barostate)
-
-        if ensemble == "nve":  # for NVE change to integrator without thermostate
-            qsim = SimulationFactory.create_nvt_simulation(
-                system,
-                parameters.testsystem.topology,
-                platform=parameters.platform,
-                temperature=temperature,
-            )
-        else:
-            qsim = SimulationFactory.create_simulation(
-                system,
-                parameters.testsystem.topology,
-                platform=parameters.platform,
-                temperature=temperature,
-            )
+        qsim = SimulationFactory.create_simulation(
+            system,
+            parameters.testsystem.topology,
+            platform=parameters.platform,
+            temperature=temperature,
+            env=parameters.env,
+            device_index=parameters.device_index,
+            ensemble=ensemble,
+        )
 
         os.makedirs(parameters.output_folder, exist_ok=True)
         output_file_name = f"{parameters.output_folder}/{parameters.log_file_name}"
 
-        PDBFile.writeFile(
-            parameters.testsystem.topology,
-            parameters.testsystem.positions,
-            open(f"{output_file_name}.pdb", "w"),
-        )
         PDBFile.writeFile(
             parameters.testsystem.topology,
             parameters.testsystem.positions,
@@ -565,6 +528,7 @@ class BondProfileProtocol(DOFTest):
             parameters.testsystem.topology,
             platform=parameters.platform,
             temperature=unit.Quantity(300, unit.kelvin),
+            env="vacuum",
         )
 
         PDBFile.writeFile(
@@ -644,3 +608,248 @@ class MultiTemperatureProtocol(PropagationProtocol):
                 parms,
                 temperature * unit.kelvin,
             )
+
+
+def run_hipen_protocol(
+    hipen_idx: Union[int, List[int]],
+    nnp: str,
+    implementation: str,
+    temperature: Union[int, List[int]],
+    reporter: StateDataReporter,
+    platform: openmm.Platform,
+    output_folder: str,
+    device_index: int = 0,
+    nr_of_simulation_steps: int = 5_000_000,
+):
+    """
+    Perform a stability test for a hipen molecule in vacuum
+    at multiple temperatures with a nnp/implementation.
+    :param hipen_idx: The index of the hipen molecule to simulate.
+    :param nnp: The neural network potential to use.
+    :param implementation: The implementation to use.
+    :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
+    """
+    from guardowl.testsystems import HipenTestsystemFactory, hipen_systems
+
+    def _run_protocol(idx: int):
+        name = list(hipen_systems.keys())[hipen_idx]
+
+        print(
+            f""" 
+------------------------------------------------------------------------------------
+|  Performing vacuum stability test for {name} from the hipen dataset in vacuum.
+|  The simulation will use the {nnp} potential with the {implementation} implementation.
+------------------------------------------------------------------------------------
+            """
+        )
+
+        testsystem = HipenTestsystemFactory().generate_testsystems(name)
+        system = initialize_ml_system(nnp, testsystem.topology, implementation)
+        log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
+        if isinstance(temperature, int):
+            stability_test = PropagationProtocol()
+        else:
+            stability_test = MultiTemperatureProtocol()
+
+        params = StabilityTestParameters(
+            protocol_length=nr_of_simulation_steps,
+            temperature=temperature,
+            ensemble="nvt",
+            simulated_annealing=False,
+            env="vacuum",
+            system=system,
+            platform=platform,
+            testsystem=testsystem,
+            output_folder=output_folder,
+            log_file_name=log_file_name,
+            state_data_reporter=reporter,
+            device_index=device_index,
+        )
+
+        stability_test.perform_stability_test(params)
+        print(f"\nSaving {params.log_file_name} files to {params.output_folder}")
+
+    if isinstance(hipen_idx, int):
+        _run_protocol(hipen_idx)
+    else:
+        for hipen_idx_ in hipen_idx:
+            _run_protocol(hipen_idx_)
+
+
+def run_waterbox_protocol(
+    edge_length: int,
+    ensemble: str,
+    nnp: str,
+    implementation: str,
+    temperature: Union[int, List[int]],
+    reporter: StateDataReporter,
+    platform: openmm.Platform,
+    output_folder: str,
+    device_index: int = 0,
+    annealing: bool = False,
+    nr_of_simulation_steps: int = 5_000_000,
+):
+    """
+    Perform a stability test for a waterbox with a given edge size
+    in PBC in an ensemble and with a nnp/implementation.
+    :param edge_length: The edge length of the waterbox in Angstrom.
+    :param ensemble: The ensemble to simulate in.
+    :param nnp: The neural network potential to use.
+    :param implementation: The implementation to use.
+    :param annealing: Whether to perform simulated annealing (default=False).
+    :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
+    """
+    from openmm import unit
+    from guardowl.testsystems import WaterboxTestsystemFactory
+
+    print(
+        f""" 
+------------------------------------------------------------------------------------
+|  Performing waterbox stability test for a {edge_length} A waterbox in PBC.
+|  The simulation will use the {nnp} potential with the {implementation} implementation.
+------------------------------------------------------------------------------------
+          """
+    )
+
+    testsystem = WaterboxTestsystemFactory().generate_testsystems(
+        unit.Quantity(edge_length, unit.angstrom)
+    )
+    system = initialize_ml_system(nnp, testsystem.topology, implementation)
+
+    log_file_name = f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}"
+    log.info(f"Writing to {log_file_name}")
+
+    stability_test = PropagationProtocol()
+
+    params = StabilityTestParameters(
+        protocol_length=nr_of_simulation_steps,
+        temperature=temperature,
+        ensemble=ensemble,
+        simulated_annealing=annealing,
+        system=system,
+        platform=platform,
+        testsystem=testsystem,
+        output_folder=output_folder,
+        log_file_name=log_file_name,
+        state_data_reporter=reporter,
+        device_index=device_index,
+        env="solution",
+    )
+
+    stability_test.perform_stability_test(params)
+    print(f"\nSaving {params.log_file_name} files to {params.output_folder}")
+
+
+def run_alanine_dipeptide_protocol(
+    nnp: str,
+    implementation: str,
+    temperature: int,
+    reporter: StateDataReporter,
+    platform: openmm.Platform,
+    output_folder: str,
+    device_index: int = 0,
+    ensemble: Optional[str] = None,
+    annealing: bool = False,
+    nr_of_simulation_steps: int = 5_000_000,
+    env: str = "vacuum",
+):
+    """
+    Perform a stability test for an alanine dipeptide in water
+    in PBC in an ensemble and with a nnp/implementation.
+    :param env: The environment to simulate in (either vacuum or solvent).
+    :param nnp: The neural network potential to use.
+    :param implementation: The implementation to use.
+    :param ensemble: The ensemble to simulate in (default='').
+    :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
+    """
+    from guardowl.testsystems import AlaninDipeptideTestsystemFactory
+
+    print(
+        f""" 
+------------------------------------------------------------------------------------
+|  Performing alanine dipeptide stability test in {env}.
+|  The simulation will use the {nnp} potential with the {implementation} implementation.
+------------------------------------------------------------------------------------
+          """
+    )
+
+    testsystem = AlaninDipeptideTestsystemFactory().generate_testsystems(env=env)
+    system = initialize_ml_system(nnp, testsystem.topology, implementation)
+
+    if env == "vacuum":
+        log_file_name = f"alanine_dipeptide_{env}_{nnp}_{implementation}"
+    else:
+        log_file_name = f"alanine_dipeptide_{env}_{nnp}_{implementation}_{ensemble}"
+
+    log.info(f"Writing to {log_file_name}")
+
+    stability_test = PropagationProtocol()
+
+    params = StabilityTestParameters(
+        protocol_length=nr_of_simulation_steps,
+        temperature=temperature,
+        ensemble=ensemble,
+        simulated_annealing=annealing,
+        system=system,
+        platform=platform,
+        testsystem=testsystem,
+        output_folder=output_folder,
+        log_file_name=log_file_name,
+        state_data_reporter=reporter,
+        device_index=device_index,
+        env=env,
+    )
+
+    stability_test.perform_stability_test(params)
+    print(f"\nSaving {params.log_file_name} files to {params.output_folder}")
+
+
+def run_DOF_scan(
+    nnp: str,
+    implementation: str,
+    DOF_definition: dict,
+    platform: openmm.Platform,
+    output_folder: str,
+    name: str = "ethanol",
+):
+    """
+    Perform a scan on a selected DOF.
+    :param nnp: The neural network potential to use.
+    :param implementation: The implementation to use.
+    :param DOF_definition: The DOF that is scanned. Allowed key values are 'bond', 'angle' and 'torsion',
+    :param name: The name of the molecule to simulation (default='ethanol').
+    values are a list of appropriate atom indices.
+    """
+
+    from guardowl.protocols import BondProfileProtocol, DOFTestParameters
+    from guardowl.testsystems import SmallMoleculeTestsystemFactory
+
+    print(
+        f""" 
+------------------------------------------------------------------------------------
+|  Performing scan on a selected DOG for {name}.
+|  The scan will use the {nnp} potential with the {implementation} implementation.
+------------------------------------------------------------------------------------
+          """
+    )
+
+    testsystem = SmallMoleculeTestsystemFactory().generate_testsystems(name)
+    system = initialize_ml_system(nnp, testsystem.topology, implementation)
+
+    log_file_name = f"vacuum_{testsystem.testsystem_name}_{nnp}_{implementation}"
+
+    if DOF_definition["bond"]:
+        stability_test = BondProfileProtocol()
+        params = DOFTestParameters(
+            system=system,
+            platform=platform,
+            testsystem=testsystem,
+            output_folder=output_folder,
+            log_file_name=log_file_name,
+            bond=DOF_definition["bond"],
+        )
+        stability_test.perform_bond_scan(params)
+    elif DOF_definition["angle"]:
+        raise NotImplementedError
+    elif DOF_definition["torsion"]:
+        raise NotImplementedError
