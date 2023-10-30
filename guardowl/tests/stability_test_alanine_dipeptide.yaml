@@ -1,7 +1,7 @@
 # config.yaml
 tests:
   - protocol: "perform_alanine_dipeptide_protocol"
-    env: "solvent"
+    env: "solution"
     ensemble: "npt"
     nnp: "ani2x"
     implementation: "torchani"

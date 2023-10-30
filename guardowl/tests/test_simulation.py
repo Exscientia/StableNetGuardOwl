@@ -7,7 +7,10 @@ from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
 from guardowl.simulation import SimulationFactory, SystemFactory
-from guardowl.utils import get_available_nnps_and_implementation
+from guardowl.utils import (
+    get_available_nnps_and_implementation,
+    gpu_memory_constrained_nnps_and_implementation,
+)
 
 
 @pytest.mark.parametrize(
@@ -103,3 +106,35 @@ def test_simulating(nnp: str, implementation: str, generate_hipen_system) -> Non
     qsim.reporters.append(DCDReporter("test.dcd", 10))
     qsim.step(5)
     del qsim
+
+
+@pytest.mark.parametrize(
+    "nnp, implementation", gpu_memory_constrained_nnps_and_implementation
+)
+def test_pure_liquid_simulation(nnp, implementation):
+    from guardowl.testsystems import PureLiquidTestsystemFactory
+
+    factory = PureLiquidTestsystemFactory()
+    liquid_box = factory.generate_testsystems(name="ethane", nr_of_copies=250)
+    qml = MLPotential(nnp)
+    platform = get_fastest_platform()
+    ########################################################
+    # ---------------------------#
+    # generate pure ML simulation
+    qsim = SimulationFactory.create_simulation(
+        SystemFactory().initialize_pure_ml_system(
+            qml,
+            liquid_box.topology,
+            implementation=implementation,
+        ),
+        liquid_box.topology,
+        env="solution",
+        platform=platform,
+        ensemble="NpT",
+        temperature=unit.Quantity(300, unit.kelvin),
+    )
+    # set position
+    qsim.context.setPositions(liquid_box.positions)
+    # simulate
+    qsim.reporters.append(DCDReporter("test.dcd", 10))
+    qsim.step(5)

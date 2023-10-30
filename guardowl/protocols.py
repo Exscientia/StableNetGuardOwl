@@ -415,13 +415,19 @@ class StabilityTest(ABC):
         -------
         None
         """
-        assert parameters.simulated_annealing in [True, False]
-        assert parameters.env in ["vacuum", "solution"]
+        assert parameters.simulated_annealing in [
+            True,
+            False,
+        ], f"Invalid input: {parameters.simulated_annealing}"
+        assert parameters.env in [
+            "vacuum",
+            "solution",
+        ], f"Invalid input: {parameters.env}"
         ensemble = parameters.ensemble
 
         if ensemble:
             ensemble = parameters.ensemble.lower()
-            assert ensemble in self.implemented_ensembles
+            assert ensemble in self.implemented_ensembles, f"{ensemble} not implemented"
 
         log.debug(
             f""" 
@@ -756,7 +762,7 @@ def run_alanine_dipeptide_protocol(
     """
     Perform a stability test for an alanine dipeptide in water
     in PBC in an ensemble and with a nnp/implementation.
-    :param env: The environment to simulate in (either vacuum or solvent).
+    :param env: The environment to simulate in (either vacuum or solution).
     :param nnp: The neural network potential to use.
     :param implementation: The implementation to use.
     :param ensemble: The ensemble to simulate in (default='').
