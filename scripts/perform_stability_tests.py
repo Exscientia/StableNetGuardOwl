@@ -45,6 +45,7 @@ def create_state_data_reporter():
         totalEnergy=True,
         temperature=True,
         density=True,
+        volume=True,
         speed=True,
     )
 

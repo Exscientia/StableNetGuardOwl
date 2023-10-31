@@ -39,6 +39,37 @@ class PropertyCalculator:
         """
         self.md_traj = md_traj
 
+    def calculate_heat_capacity(
+        self, total_energy: np.array, volumn: np.array
+    ) -> float:
+        """
+        Calculate the heat capacity of the trajectory.
+        C_p = <\Delta E^2> / k_B T^2 V
+        """
+        from openmm.unit import kelvin
+        from .constants import kB
+
+        mean_energy = np.mean(total_energy)
+        mean_volume = np.mean(volumn)
+
+        # Calculate the mean square fluctuation of the energy
+        mean_square_fluctuation_energy = np.mean((total_energy - mean_energy) ** 2)
+
+        # Calculate Cp using the formula
+        Cp = mean_square_fluctuation_energy / (kB * (300 * kelvin) ** 2 * mean_volume)
+
+        return Cp
+
+    def calculate_isothermal_compressability_kappa_T(self):
+        from .constants import temperature
+
+        return md.isothermal_compressability_kappa_T(self.md_traj, temperature)
+
+    def calculate_thermal_expansion_alpha_P(self, pot_energy: np.array):
+        from .constants import temperature
+
+        return md.thermal_expansion_alpha_P(self.md_traj, temperature, pot_energy)
+
     def calculate_water_rdf(self):  # type: ignore
         """
         Calculate the radial distribution function (RDF) for water molecules in the trajectory.
