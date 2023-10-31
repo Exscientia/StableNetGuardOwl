@@ -115,7 +115,9 @@ def test_pure_liquid_simulation(nnp, implementation):
     from guardowl.testsystems import PureLiquidTestsystemFactory
 
     factory = PureLiquidTestsystemFactory()
-    liquid_box = factory.generate_testsystems(name="ethane", nr_of_copies=250)
+    liquid_box = factory.generate_testsystems(
+        name="ethane", nr_of_copies=150, nr_of_equilibration_steps=500
+    )
     qml = MLPotential(nnp)
     platform = get_fastest_platform()
     ########################################################

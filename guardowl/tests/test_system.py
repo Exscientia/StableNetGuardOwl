@@ -28,4 +28,4 @@ def test_generate_pure_liquids(molecule_name, nr_of_copies) -> None:
     """ "Test if we can generate a pure liquid"""
 
     factory = PureLiquidTestsystemFactory()
-    factory.generate_testsystems(name=molecule_name, nr_of_copies=nr_of_copies)
+    factory.generate_testsystems(name=molecule_name, nr_of_copies=nr_of_copies, nr_of_equilibration_steps=100)

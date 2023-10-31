@@ -25,6 +25,7 @@ class PureLiquidBoxTestSystem(TestSystem):
         from openff.toolkit import ForceField, Molecule
         from openff.interchange.components._packmol import UNIT_CUBE, pack_box
         from openff.units import unit
+        import numpy as np
 
         self.nr_of_copies = nr_of_copies
         sage = ForceField("openff-2.0.0.offxml")
@@ -37,18 +38,33 @@ class PureLiquidBoxTestSystem(TestSystem):
         )
         log.info(f"Generating pure liquid box for {molecule_name}")
         log.info("Packmol is running ...")
-        if nr_of_copies < 500:
-            edge_length = 3.5
-        elif nr_of_copies < 800:
-            edge_length = 4.5
-        else:
-            edge_length = 5.
 
-        topology = pack_box(
-            molecules=[solvent],
-            number_of_copies=[nr_of_copies],
-            box_vectors=edge_length * UNIT_CUBE * unit.nanometer,
-        )
+        n_atoms = solvent.n_atoms * nr_of_copies
+        # 25 Angstrom ...1431 atoms (water)
+        # 30 Angstrom ...3000 atoms (water)
+        # 35 Angstrom ...4014 atoms (water)
+        edge_length = np.round(
+            0.003813 * n_atoms + 22
+        )  # NOTE: original regression line Y = 0.003813*X + 19.27
+        log.debug(f"Calculated intial {edge_length} Angstrom for {n_atoms} atoms")
+        success = False  # Repeat until sucess is True
+        while not success:
+            increase_packing = 0
+            try:
+                log.debug(
+                    f"Trying to pack {nr_of_copies} copies of {molecule_name} in box with edge length {edge_length+increase_packing} ..."
+                )
+                topology = pack_box(
+                    molecules=[solvent],
+                    number_of_copies=[nr_of_copies],
+                    box_vectors=(edge_length + increase_packing)
+                    * UNIT_CUBE
+                    * unit.nanometer,
+                )
+                success = True
+            except Exception as e:
+                log.error(f"Packmol failed with the following error: {e}")
+                increase_packing += 2
         log.debug("Packmol has finished ...")
 
         sage = ForceField("openff-2.0.0.offxml")
@@ -176,7 +192,9 @@ class SmallMoleculeTestsystemFactory:
 
 class LiquidTestsystemFactory:
     def _run_equilibration(
-        self, testsystem: Union[WaterBox, PureLiquidBoxTestSystem]
+        self,
+        testsystem: Union[WaterBox, PureLiquidBoxTestSystem],
+        nr_of_steps: int = 50_000,
     ) -> Union[WaterBox, PureLiquidBoxTestSystem]:
         """Run a simulation on the liquid box.
 
@@ -199,12 +217,12 @@ class LiquidTestsystemFactory:
             integrator,
             platform=platform,
         )
-        barostat = MonteCarloBarostat(1.0 * unit.bar, 300 * unit.kelvin, 25)
+        barostat = MonteCarloBarostat(1.0 * unit.bar, 300 * unit.kelvin, 10)
 
         sim.system.addForce(barostat)
 
         sim.context.setPositions(testsystem.positions)
-        sim.step(50_000)
+        sim.step(nr_of_steps)
         state = sim.context.getState(getPositions=True)
         testsystem.positions = (
             state.getPositions()
@@ -228,7 +246,10 @@ class PureLiquidTestsystemFactory(LiquidTestsystemFactory):
         pass
 
     def generate_testsystems(
-        self, name: str, nr_of_copies: int = 500
+        self,
+        name: str,
+        nr_of_copies: int = 500,
+        nr_of_equilibration_steps: int = 50_000,
     ) -> PureLiquidBoxTestSystem:
         """Generate a WaterBox test system.
 
@@ -248,7 +269,7 @@ class PureLiquidTestsystemFactory(LiquidTestsystemFactory):
 
         liquid_box = PureLiquidBoxTestSystem(name, nr_of_copies)
         print("Start equilibration ...")
-        liquid_box = self._run_equilibration(liquid_box)
+        liquid_box = self._run_equilibration(liquid_box, nr_of_equilibration_steps)
         print("Stop equilibration ...")
         return liquid_box
 
