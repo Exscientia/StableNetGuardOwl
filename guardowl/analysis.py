@@ -1,6 +1,7 @@
 import mdtraj as md
 import numpy as np
 from typing import List, Tuple
+from loguru import logger as log
 
 
 class PropertyCalculator:
@@ -38,6 +39,38 @@ class PropertyCalculator:
 
         """
         self.md_traj = md_traj
+
+    def calculate_heat_capacity(
+        self, total_energy: np.array, volumn: np.array
+    ) -> float:
+        """
+        Calculate the heat capacity of the trajectory.
+        C_p = <\Delta E^2> / k_B T^2 V
+        """
+        from openmm.unit import kelvin, nanometer, kilojoule_per_mole
+        from .constants import kB, temperature
+
+        mean_energy = np.mean(total_energy)
+        mean_volume = np.mean(volumn)
+
+        # Calculate the mean square fluctuation of the energy
+        mean_square_fluctuation_energy = np.mean((total_energy - mean_energy) ** 2)
+
+        # Calculate Cp using the formula
+        Cp = mean_square_fluctuation_energy / (kB * temperature**2 * mean_volume)
+        log.debug(f"heat capacity: {Cp}")
+        return Cp
+
+    def calculate_isothermal_compressability_kappa_T(self):
+        from .constants import temperature
+        from openmm.unit import kelvin
+
+        kappa_T = md.isothermal_compressability_kappa_T(
+            self.md_traj, temperature.value_in_unit(kelvin)
+        )
+        print(kappa_T)
+        log.debug(f"isothermal_compressability_kappa_T: {kappa_T}")
+        return kappa_T
 
     def calculate_water_rdf(self):  # type: ignore
         """

@@ -1,7 +1,8 @@
 # config.yaml
 tests:
-  - protocol: "perform_alanine_dipeptide_protocol"
-    env: "solution"
+  - protocol: "perform_pure_liquid_protocol"
+    molecule_name: ["ethane", "ethane", "butane"]
+    nr_of_molecule: [10, 20, 30]
     ensemble: "npt"
     nnp: "ani2x"
     implementation: "torchani"

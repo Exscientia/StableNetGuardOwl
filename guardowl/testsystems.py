@@ -1,9 +1,8 @@
+from typing import List, Union, Optional
 from functools import lru_cache
-from typing import List, Union
-
 from loguru import logger as log
 from openff.units.openmm import to_openmm
-from openmm import LangevinIntegrator, Platform, unit
+from openmm import LangevinIntegrator, unit, MonteCarloBarostat
 from openmm.app import Simulation
 from openmmtools.testsystems import (
     AlanineDipeptideExplicit,
@@ -16,6 +15,67 @@ from openmmtools.utils import get_fastest_platform
 
 from .constants import collision_rate, stepsize, temperature
 from .setup import create_system_from_mol, generate_molecule
+
+
+class PureLiquidBoxTestSystem(TestSystem):
+
+    """Pure liquid box."""
+
+    def __init__(self, molecule_name: str, nr_of_copies: int):
+        from openff.toolkit import ForceField, Molecule
+        from openff.interchange.components._packmol import UNIT_CUBE, pack_box
+        from openff.units import unit
+        import numpy as np
+
+        self.nr_of_copies = nr_of_copies
+        sage = ForceField("openff-2.0.0.offxml")
+
+        TestSystem.__init__(self)
+
+        # generate the system
+        solvent = Molecule.from_smiles(
+            PureLiquidTestsystemFactory._AVAILABLE_SYSTEM[molecule_name]
+        )
+        log.info(f"Generating pure liquid box for {molecule_name}")
+        log.info("Packmol is running ...")
+
+        n_atoms = solvent.n_atoms * nr_of_copies
+        # 25 Angstrom ...1431 atoms (water)
+        # 30 Angstrom ...3000 atoms (water)
+        # 35 Angstrom ...4014 atoms (water)
+        edge_length = np.round(
+            0.003813 * n_atoms + 22
+        )  # NOTE: original regression line Y = 0.003813*X + 19.27
+        log.debug(f"Calculated intial {edge_length} Angstrom for {n_atoms} atoms")
+        success = False  # Repeat until sucess is True
+        while not success:
+            increase_packing = 0
+            try:
+                log.debug(
+                    f"Trying to pack {nr_of_copies} copies of {molecule_name} in box with edge length {edge_length+increase_packing} ..."
+                )
+                topology = pack_box(
+                    molecules=[solvent],
+                    number_of_copies=[nr_of_copies],
+                    box_vectors=(edge_length + increase_packing)
+                    * UNIT_CUBE
+                    * unit.nanometer,
+                )
+                success = True
+            except Exception as e:
+                log.error(f"Packmol failed with the following error: {e}")
+                increase_packing += 2
+        log.debug("Packmol has finished ...")
+
+        sage = ForceField("openff-2.0.0.offxml")
+        system = sage.create_openmm_system(topology)
+
+        positions = topology.get_positions().to(unit.nanometer)
+        self.system, self.positions, self.topology = (
+            system,
+            positions.magnitude,
+            topology.to_openmm(),
+        )
 
 
 class BaseMoleculeTestSystem:
@@ -36,7 +96,7 @@ class BaseMoleculeTestSystem:
         self.mol = mol
 
 
-class SmallMoleculeVacuum(BaseMoleculeTestSystem):
+class SmallMoleculeVacuumTestSystem(BaseMoleculeTestSystem):
     """Class for small molecule in vacuum test systems.
 
     Parameters
@@ -109,7 +169,7 @@ class SmallMoleculeTestsystemFactory:
         }
 
     @lru_cache(maxsize=None)
-    def generate_testsystems(self, name: str) -> SmallMoleculeVacuum:
+    def generate_testsystems(self, name: str) -> SmallMoleculeVacuumTestSystem:
         """Generate a SmallMoleculeVacuum test system.
 
         Parameters
@@ -127,10 +187,94 @@ class SmallMoleculeTestsystemFactory:
                 f"Molecule is not in the list of available systems: {self._mols.keys()}"
             )
 
-        return SmallMoleculeVacuum(name, self._mols[name])
+        return SmallMoleculeVacuumTestSystem(name, self._mols[name])
 
 
-class WaterboxTestsystemFactory:
+class LiquidTestsystemFactory:
+    def _run_equilibration(
+        self,
+        testsystem: Union[WaterBox, PureLiquidBoxTestSystem],
+        nr_of_steps: int = 50_000,
+    ) -> Union[WaterBox, PureLiquidBoxTestSystem]:
+        """Run a simulation on the liquid box.
+
+        Parameters
+        ----------
+        Union[WaterBox, PureLiquid] : WaterBox
+            system to simulate.
+
+        Returns
+        -------
+        Union[WaterBox, PureLiquid]
+            The system after simulation.
+        """
+        integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
+        platform = get_fastest_platform()
+
+        sim = Simulation(
+            testsystem.topology,
+            testsystem.system,
+            integrator,
+            platform=platform,
+        )
+        barostat = MonteCarloBarostat(1.0 * unit.bar, 300 * unit.kelvin, 10)
+
+        sim.system.addForce(barostat)
+
+        sim.context.setPositions(testsystem.positions)
+        sim.step(nr_of_steps)
+        state = sim.context.getState(getPositions=True)
+        testsystem.positions = (
+            state.getPositions()
+        )  # pylint: disable=unexpected-keyword-arg
+        return testsystem
+
+
+class PureLiquidTestsystemFactory(LiquidTestsystemFactory):
+    """Factory for generating pure liquid systems"""
+
+    _AVAILABLE_SYSTEM = {
+        "butan": "CCCC",
+        "cyclohexane": "C1CCCCC1",
+        "ethane": "CC",
+        "isobutane": "CC(C)C",
+        "methanol": "CO",
+        "propane": "CCC",
+    }
+
+    def __init__(self) -> None:
+        pass
+
+    def generate_testsystems(
+        self,
+        name: str,
+        nr_of_copies: int = 500,
+        nr_of_equilibration_steps: int = 50_000,
+    ) -> PureLiquidBoxTestSystem:
+        """Generate a WaterBox test system.
+
+        Parameters
+        ----------
+        edge_length : unit.Quantity
+            Edge length for the waterbox.
+
+        Returns
+        -------
+        WaterBox
+            Generated test system.
+        """
+        assert (
+            name in PureLiquidTestsystemFactory._AVAILABLE_SYSTEM.keys()
+        ), f"Available systems are {PureLiquidTestsystemFactory._AVAILABLE_SYSTEM.keys()}"
+
+        liquid_box = PureLiquidBoxTestSystem(name, nr_of_copies)
+        print("Start equilibration ...")
+        liquid_box = self._run_equilibration(liquid_box, nr_of_equilibration_steps)
+        print("Stop equilibration ...")
+        return liquid_box
+
+
+class WaterboxTestsystemFactory(LiquidTestsystemFactory):
     """Factory for generating WaterBox test systems.
 
     This factory class provides methods to generate WaterBox test systems with different edge lengths.
@@ -138,36 +282,6 @@ class WaterboxTestsystemFactory:
 
     def __init__(self) -> None:
         self.name = "waterbox_testsystem"
-
-    def _run_sim(self, waterbox: WaterBox) -> WaterBox:
-        """Run a simulation on the waterbox.
-
-        Parameters
-        ----------
-        waterbox : WaterBox
-            Waterbox system to simulate.
-
-        Returns
-        -------
-        WaterBox
-            The waterbox system after simulation.
-        """
-        integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
-        platform = get_fastest_platform()
-
-        sim = Simulation(
-            waterbox.topology,
-            waterbox.system,
-            integrator,
-            platform=platform,
-        )
-        sim.context.setPositions(waterbox.positions)
-        sim.step(50_000)
-        state = sim.context.getState(getPositions=True)
-        waterbox.positions = (
-            state.getPositions()
-        )  # pylint: disable=unexpected-keyword-arg
-        return waterbox
 
     def generate_testsystems(self, edge_length: unit.Quantity) -> WaterBox:
         """Generate a WaterBox test system.
@@ -186,7 +300,7 @@ class WaterboxTestsystemFactory:
             edge_length, cutoff=((edge_length / 2) - unit.Quantity(0.5, unit.angstrom))
         )
         print("Start equilibration ...")
-        waterbox = self._run_sim(waterbox)
+        waterbox = self._run_equilibration(waterbox)
         print("Stop equilibration ...")
         return waterbox
 
@@ -194,7 +308,7 @@ class WaterboxTestsystemFactory:
 class AlaninDipeptideTestsystemFactory:
     """Factory for generating alanine dipeptide test systems.
 
-    This factory class provides methods to generate alanine dipeptide test systems in vacuum or solvent.
+    This factory class provides methods to generate alanine dipeptide test systems in vacuum or solution.
     """
 
     def __init__(self) -> None:
@@ -217,14 +331,14 @@ class AlaninDipeptideTestsystemFactory:
         Raises
         ------
         NotImplementedError
-            If the provided environment is neither 'vacuum' nor 'solvent'.
+            If the provided environment is neither 'vacuum' nor 'solution'.
         """
         if env == "vacuum":
             return AlanineDipeptideVacuum(constraints=None)
-        elif env == "solvent":
+        elif env == "solution":
             return AlanineDipeptideExplicit(constraints=None)
         else:
-            raise NotImplementedError("Only solvent and vacuum implemented")
+            raise NotImplementedError("Only solution and vacuum implemented")
 
 
 class ProteinTestsystemFactory:

@@ -6,14 +6,24 @@ prefix = "guardowl/tests/data/stability_testing"
 def generate_water_mdtraj_instance() -> md.Trajectory:
     system_name = "waterbox"
     prefix_path = f"{prefix}/{system_name}/"
-    ensemble = "NVT"
+    ensemble = "npt"
     nnp = "ani2x"
-    implementation = "nnpops"
+    implementation = "torchani"
 
     traj_file = f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.dcd"
     top_file = f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.pdb"
-
     return md.load(traj_file, top=top_file)
+
+
+def get_water_csv_file():
+    system_name = "waterbox"
+    prefix_path = f"{prefix}/{system_name}/"
+    ensemble = "npt"
+    nnp = "ani2x"
+    implementation = "torchani"
+
+    csv_file = f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.csv"
+    return csv_file
 
 
 def test_rdf():
@@ -26,3 +36,20 @@ def test_rdf():
 
     rdf = property_calculator.calculate_water_rdf()
     print(rdf)
+
+
+def test_calculate_properties():
+    from guardowl.analysis import PropertyCalculator
+    import numpy as np
+
+    md_traj_instance = generate_water_mdtraj_instance()
+    csv_file = get_water_csv_file()
+    # read and extract columns from csv file
+    csv_data = np.genfromtxt(csv_file, delimiter=",", names=True)
+    total_energy = csv_data["Total_Energy_kJmole"]
+    volumn = csv_data["Box_Volume_nm3"]
+
+    property_calculator = PropertyCalculator(md_traj_instance)
+    property_calculator.calculate_heat_capacity(total_energy, volumn)
+    property_calculator.calculate_isothermal_compressability_kappa_T()
+    
