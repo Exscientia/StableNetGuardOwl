@@ -66,6 +66,7 @@ def main(config: str):
         run_hipen_protocol,
         run_waterbox_protocol,
         run_alanine_dipeptide_protocol,
+        run_pure_liquid_protocol,
     )
 
     log.info(f"Loaded config: {config}")
@@ -92,6 +93,9 @@ def main(config: str):
             run_alanine_dipeptide_protocol(
                 **{k: test[k] for k in test if k != "protocol"}
             )
+        elif protocol == "perform_pure_liquid_protocol":
+            log.info("Performing pure liquid protocol")
+            run_pure_liquid_protocol(**{k: test[k] for k in test if k != "protocol"})
 
         elif protocol == "DOF_scan":
             log.info("Performing DOF protocol")

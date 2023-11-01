@@ -226,6 +226,40 @@ def test_run_alanine_dipeptide_protocol(
     )
 
 
+@pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
+@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+def test_run_pure_liquid_protocol(ensemble: str, nnp: str, implementation: str) -> None:
+    from guardowl.protocols import run_pure_liquid_protocol
+
+    reporter = StateDataReporter(
+        file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
+        reportInterval=1,
+        step=True,  # must be set to true
+        time=True,
+        potentialEnergy=True,
+        totalEnergy=True,
+        temperature=True,
+        density=True,
+        volume=True,
+        speed=True,
+    )
+    platform = get_fastest_platform()
+    output_folder = "test_stability_protocol"
+
+    run_pure_liquid_protocol(
+        nnp=nnp,
+        implementation=implementation,
+        temperature=300,
+        reporter=reporter,
+        platform=platform,
+        output_folder=output_folder,
+        molecule_name="ethane",
+        nr_of_molecule=100,
+        ensemble=ensemble,
+        nr_of_simulation_steps=2,
+    )
+
+
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
 def test_DOF_protocol(nnp: str, implementation: str) -> None:
     """Test if we can run a simulation for a number of steps"""

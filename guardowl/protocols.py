@@ -746,6 +746,84 @@ def run_waterbox_protocol(
     print(f"\nSaving {params.log_file_name} files to {params.output_folder}")
 
 
+def run_pure_liquid_protocol(
+    molecule_name: Tuple[str, List[str]],
+    nr_of_molecule: Tuple[int, List[int]],
+    ensemble: str,
+    nnp: str,
+    implementation: str,
+    temperature: Union[int, List[int]],
+    reporter: StateDataReporter,
+    platform: openmm.Platform,
+    output_folder: str,
+    device_index: int = 0,
+    annealing: bool = False,
+    nr_of_simulation_steps: int = 5_000_000,
+):
+    """
+    Perform a stability test for a pure liquid with a given number of molecules
+    in PBC in an ensemble and with a nnp/implementation.
+    :param molecule_name: The name of the solvent molecule (ethane, butane, propane, methanol, cyclohexane, isobutane).
+    :param nr_of_molecule: The number of solvent molecules.
+    :param ensemble: The ensemble to simulate in.
+    :param nnp: The neural network potential to use.
+    :param implementation: The implementation to use.
+    :param annealing: Whether to perform simulated annealing (default=False).
+    :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
+    """
+    from openmm import unit
+    from guardowl.testsystems import PureLiquidTestsystemFactory
+
+    if isinstance(molecule_name, str):
+        molecule_name_ = [molecule_name]
+        nr_of_molecule_ = [nr_of_molecule]
+    else:
+        molecule_name_ = molecule_name
+        nr_of_molecule_ = nr_of_molecule
+
+    for name, n_atoms in zip(molecule_name_, nr_of_molecule_):
+        print(
+            f""" 
+    ------------------------------------------------------------------------------------
+    |  Performing pure liquid stability test for {n_atoms} {name} in PBC.
+    |  The simulation will use the {nnp} potential with the {implementation} implementation.
+    ------------------------------------------------------------------------------------
+            """
+        )
+
+        testsystem = PureLiquidTestsystemFactory().generate_testsystems(
+            name=name,
+            nr_of_copies=n_atoms,
+            nr_of_equilibration_steps=100,
+        )
+        system = initialize_ml_system(nnp, testsystem.topology, implementation)
+
+        log_file_name = (
+            f"pure_liquid_{name}_{n_atoms}_{nnp}_{implementation}_{ensemble}"
+        )
+        log.info(f"Writing to {log_file_name}")
+
+        stability_test = PropagationProtocol()
+
+        params = StabilityTestParameters(
+            protocol_length=nr_of_simulation_steps,
+            temperature=temperature,
+            ensemble=ensemble,
+            simulated_annealing=annealing,
+            system=system,
+            platform=platform,
+            testsystem=testsystem,
+            output_folder=output_folder,
+            log_file_name=log_file_name,
+            state_data_reporter=reporter,
+            device_index=device_index,
+            env="solution",
+        )
+
+        stability_test.perform_stability_test(params)
+        print(f"\nSaving {params.log_file_name} files to {params.output_folder}")
+
+
 def run_alanine_dipeptide_protocol(
     nnp: str,
     implementation: str,
