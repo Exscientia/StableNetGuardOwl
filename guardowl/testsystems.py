@@ -43,9 +43,11 @@ class PureLiquidBoxTestSystem(TestSystem):
         # 25 Angstrom ...1431 atoms (water)
         # 30 Angstrom ...3000 atoms (water)
         # 35 Angstrom ...4014 atoms (water)
-        edge_length = np.round(
-            0.003813 * n_atoms + 22
-        )  # NOTE: original regression line Y = 0.003813*X + 19.27
+        if n_atoms < 50:
+            edge_length = 10
+        else:
+            edge_length = np.round(0.003813 * n_atoms) + 22
+        # NOTE: original regression line Y = 0.003813*X + 19.27
         log.debug(f"Calculated intial {edge_length} Angstrom for {n_atoms} atoms")
         success = False  # Repeat until sucess is True
         while not success:
@@ -234,7 +236,7 @@ class PureLiquidTestsystemFactory(LiquidTestsystemFactory):
     """Factory for generating pure liquid systems"""
 
     _AVAILABLE_SYSTEM = {
-        "butan": "CCCC",
+        "butane": "CCCC",
         "cyclohexane": "C1CCCCC1",
         "ethane": "CC",
         "isobutane": "CC(C)C",
@@ -283,7 +285,9 @@ class WaterboxTestsystemFactory(LiquidTestsystemFactory):
     def __init__(self) -> None:
         self.name = "waterbox_testsystem"
 
-    def generate_testsystems(self, edge_length: unit.Quantity) -> WaterBox:
+    def generate_testsystems(
+        self, edge_length: unit.Quantity, nr_of_equilibrium_steps: int = 5_000
+    ) -> WaterBox:
         """Generate a WaterBox test system.
 
         Parameters
@@ -300,7 +304,7 @@ class WaterboxTestsystemFactory(LiquidTestsystemFactory):
             edge_length, cutoff=((edge_length / 2) - unit.Quantity(0.5, unit.angstrom))
         )
         print("Start equilibration ...")
-        waterbox = self._run_equilibration(waterbox)
+        waterbox = self._run_equilibration(waterbox, nr_of_equilibrium_steps)
         print("Stop equilibration ...")
         return waterbox
 

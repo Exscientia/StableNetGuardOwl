@@ -694,6 +694,7 @@ def run_waterbox_protocol(
     device_index: int = 0,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
+    nr_of_equilibrium_steps: int = 50_000,
 ):
     """
     Perform a stability test for a waterbox with a given edge size
@@ -718,7 +719,7 @@ def run_waterbox_protocol(
     )
 
     testsystem = WaterboxTestsystemFactory().generate_testsystems(
-        unit.Quantity(edge_length, unit.angstrom)
+        edge_length * unit.angstrom, nr_of_equilibrium_steps
     )
     system = initialize_ml_system(nnp, testsystem.topology, implementation)
 
@@ -759,6 +760,7 @@ def run_pure_liquid_protocol(
     device_index: int = 0,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
+    nr_of_equilibration_steps: int = 50_000,
 ):
     """
     Perform a stability test for a pure liquid with a given number of molecules
@@ -771,7 +773,6 @@ def run_pure_liquid_protocol(
     :param annealing: Whether to perform simulated annealing (default=False).
     :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
     """
-    from openmm import unit
     from guardowl.testsystems import PureLiquidTestsystemFactory
 
     if isinstance(molecule_name, str):
@@ -794,7 +795,7 @@ def run_pure_liquid_protocol(
         testsystem = PureLiquidTestsystemFactory().generate_testsystems(
             name=name,
             nr_of_copies=n_atoms,
-            nr_of_equilibration_steps=100,
+            nr_of_equilibration_steps=nr_of_equilibration_steps,
         )
         system = initialize_ml_system(nnp, testsystem.topology, implementation)
 
@@ -859,7 +860,7 @@ def run_alanine_dipeptide_protocol(
 
     testsystem = AlaninDipeptideTestsystemFactory().generate_testsystems(env=env)
     system = initialize_ml_system(nnp, testsystem.topology, implementation)
-
+    assert env in ["vacuum", "solution"], f"Invalid input: {env}"
     if env == "vacuum":
         log_file_name = f"alanine_dipeptide_{env}_{nnp}_{implementation}"
     else:
