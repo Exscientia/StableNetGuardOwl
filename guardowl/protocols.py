@@ -694,6 +694,7 @@ def run_waterbox_protocol(
     device_index: int = 0,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
+    nr_of_equilibrium_steps: int = 50_000,
 ):
     """
     Perform a stability test for a waterbox with a given edge size
@@ -718,7 +719,7 @@ def run_waterbox_protocol(
     )
 
     testsystem = WaterboxTestsystemFactory().generate_testsystems(
-        unit.Quantity(edge_length, unit.angstrom)
+        edge_length * unit.angstrom, nr_of_equilibrium_steps
     )
     system = initialize_ml_system(nnp, testsystem.topology, implementation)
 

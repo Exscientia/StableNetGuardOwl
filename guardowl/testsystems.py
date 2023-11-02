@@ -285,7 +285,9 @@ class WaterboxTestsystemFactory(LiquidTestsystemFactory):
     def __init__(self) -> None:
         self.name = "waterbox_testsystem"
 
-    def generate_testsystems(self, edge_length: unit.Quantity) -> WaterBox:
+    def generate_testsystems(
+        self, edge_length: unit.Quantity, nr_of_equilibrium_steps: int
+    ) -> WaterBox:
         """Generate a WaterBox test system.
 
         Parameters
@@ -302,7 +304,7 @@ class WaterboxTestsystemFactory(LiquidTestsystemFactory):
             edge_length, cutoff=((edge_length / 2) - unit.Quantity(0.5, unit.angstrom))
         )
         print("Start equilibration ...")
-        waterbox = self._run_equilibration(waterbox)
+        waterbox = self._run_equilibration(waterbox, nr_of_equilibrium_steps)
         print("Stop equilibration ...")
         return waterbox
 

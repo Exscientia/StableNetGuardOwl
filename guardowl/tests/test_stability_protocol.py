@@ -189,6 +189,7 @@ def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> 
         platform,
         output_folder,
         nr_of_simulation_steps=2,
+        nr_of_equilibrium_steps=10,
     )
 
 
@@ -257,6 +258,7 @@ def test_run_pure_liquid_protocol(ensemble: str, nnp: str, implementation: str) 
         nr_of_molecule=100,
         ensemble=ensemble,
         nr_of_simulation_steps=2,
+        nr_of_equilibration_steps=10,
     )
 
 
