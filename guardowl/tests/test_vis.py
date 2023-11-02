@@ -34,7 +34,7 @@ def test_waterbox():
     prefix_path = f"{prefix}/{system_name}/"
     ensemble = "NVT"
     nnp = "ani2x"
-    implementation = "nnpops"
+    implementation = "torchani"
     s = MonitoringPlotter(
         f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.dcd",
         f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.pdb",

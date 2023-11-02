@@ -234,7 +234,7 @@ class PureLiquidTestsystemFactory(LiquidTestsystemFactory):
     """Factory for generating pure liquid systems"""
 
     _AVAILABLE_SYSTEM = {
-        "butan": "CCCC",
+        "butane": "CCCC",
         "cyclohexane": "C1CCCCC1",
         "ethane": "CC",
         "isobutane": "CC(C)C",

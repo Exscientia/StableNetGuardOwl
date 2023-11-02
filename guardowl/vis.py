@@ -201,32 +201,36 @@ class MonitoringPlotter:
                 row += 1
 
         # print numerical values
-        props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
-        textstr = "\n".join(
-            (
-                r"Heat capacity$=%.12f$ mol/(K J)"
-                % (
-                    self.property_calculator.calculate_heat_capacity(
-                        label_to_data_map["Total Energy (kJ/mole)"],
-                        label_to_data_map["Box Volume (nm^3)"],
-                    )._value,
-                ),
-                r"$\kappa_{T}=%.12f$ / bar"
-                % (
-                    self.property_calculator.calculate_isothermal_compressability_kappa_T(),
-                ),
+        try:
+            props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
+            textstr = "\n".join(
+                (
+                    r"Heat capacity$=%.12f$ mol/(K J)"
+                    % (
+                        self.property_calculator.calculate_heat_capacity(
+                            label_to_data_map["Total Energy (kJ/mole)"],
+                            label_to_data_map["Box Volume (nm^3)"],
+                        )._value,
+                    ),
+                    r"$\kappa_{T}=%.12f$ / bar"
+                    % (
+                        self.property_calculator.calculate_isothermal_compressability_kappa_T(),
+                    ),
+                )
             )
-        )
-        axs[row][column].set_axis_off()
-        axs[row][column].text(
-            0.05,
-            0.95,
-            textstr,
-            transform=axs[row][column].transAxes,
-            fontsize=10,
-            verticalalignment="top",
-            bbox=props,
-        )
+            axs[row][column].set_axis_off()
+            axs[row][column].text(
+                0.05,
+                0.95,
+                textstr,
+                transform=axs[row][column].transAxes,
+                fontsize=10,
+                verticalalignment="top",
+                bbox=props,
+            )
+        except KeyError as e:
+            log.debug(e)
+        
         if column == 0:
             axs[row][1].set_axis_off()
             axs[row][2].set_axis_off()
