@@ -230,12 +230,15 @@ class MonitoringPlotter:
             )
         except KeyError as e:
             log.debug(e)
-        
-        if column == 0:
-            axs[row][1].set_axis_off()
-            axs[row][2].set_axis_off()
-        if column == 1:
-            axs[row][2].set_axis_off()
+
+        try:
+            if column == 0:
+                axs[row][1].set_axis_off()
+                axs[row][2].set_axis_off()
+            if column == 1:
+                axs[row][2].set_axis_off()
+        except TypeError:
+            log.debug(e)
 
         fig.tight_layout()
         plt.gca().set_title("title")

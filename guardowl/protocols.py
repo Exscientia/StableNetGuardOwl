@@ -759,6 +759,7 @@ def run_pure_liquid_protocol(
     device_index: int = 0,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
+    nr_of_equilibration_steps: int = 50_000,
 ):
     """
     Perform a stability test for a pure liquid with a given number of molecules
@@ -771,7 +772,6 @@ def run_pure_liquid_protocol(
     :param annealing: Whether to perform simulated annealing (default=False).
     :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
     """
-    from openmm import unit
     from guardowl.testsystems import PureLiquidTestsystemFactory
 
     if isinstance(molecule_name, str):
@@ -794,7 +794,7 @@ def run_pure_liquid_protocol(
         testsystem = PureLiquidTestsystemFactory().generate_testsystems(
             name=name,
             nr_of_copies=n_atoms,
-            nr_of_equilibration_steps=100,
+            nr_of_equilibration_steps=nr_of_equilibration_steps,
         )
         system = initialize_ml_system(nnp, testsystem.topology, implementation)
 

@@ -32,7 +32,7 @@ def test_waterbox():
 
     system_name = "waterbox"
     prefix_path = f"{prefix}/{system_name}/"
-    ensemble = "NVT"
+    ensemble = "npt"
     nnp = "ani2x"
     implementation = "torchani"
     s = MonitoringPlotter(
