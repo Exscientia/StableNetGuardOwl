@@ -859,7 +859,7 @@ def run_alanine_dipeptide_protocol(
 
     testsystem = AlaninDipeptideTestsystemFactory().generate_testsystems(env=env)
     system = initialize_ml_system(nnp, testsystem.topology, implementation)
-
+    assert env in ["vacuum", "solution"], f"Invalid input: {env}"
     if env == "vacuum":
         log_file_name = f"alanine_dipeptide_{env}_{nnp}_{implementation}"
     else:
