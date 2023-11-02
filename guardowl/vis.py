@@ -237,7 +237,7 @@ class MonitoringPlotter:
                 axs[row][2].set_axis_off()
             if column == 1:
                 axs[row][2].set_axis_off()
-        except TypeError:
+        except TypeError as e:
             log.debug(e)
 
         fig.tight_layout()

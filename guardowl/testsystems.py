@@ -286,7 +286,7 @@ class WaterboxTestsystemFactory(LiquidTestsystemFactory):
         self.name = "waterbox_testsystem"
 
     def generate_testsystems(
-        self, edge_length: unit.Quantity, nr_of_equilibrium_steps: int
+        self, edge_length: unit.Quantity, nr_of_equilibrium_steps: int = 5_000
     ) -> WaterBox:
         """Generate a WaterBox test system.
 

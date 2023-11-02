@@ -113,7 +113,7 @@ def test_setup_waterbox_protocol_individual_parts(
 
     edge_size = 5
     testsystem = WaterboxTestsystemFactory().generate_testsystems(
-        unit.Quantity(edge_size, unit.angstrom)
+        edge_size * unit.angstrom, nr_of_equilibrium_steps=10
     )
     nnp_instance = MLPotential(nnp)
 
@@ -255,7 +255,7 @@ def test_run_pure_liquid_protocol(ensemble: str, nnp: str, implementation: str) 
         platform=platform,
         output_folder=output_folder,
         molecule_name="ethane",
-        nr_of_molecule=100,
+        nr_of_molecule=10,
         ensemble=ensemble,
         nr_of_simulation_steps=2,
         nr_of_equilibration_steps=10,
