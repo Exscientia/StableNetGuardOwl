@@ -294,3 +294,23 @@ def test_DOF_protocol(nnp: str, implementation: str) -> None:
     )
 
     stability_test.perform_bond_scan(params)
+
+
+def test_input_generation_for_minimization_tests():
+    from guardowl.protocols import _generate_input_for_minimization_test
+
+    input = _generate_input_for_minimization_test()
+    assert (
+        len(input["minimized"])
+        == len(input["start_positions"])
+        == len(input["directories"])
+    )
+
+
+@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+def test_run_detect_minimum_test(nnp, implementation):
+    from guardowl.protocols import run_detect_minimum_test
+
+    platform = get_fastest_platform()
+
+    run_detect_minimum_test(nnp, implementation, platform, output_folder="test", percentage=0.01)

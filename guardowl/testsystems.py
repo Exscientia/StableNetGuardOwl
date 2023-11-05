@@ -14,7 +14,6 @@ from openmmtools.testsystems import (
 from openmmtools.utils import get_fastest_platform
 
 from .constants import collision_rate, stepsize, temperature
-from .setup import create_system_from_mol, generate_molecule
 
 
 class PureLiquidBoxTestSystem(TestSystem):
@@ -87,11 +86,29 @@ class BaseMoleculeTestSystem:
     molecule-based test systems.
     """
 
-    def __init__(self, name: str, smiles: str):
+    def __init__(
+        self,
+        name: str,
+        smiles: Optional[str],
+        sdf_file: Optional[str],
+        positions: Optional[List],
+    ):
+        from .setup import (
+            create_system_from_mol,
+            generate_molecule_from_smiles,
+            generate_molecule_from_sdf,
+        )
+
         self.testsystem_name = name
         self.smiles = smiles
 
-        mol = generate_molecule(self.smiles)
+        if self.smiles:
+            mol = generate_molecule_from_smiles(self.smiles)
+        elif sdf_file:
+            mol = generate_molecule_from_sdf(sdf_file, positions)
+        else:
+            raise RuntimeError("Either smiles or sdf_file must be provided")
+
         self.system, topology = create_system_from_mol(mol)
         self.topology = topology.to_openmm()
         self.positions = to_openmm(mol.conformers[0])

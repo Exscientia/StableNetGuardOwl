@@ -1,19 +1,19 @@
 import csv
 import os
 import sys
-from abc import ABC
-from dataclasses import dataclass, field
 from typing import List, TextIO, Tuple, Union, Optional
 
-import mdtraj as md
 import numpy as np
-import openmm
 from loguru import logger as log
-from openmm import Platform, State, System, unit
-from openmm.app import DCDReporter, PDBFile, Simulation, StateDataReporter, Topology
-from openmmtools.testsystems import TestSystem
+from openmm import State, System, unit, Platform
+from openmm.app import Simulation, StateDataReporter, Topology
 
-from .simulation import SimulationFactory
+from .parameters import (
+    StabilityTestParameters,
+    MinimizationTestParameters,
+    DOFTestParameters,
+)
+from functools import lru_cache
 
 
 def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> System:
@@ -89,210 +89,13 @@ class ContinuousProgressReporter(object):
         self._out.flush()
 
 
-@dataclass
-class BaseParameters:
-    system: System
-    platform: Platform
-    testsystem: TestSystem
-    output_folder: str
-    log_file_name: str
-
-
-@dataclass
-class StabilityTestParameters(BaseParameters):
-    """Parameters for a stability test.
-
-    Parameters are stored as attributes.
-
-    Attributes
-    ----------
-    protocol_length : int
-        Length of the protocol in time units.
-    temperature : unit.Quantity
-        Temperature of the simulation.
-    ensemble : str
-        Ensemble type ('NVT', 'NPT', etc.).
-    simulated_annealing : bool
-        Whether simulated annealing is to be used.
-    system : System
-        The OpenMM System object.
-    platform : Platform
-        The OpenMM Platform object.
-    testsystem : TestSystem
-        The test system for the simulation.
-    output_folder : str
-        Path to the output folder.
-    log_file_name : str
-        Name of the log file.
-    state_data_reporter : StateDataReporter
-        The OpenMM StateDataReporter object.
-    """
-
-    protocol_length: int
-    temperature: Union[int, List[int]]
-    env: str
-    simulated_annealing: bool
-    state_data_reporter: StateDataReporter
-    device_index: int = 0
-    ensemble: Optional[str] = None
-
-
-@dataclass
-class DOFTestParameters(BaseParameters):
-    """Parameters for a degree of freedom (DOF) test.
-
-    In addition to attributes in StabilityTestParameters, extra attributes for DOF tests are included.
-
-    Attributes
-    ----------
-    bond : List
-        List of atom pairs to be considered as bonds.
-    angle : List
-        List of atom triplets to be considered as angles.
-    torsion : List
-        List of atom quartets to be considered as torsions.
-    """
-
-    bond: List = field(default_factory=lambda: [])
-    angle: List = field(default_factory=lambda: [])
-    torsion: List = field(default_factory=lambda: [])
-
-
-class DOFTest(ABC):
-    """Abstract base class for DOF tests.
-
-    Attributes
-    ----------
-    potential_simulation_factory : SimulationFactory
-        Factory to generate simulation instances.
-    """
-
-    def __init__(self) -> None:
-        self.potential_simulation_factory = SimulationFactory()
-
-    def _set_bond_length(
-        self, position: unit.Quantity, atom1: int, atom2: int, length: float
-    ) -> unit.Quantity:
-        """
-        Sets the length of a bond between two atoms.
-
-        Parameters
-        ----------
-        position : unit.Quantity
-            The positions of the atoms.
-        atom1 : int
-            The index of the first atom.
-        atom2 : int
-            The index of the second atom.
-        length : float
-            The desired length of the bond.
-
-        Returns
-        -------
-        unit.Quantity
-            The new positions of the atoms.
-        """
-        diff = (position[atom2] - position[atom1]).value_in_unit(unit.angstrom)
-        normalized_diff = diff / np.linalg.norm(diff)
-        new_positions = position.copy()
-        new_positions[atom2] = position[atom1] + normalized_diff * unit.Quantity(
-            length, unit.angstrom
-        )
-        log.debug(f"{position=}")
-        log.debug(f"{new_positions=}")
-        return unit.Quantity(new_positions, unit.angstrom)
-
-    def _perform_bond_scan(
-        self,
-        qsim: Simulation,
-        parameters: DOFTestParameters,
-    ) -> Tuple[List, List, List]:
-        """
-        Performs a scan of the length of a bond between two atoms.
-
-        Parameters
-        ----------
-        qsim : Simulation
-            The simulation to perform the scan on.
-        parameters : DOFTestParameters
-            The parameters for the DOF test.
-
-        Returns
-        -------
-        Tuple[List, List, List]
-            A tuple containing the conformations, potential energies, and bond lengths.
-        """
-        assert parameters.bond is not None
-        bond_atom1, bond_atom2 = parameters.bond
-        initial_pos = parameters.testsystem.positions
-        conformations, potential_energy, bond_length = [], [], []
-        for b in np.linspace(0, 8, 100):  # in angstrom
-            new_pos = self._set_bond_length(
-                initial_pos,
-                bond_atom1,
-                bond_atom2,
-                b,
-            )
-            qsim.context.setPositions(new_pos)
-            energy = qsim.context.getState(getEnergy=True).getPotentialEnergy()
-            potential_energy.append(energy.value_in_unit(unit.kilojoule_per_mole))
-            conformations.append(new_pos.value_in_unit(unit.nano * unit.meter))
-            bond_length.append(b)
-
-    def describeNextReport(self, simulation: Simulation) -> Tuple:
-        steps = self._reportInterval - simulation.currentStep % self._reportInterval
-        return (steps, False, False, True, False, None)
-
-    def report(self, simulation: Simulation, state: State) -> None:
-        progress = 100.0 * simulation.currentStep / self._total_steps
-        self._out.write(f"\rProgress: {progress:.2f}")
-        self._out.flush()
-
-
-@dataclass
-class DOFTestParameters:
-    """
-    A dataclass for storing parameters for a degree of freedom (DOF) test.
-
-    Attributes
-    ----------
-    protocol_length : int
-        The length of the protocol to run.
-    temperature : unit.Quantity
-        The temperature to run the simulation at.
-    ensemble : str
-        The ensemble to simulate.
-    simulated_annealing : bool
-        Whether to use simulated annealing.
-    system : System
-        The system to simulate.
-    platform : Platform
-        The platform to run the simulation on.
-    testsystem : TestSystem
-        The test system to simulate.
-    output_folder : str
-        The path to the output folder.
-    log_file_name : str
-        The name of the log file.
-    state_data_reporter : StateDataReporter
-        The reporter to use for state data.
-    """
-
-    system: System
-    platform: Platform
-    testsystem: TestSystem
-    output_folder: str
-    log_file_name: str
-    bond: List = field(default_factory=lambda: [])
-    angle: List = field(default_factory=lambda: [])
-    torsion: List = field(default_factory=lambda: [])
-
-
-class DOFTest(ABC):
+class DOFTest:
     def __init__(self) -> None:
         """
         Initializes a new instance of the StabilityTest class.
         """
+        from .simulation import SimulationFactory
+
         self.potential_simulation_factory = SimulationFactory()
 
     def _set_bond_length(
@@ -367,7 +170,7 @@ class DOFTest(ABC):
         return (potential_energy, conformations, bond_length)  #
 
 
-class StabilityTest(ABC):
+class StabilityTest:
     """
     Abstract base class for stability tests on molecular systems.
     """
@@ -387,6 +190,8 @@ class StabilityTest(ABC):
         -------
         None
         """
+        from .simulation import SimulationFactory
+
         self.potential_simulation_factory = SimulationFactory()
         self.implemented_ensembles = ["npt", "nvt", "nve"]
 
@@ -394,27 +199,7 @@ class StabilityTest(ABC):
     def _get_name(cls) -> str:
         return cls.__name__
 
-    def _run_simulation(
-        self,
-        parameters: StabilityTestParameters,
-        temperature: unit.Quantity,
-    ) -> None:
-        """
-        Runs a simulation for stability tests on molecular systems.
-
-        This method runs a simulation for stability tests on molecular systems. It takes in a StabilityTestParameters object and a temperature as input parameters. It checks if the simulated annealing flag is set to True or False and if the ensemble is implemented in the protocol. It then creates a simulation object using the SimulationFactory class and sets the positions of the system. It minimizes the energy of the system and runs a simulated annealing molecular dynamics simulation if the simulated annealing flag is set to True. Finally, it writes out the simulation data to files.
-
-        Parameters
-        ----------
-        parameters: StabilityTestParameters
-            The parameters for the stability test.
-        temperature: unit.Quantity
-            The temperature of the simulation.
-
-        Returns
-        -------
-        None
-        """
+    def _assert_input(self, parameters: StabilityTestParameters):
         assert parameters.simulated_annealing in [
             True,
             False,
@@ -446,17 +231,11 @@ params.log_file_name: {parameters.log_file_name}
             """
         )
 
-        system = parameters.system
-
-        qsim = SimulationFactory.create_simulation(
-            system,
-            parameters.testsystem.topology,
-            platform=parameters.platform,
-            temperature=temperature,
-            env=parameters.env,
-            device_index=parameters.device_index,
-            ensemble=ensemble,
-        )
+    def _run_simulation(
+        parameters: StabilityTestParameters,
+        qsim: Simulation,
+    ) -> None:
+        from openmm.app import DCDReporter, PDBFile
 
         os.makedirs(parameters.output_folder, exist_ok=True)
         output_file_name = f"{parameters.output_folder}/{parameters.log_file_name}"
@@ -473,20 +252,6 @@ params.log_file_name: {parameters.log_file_name}
         if parameters.state_data_reporter._step is False:
             log.info("Setting step to True")
             parameters.state_data_reporter._step = True
-        qsim.context.setPositions(parameters.testsystem.positions)
-
-        qsim.minimizeEnergy()
-
-        if parameters.simulated_annealing:
-            print("Running Simulated Annealing MD")
-            # every 1000 steps raise the temperature by 5 K, ending at 325 K
-            for temp in np.linspace(0, 300, 60):
-                qsim.step(100)
-                temp = unit.Quantity(temp, unit.kelvin)
-                qsim.integrator.setTemperature(temp)
-                if ensemble == "npt":
-                    barostat = parameters.system.getForce(barostate_force_id)
-                    barostat.setDefaultTemperature(temp)
 
         qsim.reporters.append(
             DCDReporter(
@@ -504,6 +269,58 @@ params.log_file_name: {parameters.log_file_name}
         )
 
         qsim.step(parameters.protocol_length)
+
+    def _setup_simulation(
+        self,
+        parameters: StabilityTestParameters,
+        temperature: unit.Quantity,
+        minimization_tolerance=10 * unit.kilojoule_per_mole / unit.nanometer,
+    ) -> None:
+        """
+        Runs a simulation for stability tests on molecular systems.
+
+        This method runs a simulation for stability tests on molecular systems. It takes in a StabilityTestParameters object and a temperature as input parameters. It checks if the simulated annealing flag is set to True or False and if the ensemble is implemented in the protocol. It then creates a simulation object using the SimulationFactory class and sets the positions of the system. It minimizes the energy of the system and runs a simulated annealing molecular dynamics simulation if the simulated annealing flag is set to True. Finally, it writes out the simulation data to files.
+
+        Parameters
+        ----------
+        parameters: StabilityTestParameters
+            The parameters for the stability test.
+        temperature: unit.Quantity
+            The temperature of the simulation.
+
+        Returns
+        -------
+        None
+        """
+        from .simulation import SimulationFactory
+
+        self._assert_input(parameters)
+        system = parameters.system
+
+        qsim = SimulationFactory.create_simulation(
+            system,
+            parameters.testsystem.topology,
+            platform=parameters.platform,
+            temperature=temperature,
+            env=parameters.env,
+            device_index=parameters.device_index,
+            ensemble=parameters.ensemble,
+        )
+
+        qsim.context.setPositions(parameters.testsystem.positions)
+
+        qsim.minimizeEnergy(tolerance=minimization_tolerance)
+
+        if parameters.simulated_annealing:
+            print("Running Simulated Annealing MD")
+            # every 1000 steps raise the temperature by 5 K, ending at 325 K
+            for temp in np.linspace(0, 300, 60):
+                qsim.step(100)
+                temp = unit.Quantity(temp, unit.kelvin)
+                qsim.integrator.setTemperature(temp)
+                if parameters.output_folderensemble == "npt":
+                    barostat = parameters.system.getForce(barostate_force_id)
+                    barostat.setDefaultTemperature(temp)
 
     def perform_stability_test(self, params: StabilityTestParameters) -> None:
         raise NotImplementedError()
@@ -529,6 +346,10 @@ class BondProfileProtocol(DOFTest):
         --------
         None
         """
+        from openmm.app import PDBFile
+        from .simulation import SimulationFactory
+        import mdtraj as md
+
         qsim = SimulationFactory.create_simulation(
             parameters.system,
             parameters.testsystem.topology,
@@ -575,7 +396,44 @@ class PropagationProtocol(StabilityTest):
     ) -> None:
         assert isinstance(parms.temperature, int)
 
-        self._run_simulation(parms, parms.temperature * unit.kelvin)
+        self._assert_input(parms)
+        qsim = self._setup_simulation(parms, parms.temperature * unit.kelvin)
+        self._run_simulation(parms, qsim)
+
+
+class MinimizationProtocol(StabilityTest):
+    def __init__(self) -> None:
+        """
+        Initializes the MinimizationProtocol class by calling the constructor of its parent class and setting the ensemble.
+
+        Returns:
+        --------
+        None
+        """
+        super().__init__()
+
+    def perform_stability_test(
+        self,
+        parms: StabilityTestParameters,
+    ) -> None:
+        from openmm.app import PDBFile
+
+        assert isinstance(parms.temperature, int)
+
+        self._assert_input(parms)
+        qsim = self._setup_simulation(
+            parms,
+            parms.temperature * unit.kelvin,
+            minimization_tolerance=1.0 * unit.kilojoule_per_mole / unit.nanometer,
+        )
+
+        output_file_name = f"{parms.output_folder}/{parms.log_file_name}"
+
+        PDBFile.writeFile(
+            parms.testsystem.topology,
+            qsim.state.getPositions(),
+            open(f"{output_file_name}.pdb", "w"),
+        )
 
 
 class MultiTemperatureProtocol(PropagationProtocol):
@@ -609,7 +467,7 @@ class MultiTemperatureProtocol(PropagationProtocol):
             )
         for temperature in parms.temperature:
             parms.log_file_name = f"{log_file_name_}_{temperature}"
-            log.info('Running simulation at temperature: {temperature} K')
+            log.info("Running simulation at temperature: {temperature} K")
             self._run_simulation(
                 parms,
                 temperature * unit.kelvin,
@@ -622,7 +480,7 @@ def run_hipen_protocol(
     implementation: str,
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
-    platform: openmm.Platform,
+    platform: Platform,
     output_folder: str,
     device_index: int = 0,
     nr_of_simulation_steps: int = 5_000_000,
@@ -689,7 +547,7 @@ def run_waterbox_protocol(
     implementation: str,
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
-    platform: openmm.Platform,
+    platform: Platform,
     output_folder: str,
     device_index: int = 0,
     annealing: bool = False,
@@ -755,7 +613,7 @@ def run_pure_liquid_protocol(
     implementation: str,
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
-    platform: openmm.Platform,
+    platform: Platform,
     output_folder: str,
     device_index: int = 0,
     annealing: bool = False,
@@ -830,7 +688,7 @@ def run_alanine_dipeptide_protocol(
     implementation: str,
     temperature: int,
     reporter: StateDataReporter,
-    platform: openmm.Platform,
+    platform: Platform,
     output_folder: str,
     device_index: int = 0,
     ensemble: Optional[str] = None,
@@ -938,3 +796,132 @@ def run_DOF_scan(
         raise NotImplementedError
     elif DOF_definition["torsion"]:
         raise NotImplementedError
+
+
+@lru_cache(maxsize=None)
+def _generate_input_for_minimization_test():
+    DATA_DIR = "/data/shared/projects/owl"
+    log.info("Reading in data for minimzation test")
+    log.debug(f"Reading from {DATA_DIR}")
+    # read in all directories in DATA_DIR
+    directories = [x[0] for x in os.walk(DATA_DIR)]
+    # read in all xyz files in directories
+    minimized_xyz_files = []
+    start_xyz_files = []
+    for directory in directories:
+        for file in os.listdir(directory):
+            if file.endswith(".xyz") and file.startswith("orca"):
+                minimized_xyz_files.append(os.path.join(directory, file))
+            if file.endswith(".xyz") and not file.startswith("orca"):
+                start_xyz_files.append(os.path.join(directory, file))
+
+    # read in coordinates from xyz files
+    minimized_positions = {}
+    start_positions = {}
+    for file in minimized_xyz_files:
+        with open(file, "r") as f:
+            lines = f.readlines()
+            positions = []
+            for line in lines[2:]:
+                positions.append([float(x) for x in line.split()[1:]])
+            minimized_positions[file] = positions
+    for file in start_xyz_files:
+        with open(file, "r") as f:
+            lines = f.readlines()
+            positions = []
+            for line in lines[2:]:
+                positions.append([float(x) for x in line.split()[1:]])
+            start_positions[file] = positions
+
+    return {
+        "minimized_positions": minimized_positions,
+        "start_positions": start_positions,
+        "directories": directories,
+    }
+
+
+def run_detect_minimum_test(
+    nnp: str,
+    implementation: str,
+    platform: Platform,
+    output_folder: str,
+    percentage: int = 10,
+):
+    """
+    Perform a minimization on a selected compound.
+    :param nnp: The neural network potential to use.
+    :param implementation: The implementation to use.
+    :param name: The name of the molecule to simulation.
+    """
+
+    from guardowl.testsystems import SmallMoleculeTestsystemFactory
+    import mdtraj as md
+
+    MINIMIZED_MOLECULES = _generate_input_for_minimization_test()
+
+    names, start_positions, minimized_positions, sdf_files = (
+        MINIMIZED_MOLECULES["directories"],
+        MINIMIZED_MOLECULES["start_positions"],
+        MINIMIZED_MOLECULES["minimized_positions"],
+        MINIMIZED_MOLECULES["sdf_files"],
+    )
+
+    # shuffel the index
+    nr_of_molecules = len(names)
+    nr_of_molecules_to_test = int(nr_of_molecules * (percentage / 100))
+    shuffeled_idx = np.random.permutation(np.arange(len(names)))
+    score = {}
+    log.info(f"Testing {nr_of_molecules_to_test} molecules")
+    for idx in shuffeled_idx[:nr_of_molecules_to_test]:
+        log.debug(f"Testing {idx}")
+        name, start_position, minimized_position, sdf_file = (
+            names[idx],
+            start_positions[idx],
+            minimized_positions[idx],
+            sdf_files[idx],
+        )
+        print(
+            f""" 
+------------------------------------------------------------------------------------
+|  Performing minimization for {name}.
+|  The scan will use the {nnp} potential with the {implementation} implementation.
+------------------------------------------------------------------------------------
+          """
+        )
+
+        reference_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems(
+            sdf_file, start_position
+        )
+
+        minimize_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems(
+            sdf_file, minimized_position
+        )
+
+        system = initialize_ml_system(
+            nnp, reference_testsystem.topology, implementation
+        )
+        log_file_name = (
+            f"minimize_{reference_testsystem.testsystem_name}_{nnp}_{implementation}"
+        )
+
+        params = MinimizationTestParameters(
+            platform=platform,
+            system=system,
+            testsystem=minimize_testsystem,
+            output_folder=output_folder,
+            log_file_name=log_file_name,
+        )
+
+        stability_test = MinimizationProtocol()
+        stability_test.perform_stability_test(params)
+
+        initial_traj = md.Trajectory(
+            minimize_testsystem.position, reference_testsystem.topology
+        )
+
+        minimized_traj = md.Trajectory(
+            reference_testsystem.positions, reference_testsystem.topology
+        )
+
+        _score_minimized = md.rmsd(initial_traj, minimized_traj)
+        score[name] = _score_minimized
