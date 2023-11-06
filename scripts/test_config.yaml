@@ -1,7 +1,16 @@
 # config.yaml
 tests:
   - protocol: "perform_alanine_dipeptide_protocol"
-    env: "solvent"
+    env: "solution"
+    ensemble: "npt"
+    nnp: "ani2x"
+    implementation: "torchani"
+    annealing: false
+    nr_of_simulation_steps: 50_000
+    temperature: 300
+
+  - protocol: "perform_alanine_dipeptide_protocol"
+    env: "vacuum"
     ensemble: "npt"
     nnp: "ani2x"
     implementation: "torchani"
@@ -10,7 +19,8 @@ tests:
     temperature: 300
 
   - protocol: "hipen_protocol"
-    hipen_idx: [0,1,2,3,4,5,6,7,8,9]
+    hipen_idx:
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     nnp: "ani2x"
     implementation: "torchani"
     temperature: 300
@@ -21,28 +31,33 @@ tests:
     nnp: "ani2x"
     implementation: "nnpops"
     temperature: [300, 400, 500]
-    nr_of_simulation_steps: 100_000
+    nr_of_simulation_steps: 1_000_000
 
   - protocol: "waterbox_protocol"
-    edge_length: 15
+    edge_length: 30
     ensemble: "NVT"
     nnp: "ani2x"
     implementation: "nnpops"
     annealing: false
-    nr_of_simulation_steps: 50_000
+    nr_of_simulation_steps: 500_000
     temperature: 300
 
   - protocol: "waterbox_protocol"
-    edge_length: 15
+    edge_length: 30
     ensemble: "npt"
     nnp: "ani2x"
     implementation: "nnpops"
     annealing: false
-    nr_of_simulation_steps: 50_000
+    nr_of_simulation_steps: 500_000
     temperature: 300
 
-  - protocol: "perform_DOF_scan"
+  - protocol: "perform_pure_liquid_protocol"
+    molecule_name: ["ethane", "butane"]
+    nr_of_molecule: [100, 200]
+    ensemble: "npt"
     nnp: "ani2x"
     implementation: "torchani"
-    DOF_definition: { "bond": [0, 2] }
-    molecule_name: "ethanol"
+    annealing: false
+    nr_of_simulation_steps: 500_000
+    nr_of_equilibration_steps: 5_000
+    temperature: 300

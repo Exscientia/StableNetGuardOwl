@@ -609,7 +609,7 @@ class MultiTemperatureProtocol(PropagationProtocol):
             )
         for temperature in parms.temperature:
             parms.log_file_name = f"{log_file_name_}_{temperature}"
-            log.info('Running simulation at temperature: {temperature} K')
+            log.info("Running simulation at temperature: {temperature} K")
             self._run_simulation(
                 parms,
                 temperature * unit.kelvin,
@@ -637,7 +637,7 @@ def run_hipen_protocol(
     """
     from guardowl.testsystems import HipenTestsystemFactory, hipen_systems
 
-    def _run_protocol(idx: int):
+    def _run_protocol(hipen_idx: int):
         name = list(hipen_systems.keys())[hipen_idx]
 
         print(
