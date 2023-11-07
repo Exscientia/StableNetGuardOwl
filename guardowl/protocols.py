@@ -14,6 +14,7 @@ from .parameters import (
     DOFTestParameters,
 )
 from functools import lru_cache
+from .simulation import SimulationFactory
 
 
 def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> System:
@@ -495,7 +496,7 @@ def run_hipen_protocol(
     """
     from guardowl.testsystems import HipenTestsystemFactory, hipen_systems
 
-    def _run_protocol(idx: int):
+    def _run_protocol(hipen_idx: int):
         name = list(hipen_systems.keys())[hipen_idx]
 
         print(
