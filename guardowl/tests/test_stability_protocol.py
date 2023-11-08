@@ -313,4 +313,6 @@ def test_run_detect_minimum_test(nnp, implementation):
 
     platform = get_fastest_platform()
 
-    run_detect_minimum_test(nnp, implementation, platform, output_folder="test", percentage=0.01)
+    run_detect_minimum_test(
+        nnp, implementation, platform, output_folder="test", percentage=10
+    )

@@ -13,8 +13,6 @@ from .parameters import (
     MinimizationTestParameters,
     DOFTestParameters,
 )
-from functools import lru_cache
-from .simulation import SimulationFactory
 
 
 def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> System:
@@ -752,7 +750,7 @@ def run_DOF_scan(
     nnp: str,
     implementation: str,
     DOF_definition: dict,
-    platform: openmm.Platform,
+    platform: Platform,
     output_folder: str,
     name: str = "ethanol",
 ):
@@ -799,7 +797,9 @@ def run_DOF_scan(
         raise NotImplementedError
 
 
-def _generate_file_list_for_minimization_test():
+def _generate_file_list_for_minimization_test() -> (
+    Tuple[List[str], List[str], List[str], List[str]]
+):
     import os
 
     DATA_DIR = "/data/shared/projects/owl"
@@ -810,18 +810,34 @@ def _generate_file_list_for_minimization_test():
     # read in all xyz files in directories
     minimized_xyz_files = []
     start_xyz_files = []
+    sdf_files = []
     for directory in directories:
-        for file in os.listdir(directory):
-            if file.endswith(".xyz") and file.startswith("orca"):
-                minimized_xyz_files.append(os.path.join(directory, file))
-            if file.endswith(".xyz") and not file.startswith("orca"):
-                start_xyz_files.append(os.path.join(directory, file))
-    return (minimized_xyz_files, start_xyz_files, directories)
+        all_files = os.listdir(directory)
+        # test if there is a xyz, orca and sdf file in the list and only then continue
+        test_orca = any("orca" in file for file in all_files)
+        test_xyz = any("xyz" in file for file in all_files)
+        test_sdf = any("sdf" in file for file in all_files)
+        if (test_orca and test_xyz and test_sdf) == False:
+            log.debug(f"Skipping {directory}")
+            print(f"Skipping {directory}")
+            continue
+
+        for file in all_files:
+            if file.endswith(".xyz"):
+                if file.startswith("orca"):
+                    minimized_xyz_files.append(os.path.join(directory, file))
+                else:
+                    start_xyz_files.append(os.path.join(directory, file))
+                    sdf_files.append(
+                        os.path.join(directory, file.replace(".xyz", ".sdf"))
+                    )
+
+    return (minimized_xyz_files, start_xyz_files, sdf_files, directories)
 
 
 def _generate_input_for_minimization_test(
-    minimized_xyz_files: List[str], start_xyz_files: List[str], directories: List[str]
-):
+    minimized_xyz_files: List[str], start_xyz_files: List[str]
+) -> Tuple[List[str], List[str]]:
     # read in coordinates from xyz files
     def read_positions(files):
         for file in files:
@@ -833,11 +849,7 @@ def _generate_input_for_minimization_test(
     minimized_positions = read_positions(minimized_xyz_files)
     start_positions = read_positions(start_xyz_files)
 
-    return {
-        "minimized_positions": minimized_positions,
-        "start_positions": start_positions,
-        "directories": directories,
-    }
+    return (start_positions, minimized_positions)
 
 
 def run_detect_minimum_test(
@@ -856,16 +868,25 @@ def run_detect_minimum_test(
 
     from guardowl.testsystems import SmallMoleculeTestsystemFactory
     import mdtraj as md
+    from .utils import extract_tar_gz
+    # extract files relative to installation path
+
+    import importlib.resources as pkg_resources
+
+    # This assumes 'my_package.data' is the package and 'filename' is the file in the 'data' directory
+    with pkg_resources.path('guardowl.data', 'owl.tar.gz') as data_file_path:
+        extract_tar_gz("data_file_path", '.')
 
     (
         minimized_xyz_files,
         start_xyz_files,
+        sdf_files,
         directories,
     ) = _generate_file_list_for_minimization_test()
 
-    nr_of_molecules = len(names)
+    nr_of_molecules = len(directories)
     nr_of_molecules_to_test = int(nr_of_molecules * (percentage / 100))
-    shuffeled_idx = np.random.permutation(np.arange(len(names)))
+    shuffeled_idx = np.random.permutation(np.arange(nr_of_molecules))
 
     minimized_xyz_files = [
         minimized_xyz_files[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]
@@ -873,26 +894,19 @@ def run_detect_minimum_test(
     start_xyz_files = [
         start_xyz_files[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]
     ]
-    directories = [directories[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]]
+    dir_list = [directories[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]]
 
-    MINIMIZED_MOLECULES = _generate_input_for_minimization_test(
+    start_positions, minimized_positions = _generate_input_for_minimization_test(
         minimized_xyz_files,
         start_xyz_files,
-        directories,
     )
 
-    names, start_positions, minimized_positions, sdf_files = (
-        MINIMIZED_MOLECULES["directories"],
-        MINIMIZED_MOLECULES["start_positions"],
-        MINIMIZED_MOLECULES["minimized_positions"],
-        MINIMIZED_MOLECULES["sdf_files"],
-    )
-
-    # shuffel the index
     score = {}
-    for name, start_position, minimized_position, sdf_file in zip(
-        names, start_positions, minimized_positions, sdf_files
+    for dir_, start_position, minimized_position, sdf_file in zip(
+        dir_list, start_positions, minimized_positions, sdf_files
     ):
+        name = os.path.basename(dir_)
+
         log.debug(f"Testing {name}")
         print(
             f""" 
