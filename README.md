@@ -1,61 +1,69 @@
 <p align="center">
-<img src="https://github.com/Exscientia/StableNetGuardOwl/assets/31651017/6e72dbdd-3fae-4463-bde3-bbaf54b459a7" alt="Simple Icons" width=150>
-<h3 align="center">StableNetGuardOwl: Perform stability tests for Neural Network Potentials</h3>
+  <img src="https://github.com/Exscientia/StableNetGuardOwl/assets/31651017/6e72dbdd-3fae-4463-bde3-bbaf54b459a7" alt="StableNetGuardOwl Logo" width="150">
+  <h3 align="center">StableNetGuardOwl: Ensuring Stability in Neural Network Potentials</h3>
 </p>
 <p align="center">
-  
+
 [//]: # (Badges)
-[![CI](https://github.com/Exscientia/StableNetGuardOwl/actions/workflows/CI.yaml/badge.svg?branch=main)](https://github.com/Exscientia/StableNetGuardOwl/actions/workflows/CI.yaml)
-[![codecov](https://codecov.io/gh/Exscientia/StableNetGuardOwl/branch/main/graph/badge.svg)](https://codecov.io/gh/Exscientia/StableNetGuardOwl/branch/main)
-[![Supported Python versions](https://img.shields.io/badge/python-%5E3.10-blue.svg)](https://docs.python.org/3/whatsnew/index.html)
-[![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Github release](https://badgen.net/github/release/Exscientia/StableNetGuardOwl)](https://github.com/Exscientia/StableNetGuardOwl/)
-[![GitHub license](https://img.shields.io/github/license/Exscientia/StableNetGuardOwl?color=green)](https://github.com/Exscientia/StableNetGuardOwl/blob/main/LICENSE)
+![Continuous Integration](https://github.com/Exscientia/StableNetGuardOwl/actions/workflows/CI.yaml/badge.svg?branch=main)
+![Code Coverage](https://codecov.io/gh/Exscientia/StableNetGuardOwl/branch/main/graph/badge.svg)
+![Supported Python versions](https://img.shields.io/badge/python-%5E3.10-blue.svg)
+![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)
+![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
+![GitHub Release](https://badgen.net/github/release/Exscientia/StableNetGuardOwl)
+![GitHub License](https://img.shields.io/github/license/Exscientia/StableNetGuardOwl?color=green)
 </p>
 
 ---
 
-# What this package contains
+# Overview
 
-## Stability testing
+StableNetGuardOwl provides a robust suite for conducting stability tests on Neural Network Potentials (NNPs) used in molecular simulations. These tests are critical in validating NNPs for research and industrial applications, ensuring accuracy and reliability.
 
-This repository provides the essential code for performing various stability tests with Neural Network Potentials (NNPs). Tests are currently limited to `openMM` and the Neural Network Potentials implemented in `openmm-ml`. The `physics-ml` package of Exscientia provides models trained on the `SPICE` dataset including implementation in `openmm-ml` for the following NNPs: `SchNET`, `PaiNN`, `MACE` and `nequip`.
+## Features
 
-The tests currently focus on small molecules in vacuum and bulk properties of water.
+StableNetGuardOwl supports stability tests for NNPs integrated with `openMM` and those implemented within `openmm-ml` or the Exscientia `physics-ml` package.  
+Currently this supports a range of NNPs including but not limited to `SchNET`, `PaiNN`, `MACE`, and `nequip`.
 
-| Environment     | Test system                                              | Thermodynamic ensemble | Test property                                                                                                               |
-| --------------- | -------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Vacuum          | HiPen set                                                | -                      | Bond/angle deviation, potential energy convergence                                                                          |
-| Vacuum          | Example molecules for relevant functional groups         | -                      | Bond/angle deviation, potential energy convergence                                                                          |
-| Vacuum          | Dipeptide alanine                                        |                        | relaxed 2D torsion scan around phi/psi dihedral                                                                             |
-| Vacuum/Water    | Dipeptide alanine                                        | NpT, NVE, NVT          | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE], phi/psi distribution |
-| Water           | Waterbox                                                 | NpT, NVE, NVT          | Bond/angle deviation, potential energy convergence, O-O rdf, density [NpT], energy conservation [NVE]                       |
-| Organic solvent | butan, cyclohexane, ethane, isobutane, methanol, propane | NpT                    | potential energy convergence, density, heat of vaporization, heat capacity, compressibility                                 |
+## Test Matrix
+
+The following table provides an overview of the test environments, systems, and properties assessed by StableNetGuardOwl:
 
 
+| Environment     | Test System                                              | Thermodynamic Ensemble | Test Properties                                                                                    |
+|-----------------|----------------------------------------------------------|------------------------|---------------------------------------------------------------------------------------------------|
+| Vacuum          | HiPen set                                                | -                      | Bond/angle deviation, potential energy convergence                                                |
+| Vacuum          | Example molecules with various functional groups         | -                      | Bond/angle deviation, potential energy convergence, geometric convergence                        |
+| Vacuum          | Dipeptide alanine                                        | -                      | Relaxed 2D torsion scan around phi/psi dihedrals                                                 |
+| Vacuum/Water    | Dipeptide alanine                                        | NpT, NVE, NVT          | Bond/angle deviation, potential energy, O-O rdf, density [NpT], energy conservation [NVE], phi/psi distribution |
+| Water           | Waterbox                                                 | NpT, NVE, NVT          | Bond/angle deviation, potential energy, O-O rdf, density [NpT], energy conservation [NVE]         |
+| Organic Solvent | Butane, Cyclohexane, Ethane, Isobutane, Methanol, Propane | NpT, NVE, NVT         | Potential energy, density, heat of vaporization, heat capacity, compressibility                   |
+
+## Customization
+
+StableNetGuardOwl allows users to customize or extend tests by inheriting from base classes tailored for specific stability assessments.
+
+### Components
+
+- **Stability Testing Script**: Located in the `scripts` directory (`perform_stability_test.py`).
+- **Results Visualization Notebook**: Found in the `notebooks` directory (`visualize_results.ipynb`).
 
 
-The tests and systems can be customized or redefined by inheriting from the appropriate base classes. Key components include:
+Each test outputs:
+1. A PDB file for the molecular topology.
+2. A CSV file for the properties being monitored.
+3. A DCD file for the molecular dynamics trajectory.
 
-- Script for stability testing: located in the scripts directory (`perform_guardowls.py``).
-- Results visualization notebook: found in the notebooks directory (`visualize_guardowls.ipynb``).
+## Usage
 
-Each stability test produces three types of output files:
+To initiate a stability test, navigate to the root directory of StableNetGuardOwl and run the following command:
 
-1. A PDB file defining the molecular system's topology.
-2. A CSV file containing the monitored properties.
-3. A DCD trajectory file to visualize the system's temporal evolution.
-
-To perform a stability test the general syntax is as follows:
-Command Syntax
 ```bash
-python scripts/perform_guardowls.py -c config.yaml
-```
-There is an example `config.yaml` file provided in the `scripts` directory that provides default parameters for the most common test systems.
+python scripts/perform_stability_test.py scripts/test_config.yaml
+There is an example `test_config.yaml` file provided in the `scripts` directory that provides default parameters for the most common test systems.
 
 ### Example
-For a stability test using a pure 15 Angstrom waterbox the config.yaml file looks like shown below
+For a stability test using a pure 15 Angstrom waterbox the `config.yaml` file may look like this
 ```
 tests:
   - protocol: "waterbox_protocol"  # which protocol is performed
@@ -69,7 +77,7 @@ tests:
 ```
 It defines the potential (nnp and implementation), the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_guardowls.py` script runs the tests
 
-To visualize the results, use the visualize_guardowls.ipynb notebook.
+To visualize the results, use the `visualize_results.ipynb` notebook.
 
 ```python
 MonitoringPlotter("trajectory.dcd", 
@@ -77,8 +85,9 @@ MonitoringPlotter("trajectory.dcd",
                   "data.csv")
 ```
 
-### Other Test Systems
-Test systems that can be used for different protocols include small molecules in vacuum (either defined with SMILES string or taken from the HiPen dataset), alanine-dipeptide in vacuum and solution, pure waterbox and degree of freedom potential energy scan, e.g., along a bond, angle, or torsion angle.
+### Additional Systems and Protocols
+Beyond the primary test environments, StableNetGuardOwl can evaluate small molecules defined by SMILES strings or sourced from datasets such as HiPen. Various protocols are available to investigate molecular dynamics at multiple temperatures, different thermodynamic ensembles, and specific degrees of freedom (DOF) for potential energy scans.
+
 
 ### Protocols
 Currently, the following protocols are available:
@@ -87,7 +96,8 @@ Currently, the following protocols are available:
 - PropagationProtocol. Perform MD simulation in a given thermodynamic ensemble (NpT, NVT, NVE).
 - BondProfileProtocol. Stretch bond along its bond axis starting with 0.5 to 5 Angstrom.
 
-### Examples
+## Examples
+### Running a DOF Scan
 To perform a DOF scan over a bond in ethanol you need to generate a yaml file containing the following (scan over bond connecting atom index 0 and 2. 
 
 ```yaml
