@@ -799,8 +799,9 @@ def run_DOF_scan(
         raise NotImplementedError
 
 
-@lru_cache(maxsize=None)
-def _generate_input_for_minimization_test():
+def _generate_file_list_for_minimization_test():
+    import os
+
     DATA_DIR = "/data/shared/projects/owl"
     log.info("Reading in data for minimzation test")
     log.debug(f"Reading from {DATA_DIR}")
@@ -815,24 +816,22 @@ def _generate_input_for_minimization_test():
                 minimized_xyz_files.append(os.path.join(directory, file))
             if file.endswith(".xyz") and not file.startswith("orca"):
                 start_xyz_files.append(os.path.join(directory, file))
+    return (minimized_xyz_files, start_xyz_files, directories)
 
+
+def _generate_input_for_minimization_test(
+    minimized_xyz_files: List[str], start_xyz_files: List[str], directories: List[str]
+):
     # read in coordinates from xyz files
-    minimized_positions = {}
-    start_positions = {}
-    for file in minimized_xyz_files:
-        with open(file, "r") as f:
-            lines = f.readlines()
-            positions = []
-            for line in lines[2:]:
-                positions.append([float(x) for x in line.split()[1:]])
-            minimized_positions[file] = positions
-    for file in start_xyz_files:
-        with open(file, "r") as f:
-            lines = f.readlines()
-            positions = []
-            for line in lines[2:]:
-                positions.append([float(x) for x in line.split()[1:]])
-            start_positions[file] = positions
+    def read_positions(files):
+        for file in files:
+            with open(file, "r") as f:
+                lines = f.readlines()
+                positions = [[float(x) for x in line.split()[1:]] for line in lines[2:]]
+                yield file, positions
+
+    minimized_positions = read_positions(minimized_xyz_files)
+    start_positions = read_positions(start_xyz_files)
 
     return {
         "minimized_positions": minimized_positions,
@@ -858,7 +857,29 @@ def run_detect_minimum_test(
     from guardowl.testsystems import SmallMoleculeTestsystemFactory
     import mdtraj as md
 
-    MINIMIZED_MOLECULES = _generate_input_for_minimization_test()
+    (
+        minimized_xyz_files,
+        start_xyz_files,
+        directories,
+    ) = _generate_file_list_for_minimization_test()
+
+    nr_of_molecules = len(names)
+    nr_of_molecules_to_test = int(nr_of_molecules * (percentage / 100))
+    shuffeled_idx = np.random.permutation(np.arange(len(names)))
+
+    minimized_xyz_files = [
+        minimized_xyz_files[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]
+    ]
+    start_xyz_files = [
+        start_xyz_files[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]
+    ]
+    directories = [directories[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]]
+
+    MINIMIZED_MOLECULES = _generate_input_for_minimization_test(
+        minimized_xyz_files,
+        start_xyz_files,
+        directories,
+    )
 
     names, start_positions, minimized_positions, sdf_files = (
         MINIMIZED_MOLECULES["directories"],
@@ -868,19 +889,11 @@ def run_detect_minimum_test(
     )
 
     # shuffel the index
-    nr_of_molecules = len(names)
-    nr_of_molecules_to_test = int(nr_of_molecules * (percentage / 100))
-    shuffeled_idx = np.random.permutation(np.arange(len(names)))
     score = {}
-    log.info(f"Testing {nr_of_molecules_to_test} molecules")
-    for idx in shuffeled_idx[:nr_of_molecules_to_test]:
-        log.debug(f"Testing {idx}")
-        name, start_position, minimized_position, sdf_file = (
-            names[idx],
-            start_positions[idx],
-            minimized_positions[idx],
-            sdf_files[idx],
-        )
+    for name, start_position, minimized_position, sdf_file in zip(
+        names, start_positions, minimized_positions, sdf_files
+    ):
+        log.debug(f"Testing {name}")
         print(
             f""" 
 ------------------------------------------------------------------------------------
