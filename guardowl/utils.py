@@ -13,6 +13,7 @@ gpu_memory_constrained_nnps_and_implementation = [
     ("ani2x", "torchani"),
 ]
 
+
 def get_available_nnps_and_implementation() -> list:
     """Return a list of available neural network potentials and implementations"""
     IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
@@ -62,3 +63,17 @@ def _set_loglevel(level="WARNING"):
 
     logger.remove()  # Remove all handlers added so far, including the default one.
     logger.add(sys.stderr, level=level)
+
+
+def extract_tar_gz(tar_path, extract_path="."):
+    """
+    Extracts a .tar.gz archive to the specified path.
+
+    :param tar_path: The path to the .tar.gz file to be extracted.
+    :param extract_path: The directory where the contents will be extracted.
+    """
+    import tarfile
+
+    with tarfile.open(tar_path, "r:gz") as tar:
+        tar.extractall(path=extract_path)
+        print(f"Extracted {tar_path} to {extract_path}")
