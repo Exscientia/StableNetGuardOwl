@@ -88,12 +88,12 @@ def main(config: str):
             log.info("Performing waterbox protocol")
             run_waterbox_protocol(**{k: test[k] for k in test if k != "protocol"})
 
-        elif protocol == "perform_alanine_dipeptide_protocol":
+        elif protocol == "alanine_dipeptide_protocol":
             log.info("Performing alanine dipeptide protocol")
             run_alanine_dipeptide_protocol(
                 **{k: test[k] for k in test if k != "protocol"}
             )
-        elif protocol == "perform_pure_liquid_protocol":
+        elif protocol == "pure_liquid_protocol":
             log.info("Performing pure liquid protocol")
             run_pure_liquid_protocol(**{k: test[k] for k in test if k != "protocol"})
 
