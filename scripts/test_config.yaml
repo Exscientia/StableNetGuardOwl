@@ -1,6 +1,6 @@
 # config.yaml
 tests:
-  - protocol: "perform_alanine_dipeptide_protocol"
+  - protocol: "alanine_dipeptide_protocol"
     env: "solution"
     ensemble: "npt"
     nnp: "ani2x"
@@ -9,7 +9,7 @@ tests:
     nr_of_simulation_steps: 50_000
     temperature: 300
 
-  - protocol: "perform_alanine_dipeptide_protocol"
+  - protocol: "alanine_dipeptide_protocol"
     env: "vacuum"
     ensemble: "npt"
     nnp: "ani2x"
@@ -51,7 +51,7 @@ tests:
     nr_of_simulation_steps: 500_000
     temperature: 300
 
-  - protocol: "perform_pure_liquid_protocol"
+  - protocol: "pure_liquid_protocol"
     molecule_name: ["ethane", "butane"]
     nr_of_molecule: [100, 200]
     ensemble: "npt"
