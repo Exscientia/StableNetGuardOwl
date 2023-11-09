@@ -60,8 +60,8 @@ To initiate a stability test, navigate to the root directory of StableNetGuardOw
 
 ```bash
 python scripts/perform_stability_test.py scripts/test_config.yaml
-There is an example `test_config.yaml` file provided in the `scripts` directory that provides default parameters for the most common test systems.
 ```
+There is an example `test_config.yaml` file provided in the `scripts` directory that provides default parameters for the most common test systems.
 
 ### Example
 For a stability test using a pure 15 Angstrom waterbox the `config.yaml` file may look like this
