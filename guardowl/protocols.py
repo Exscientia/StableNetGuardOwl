@@ -230,6 +230,7 @@ params.log_file_name: {parameters.log_file_name}
             """
         )
 
+    @staticmethod
     def _run_simulation(
         parameters: StabilityTestParameters,
         qsim: Simulation,
@@ -269,10 +270,9 @@ params.log_file_name: {parameters.log_file_name}
 
         qsim.step(parameters.protocol_length)
 
+    @staticmethod
     def _setup_simulation(
-        self,
         parameters: StabilityTestParameters,
-        temperature: unit.Quantity,
         minimization_tolerance=10 * unit.kilojoule_per_mole / unit.nanometer,
     ) -> None:
         """
@@ -284,8 +284,6 @@ params.log_file_name: {parameters.log_file_name}
         ----------
         parameters: StabilityTestParameters
             The parameters for the stability test.
-        temperature: unit.Quantity
-            The temperature of the simulation.
 
         Returns
         -------
@@ -293,14 +291,13 @@ params.log_file_name: {parameters.log_file_name}
         """
         from .simulation import SimulationFactory
 
-        self._assert_input(parameters)
         system = parameters.system
 
         qsim = SimulationFactory.create_simulation(
             system,
             parameters.testsystem.topology,
             platform=parameters.platform,
-            temperature=temperature,
+            temperature=parameters.temperature * unit.kelvin,
             env=parameters.env,
             device_index=parameters.device_index,
             ensemble=parameters.ensemble,
@@ -320,6 +317,8 @@ params.log_file_name: {parameters.log_file_name}
                 if parameters.output_folderensemble == "npt":
                     barostat = parameters.system.getForce(barostate_force_id)
                     barostat.setDefaultTemperature(temp)
+
+        return qsim
 
     def perform_stability_test(self, params: StabilityTestParameters) -> None:
         raise NotImplementedError()
@@ -395,8 +394,10 @@ class PropagationProtocol(StabilityTest):
     ) -> None:
         assert isinstance(parms.temperature, int)
 
+        parms.log_file_name = f"{parms.log_file_name}_{parms.temperature}"
+
         self._assert_input(parms)
-        qsim = self._setup_simulation(parms, parms.temperature * unit.kelvin)
+        qsim = self._setup_simulation(parms)
         self._run_simulation(parms, qsim)
 
 
@@ -422,7 +423,6 @@ class MinimizationProtocol(StabilityTest):
         self._assert_input(parms)
         qsim = self._setup_simulation(
             parms,
-            parms.temperature * unit.kelvin,
             minimization_tolerance=1.0 * unit.kilojoule_per_mole / unit.nanometer,
         )
 
@@ -459,18 +459,20 @@ class MultiTemperatureProtocol(PropagationProtocol):
         --------
         None
         """
-        log_file_name_ = parms.log_file_name
         if not isinstance(parms.temperature, list):
             raise RuntimeError(
                 "You need to provide mutliple temperatures to run the MultiTemperatureProtocol."
             )
+
         for temperature in parms.temperature:
-            parms.log_file_name = f"{log_file_name_}_{temperature}"
+            _parms = parms.copy()
+            _parms.temperature = temperature
+            _parms.log_file_name = f"{parms.log_file_name}_{temperature}K"
             log.info("Running simulation at temperature: {temperature} K")
-            self._run_simulation(
-                parms,
-                temperature * unit.kelvin,
-            )
+            self._assert_input(_parms)
+
+            qsim = self._setup_simulation(_parms)
+            self._run_simulation(_parms, qsim)
 
 
 def run_hipen_protocol(
@@ -580,7 +582,9 @@ def run_waterbox_protocol(
     )
     system = initialize_ml_system(nnp, testsystem.topology, implementation)
 
-    log_file_name = f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}"
+    log_file_name = (
+        f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}_{temperature}K"
+    )
     log.info(f"Writing to {log_file_name}")
 
     stability_test = PropagationProtocol()
@@ -802,35 +806,38 @@ def _generate_file_list_for_minimization_test() -> (
 ):
     import os
 
-    DATA_DIR = "/data/shared/projects/owl"
-    log.info("Reading in data for minimzation test")
-    log.debug(f"Reading from {DATA_DIR}")
-    # read in all directories in DATA_DIR
-    directories = [x[0] for x in os.walk(DATA_DIR)]
-    # read in all xyz files in directories
-    minimized_xyz_files = []
-    start_xyz_files = []
-    sdf_files = []
-    for directory in directories:
-        all_files = os.listdir(directory)
-        # test if there is a xyz, orca and sdf file in the list and only then continue
-        test_orca = any("orca" in file for file in all_files)
-        test_xyz = any("xyz" in file for file in all_files)
-        test_sdf = any("sdf" in file for file in all_files)
-        if (test_orca and test_xyz and test_sdf) == False:
-            log.debug(f"Skipping {directory}")
-            print(f"Skipping {directory}")
-            continue
+    import importlib.resources as pkg_resources
 
-        for file in all_files:
-            if file.endswith(".xyz"):
-                if file.startswith("orca"):
-                    minimized_xyz_files.append(os.path.join(directory, file))
-                else:
-                    start_xyz_files.append(os.path.join(directory, file))
-                    sdf_files.append(
-                        os.path.join(directory, file.replace(".xyz", ".sdf"))
-                    )
+    # This assumes 'my_package.data' is the package and 'filename' is the file in the 'data' directory
+    with pkg_resources.path("guardowl.data", "drugbank.tar.gz") as DATA_DIR:
+        log.info("Reading in data for minimzation test")
+        log.debug(f"Reading from {DATA_DIR}")
+        # read in all directories in DATA_DIR
+        directories = [x[0] for x in os.walk(DATA_DIR)]
+        # read in all xyz files in directories
+        minimized_xyz_files = []
+        start_xyz_files = []
+        sdf_files = []
+        for directory in directories:
+            all_files = os.listdir(directory)
+            # test if there is a xyz, orca and sdf file in the list and only then continue
+            test_orca = any("orca" in file for file in all_files)
+            test_xyz = any("xyz" in file for file in all_files)
+            test_sdf = any("sdf" in file for file in all_files)
+            if (test_orca and test_xyz and test_sdf) == False:
+                log.debug(f"Skipping {directory}")
+                print(f"Skipping {directory}")
+                continue
+
+            for file in all_files:
+                if file.endswith(".xyz"):
+                    if file.startswith("orca"):
+                        minimized_xyz_files.append(os.path.join(directory, file))
+                    else:
+                        start_xyz_files.append(os.path.join(directory, file))
+                        sdf_files.append(
+                            os.path.join(directory, file.replace(".xyz", ".sdf"))
+                        )
 
     return (minimized_xyz_files, start_xyz_files, sdf_files, directories)
 
@@ -869,13 +876,14 @@ def run_detect_minimum_test(
     from guardowl.testsystems import SmallMoleculeTestsystemFactory
     import mdtraj as md
     from .utils import extract_tar_gz
+
     # extract files relative to installation path
 
     import importlib.resources as pkg_resources
 
     # This assumes 'my_package.data' is the package and 'filename' is the file in the 'data' directory
-    with pkg_resources.path('guardowl.data', 'owl.tar.gz') as data_file_path:
-        extract_tar_gz("data_file_path", '.')
+    with pkg_resources.path("guardowl.data", "drugbank.tar.gz") as data_file_path:
+        extract_tar_gz(data_file_path, ".")
 
     (
         minimized_xyz_files,

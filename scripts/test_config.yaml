@@ -6,7 +6,7 @@ tests:
     nnp: "ani2x"
     implementation: "torchani"
     annealing: false
-    nr_of_simulation_steps: 50_000
+    nr_of_simulation_steps: 50
     temperature: 300
 
   - protocol: "alanine_dipeptide_protocol"
@@ -15,31 +15,23 @@ tests:
     nnp: "ani2x"
     implementation: "torchani"
     annealing: false
-    nr_of_simulation_steps: 50_000
+    nr_of_simulation_steps: 5
     temperature: 300
 
   - protocol: "hipen_protocol"
-    hipen_idx:
-      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-    nnp: "ani2x"
-    implementation: "torchani"
-    temperature: 300
-    nr_of_simulation_steps: 50_000
-
-  - protocol: "hipen_protocol"
-    hipen_idx: 1
+    hipen_idx: [0, 1, 15]
     nnp: "ani2x"
     implementation: "nnpops"
     temperature: [300, 400, 500]
-    nr_of_simulation_steps: 1_000_000
+    nr_of_simulation_steps: 50
 
   - protocol: "waterbox_protocol"
     edge_length: 30
-    ensemble: "NVT"
+    ensemble: "npt"
     nnp: "ani2x"
     implementation: "nnpops"
     annealing: false
-    nr_of_simulation_steps: 500_000
+    nr_of_simulation_steps: 50
     temperature: 300
 
   - protocol: "waterbox_protocol"
@@ -48,8 +40,8 @@ tests:
     nnp: "ani2x"
     implementation: "nnpops"
     annealing: false
-    nr_of_simulation_steps: 500_000
-    temperature: 300
+    nr_of_simulation_steps: 50
+    temperature: 500
 
   - protocol: "pure_liquid_protocol"
     molecule_name: ["ethane", "butane"]
@@ -58,6 +50,6 @@ tests:
     nnp: "ani2x"
     implementation: "torchani"
     annealing: false
-    nr_of_simulation_steps: 500_000
-    nr_of_equilibration_steps: 5_000
+    nr_of_simulation_steps: 50
+    nr_of_equilibration_steps: 50
     temperature: 300

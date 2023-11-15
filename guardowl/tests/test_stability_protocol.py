@@ -104,7 +104,7 @@ def test_run_vacuum_protocol(nnp: str, implementation: str) -> None:
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
 def test_setup_waterbox_protocol_individual_parts(
-    ensemble: str, nnp: str, implementation: str
+    ensemble: str, nnp: str, implementation: str, temperature: int = 300
 ) -> None:
     """Test if we can run a simulation for a number of steps"""
 
@@ -124,7 +124,7 @@ def test_setup_waterbox_protocol_individual_parts(
     )
 
     output_folder = "test_stability_protocol"
-    log_file_name = f"waterbox_{edge_size}A_{nnp}_{implementation}_{ensemble}"
+    log_file_name = f"waterbox_{edge_size}A_{nnp}_{implementation}_{ensemble}_{temperature}K"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     stability_test = PropagationProtocol()
@@ -143,7 +143,7 @@ def test_setup_waterbox_protocol_individual_parts(
 
     params = StabilityTestParameters(
         protocol_length=5,
-        temperature=300,
+        temperature=temperature,
         ensemble=ensemble,
         simulated_annealing=False,
         system=system,

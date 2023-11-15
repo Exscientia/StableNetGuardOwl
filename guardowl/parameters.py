@@ -16,7 +16,9 @@ class BaseParameters:
 
 @dataclass
 class MinimizationTestParameters(BaseParameters):
-    convergence_criteria: unit.Quantity = field(default_factory=1.0 * unit.kilojoule_per_mole / unit.nanometer)
+    convergence_criteria: unit.Quantity = field(
+        default_factory=1.0 * unit.kilojoule_per_mole / unit.nanometer
+    )
 
 
 @dataclass
@@ -50,7 +52,7 @@ class StabilityTestParameters(BaseParameters):
     """
 
     protocol_length: int
-    temperature: Union[int, List[int]]
+    temperature: unit.Quantity
     env: str
     simulated_annealing: bool
     state_data_reporter: StateDataReporter
