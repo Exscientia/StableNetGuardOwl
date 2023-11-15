@@ -459,16 +459,18 @@ class MultiTemperatureProtocol(PropagationProtocol):
         --------
         None
         """
+        import dataclasses
+
         if not isinstance(parms.temperature, list):
             raise RuntimeError(
                 "You need to provide mutliple temperatures to run the MultiTemperatureProtocol."
             )
 
         for temperature in parms.temperature:
-            _parms = parms.copy()
+            _parms = dataclasses.replace(parms)
             _parms.temperature = temperature
             _parms.log_file_name = f"{parms.log_file_name}_{temperature}K"
-            log.info("Running simulation at temperature: {temperature} K")
+            log.info(f"Running simulation at temperature: {temperature} K")
             self._assert_input(_parms)
 
             qsim = self._setup_simulation(_parms)
@@ -727,6 +729,7 @@ def run_alanine_dipeptide_protocol(
     else:
         log_file_name = f"alanine_dipeptide_{env}_{nnp}_{implementation}_{ensemble}"
 
+    log_file_name = f"{log_file_name}_{temperature}K"
     log.info(f"Writing to {log_file_name}")
 
     stability_test = PropagationProtocol()

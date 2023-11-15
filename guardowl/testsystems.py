@@ -90,8 +90,8 @@ class BaseMoleculeTestSystem:
         self,
         name: str,
         smiles: Optional[str],
-        sdf_file: Optional[str],
-        positions: Optional[List],
+        sdf_file: Optional[str] = None,
+        positions: Optional[List] = None,
     ):
         from .setup import (
             create_system_from_mol,
