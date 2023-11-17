@@ -20,15 +20,6 @@ def setup_logging_and_output():
     return output_folder
 
 
-def validate_input(nnp: str, implementation: str):
-    from guardowl.utils import available_nnps_and_implementation
-
-    if (nnp, implementation) not in available_nnps_and_implementation:
-        error_message = f"Invalid nnp/implementation combination. Valid combinations are: {available_nnps_and_implementation}. Got {nnp}/{implementation}"
-        log.error(error_message)
-        raise RuntimeError(error_message)
-
-
 def create_test_system(testsystem_factory, *args, **kwargs):
     return testsystem_factory().generate_testsystems(*args, **kwargs)
 
@@ -74,7 +65,7 @@ def main(config: str):
 
     for test in config.get("tests", []):
         protocol = test.get("protocol")
-        validate_input(test.get("nnp"), test.get("implementation"))
+        
         # add reporter and output folder
         test["output_folder"] = setup_logging_and_output()
         test["reporter"] = create_state_data_reporter()

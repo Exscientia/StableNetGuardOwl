@@ -1,6 +1,6 @@
 import mdtraj as md
 
-prefix = "guardowl/tests/data/stability_testing"
+prefix = "data/stability_testing"
 
 
 def generate_water_mdtraj_instance() -> md.Trajectory:

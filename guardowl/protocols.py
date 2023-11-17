@@ -3,7 +3,7 @@ import os
 import sys
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import List, TextIO, Tuple, Union, Optional
+from typing import List, TextIO, Tuple, Union, Optional, Dict
 
 import mdtraj as md
 import numpy as np
@@ -20,13 +20,32 @@ from .parameters import (
     MinimizationTestParameters,
 )
 
+from exs.physicsml.plugins.openmm.mlpotential import MLPotential
+from exs.physicsml.plugins.openmm.physicsml_potential import (
+    PhysicsMLPotentialImplFactory,  # noqa F401
+)
 
-def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> System:
-    from openmmml import MLPotential
 
+def initialize_ml_system(
+    nnp: str,
+    topology: Topology,
+    implementation: str,
+    model_properties: Dict,
+    platform: openmm.Platform,
+) -> System:
     from guardowl.simulation import SystemFactory
 
-    nnp_instance = MLPotential(nnp)
+    nnp_instance = MLPotential(
+        "physicsml_model",
+        repo_url="git@bitbucket.org:exscientia/qmml-experiments.git",
+        rev=model_properties["rev"],
+        model_path_in_repo=model_properties["model_path_in_repo"],
+        precision=model_properties["precision"],
+        position_scaling=10.0,
+        output_scaling=4.184,
+        device=platform.getName().lower(),
+    )
+
     system = SystemFactory().initialize_pure_ml_system(
         nnp_instance, topology, implementation=implementation
     )
@@ -44,7 +63,7 @@ class ContinuousProgressReporter(object):
     total_steps : int
         Total number of steps in the simulation.
     reportInterval : int
-        Interval at which to report the progress.
+        Interval at which to repor`t the progress.
 
     Attributes
     ----------
@@ -560,6 +579,7 @@ def run_hipen_protocol(
     reporter: StateDataReporter,
     platform: openmm.Platform,
     output_folder: str,
+    model_properties: Dict,
     device_index: int = 0,
     nr_of_simulation_steps: int = 5_000_000,
 ):
@@ -586,7 +606,13 @@ def run_hipen_protocol(
         )
 
         testsystem = HipenTestsystemFactory().generate_testsystems(name)
-        system = initialize_ml_system(nnp, testsystem.topology, implementation)
+        system = initialize_ml_system(
+            nnp,
+            testsystem.topology,
+            implementation,
+            model_properties=model_properties,
+            platform=platform,
+        )
         log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
         if isinstance(temperature, int):
             stability_test = PropagationProtocol()
@@ -627,6 +653,7 @@ def run_waterbox_protocol(
     reporter: StateDataReporter,
     platform: openmm.Platform,
     output_folder: str,
+    model_properties: Dict,
     device_index: int = 0,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
@@ -657,7 +684,13 @@ def run_waterbox_protocol(
     testsystem = WaterboxTestsystemFactory().generate_testsystems(
         edge_length * unit.angstrom, nr_of_equilibrium_steps
     )
-    system = initialize_ml_system(nnp, testsystem.topology, implementation)
+    system = initialize_ml_system(
+        nnp,
+        testsystem.topology,
+        implementation,
+        model_properties=model_properties,
+        platform=platform,
+    )
 
     log_file_name = f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}"
     log.info(f"Writing to {log_file_name}")
@@ -693,6 +726,7 @@ def run_pure_liquid_protocol(
     reporter: StateDataReporter,
     platform: openmm.Platform,
     output_folder: str,
+    model_properties: Dict,
     device_index: int = 0,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
@@ -733,7 +767,13 @@ def run_pure_liquid_protocol(
             nr_of_copies=n_atoms,
             nr_of_equilibration_steps=nr_of_equilibration_steps,
         )
-        system = initialize_ml_system(nnp, testsystem.topology, implementation)
+        system = initialize_ml_system(
+            nnp,
+            testsystem.topology,
+            implementation,
+            model_properties=model_properties,
+            platform=platform,
+        )
 
         log_file_name = (
             f"pure_liquid_{name}_{n_atoms}_{nnp}_{implementation}_{ensemble}"
@@ -768,6 +808,7 @@ def run_alanine_dipeptide_protocol(
     reporter: StateDataReporter,
     platform: openmm.Platform,
     output_folder: str,
+    model_properties: Dict,
     device_index: int = 0,
     ensemble: Optional[str] = None,
     annealing: bool = False,
@@ -795,8 +836,17 @@ def run_alanine_dipeptide_protocol(
     )
 
     testsystem = AlaninDipeptideTestsystemFactory().generate_testsystems(env=env)
-    system = initialize_ml_system(nnp, testsystem.topology, implementation)
+
+    system = initialize_ml_system(
+        nnp,
+        testsystem.topology,
+        implementation,
+        model_properties=model_properties,
+        platform=platform,
+    )
+
     assert env in ["vacuum", "solution"], f"Invalid input: {env}"
+
     if env == "vacuum":
         log_file_name = f"alanine_dipeptide_{env}_{nnp}_{implementation}"
     else:

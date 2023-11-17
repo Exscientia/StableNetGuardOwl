@@ -1,4 +1,4 @@
-prefix = "guardowl/tests/data/stability_testing"
+prefix = "data/stability_testing"
 
 
 def test_generate_visualization():

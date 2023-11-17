@@ -63,7 +63,7 @@ class SimulationFactory:
                 integrator,
                 platform=platform,
                 platformProperties={
-                    "Precision": "mixed",
+                    "Precision": "double",
                     "DeviceIndex": str(device_index),
                 },
             )

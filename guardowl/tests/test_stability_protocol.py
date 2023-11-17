@@ -1,9 +1,13 @@
+from typing import Dict
 from pathlib import Path
 
 import pytest
 from openmm import unit
 from openmm.app import StateDataReporter
-from openmmml import MLPotential
+from exs.physicsml.plugins.openmm.mlpotential import MLPotential
+from exs.physicsml.plugins.openmm.physicsml_potential import (
+    PhysicsMLPotentialImplFactory,  # noqa F401
+)
 from openmmtools.utils import get_fastest_platform
 
 from guardowl.protocols import (
@@ -21,23 +25,43 @@ from guardowl.testsystems import (
 )
 from guardowl.utils import get_available_nnps_and_implementation
 
+NNP_MODELS = [
+    {},
+    {},
+    {},
+    {},
+]
 
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -> None:
+
+@pytest.mark.parametrize("model_properties", NNP_MODELS)
+def test_setup_vacuum_protocol_individual_parts(model_properties: Dict) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # ---------------------------#
     platform = get_fastest_platform()
     name = "ZINC00107550"
 
+    nnp = model_properties["model"]
+    implementation = "SPICE"
+
     testsystem = HipenTestsystemFactory().generate_testsystems(name)
-    nnp_instance = MLPotential(nnp)
+    nnp_instance = MLPotential(
+        "physicsml_model",
+        repo_url="git@bitbucket.org:exscientia/qmml-experiments.git",
+        rev=model_properties["rev"],
+        model_path_in_repo=model_properties["model_path_in_repo"],
+        precision=model_properties["precision"],
+        position_scaling=10.0,
+        output_scaling=4.184,
+        device=platform.getName().lower(),
+    )
 
     system = SystemFactory().initialize_pure_ml_system(
         nnp_instance,
         testsystem.topology,
         implementation=implementation,
     )
+
     output_folder = "test_stability_protocol"
     log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
@@ -54,6 +78,7 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -
         density=True,
         speed=True,
     )
+
     params = StabilityTestParameters(
         protocol_length=5,
         temperature=[300, 400],
@@ -71,9 +96,12 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -
     stability_test.perform_stability_test(params)
 
 
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_vacuum_protocol(nnp: str, implementation: str) -> None:
+@pytest.mark.parametrize("model_properties", NNP_MODELS)
+def test_run_vacuum_protocol(model_properties: Dict) -> None:
     from guardowl.protocols import run_hipen_protocol
+
+    nnp = model_properties["model"]
+    implementation = "SPICE"
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -98,15 +126,19 @@ def test_run_vacuum_protocol(nnp: str, implementation: str) -> None:
         platform,
         output_folder,
         nr_of_simulation_steps=2,
+        model_properties=model_properties,
     )
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+@pytest.mark.parametrize("model_properties", NNP_MODELS)
 def test_setup_waterbox_protocol_individual_parts(
-    ensemble: str, nnp: str, implementation: str
+    ensemble: str, model_properties: Dict
 ) -> None:
     """Test if we can run a simulation for a number of steps"""
+
+    nnp = model_properties["model"]
+    implementation = "SPICE"
 
     # ---------------------------#
     platform = get_fastest_platform()
@@ -115,7 +147,17 @@ def test_setup_waterbox_protocol_individual_parts(
     testsystem = WaterboxTestsystemFactory().generate_testsystems(
         edge_size * unit.angstrom, nr_of_equilibrium_steps=10
     )
-    nnp_instance = MLPotential(nnp)
+
+    nnp_instance = MLPotential(
+        "physicsml_model",
+        repo_url="git@bitbucket.org:exscientia/qmml-experiments.git",
+        rev=model_properties["rev"],
+        model_path_in_repo=model_properties["model_path_in_repo"],
+        precision=model_properties["precision"],
+        position_scaling=10.0,
+        output_scaling=4.184,
+        device=platform.getName().lower(),
+    )
 
     system = SystemFactory().initialize_pure_ml_system(
         nnp_instance,
@@ -161,9 +203,12 @@ def test_setup_waterbox_protocol_individual_parts(
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> None:
+@pytest.mark.parametrize("model_properties", NNP_MODELS)
+def test_run_waterbox_protocol(ensemble: str, model_properties: Dict) -> None:
     from guardowl.protocols import run_waterbox_protocol
+
+    nnp = model_properties["model"]
+    implementation = "SPICE"
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -190,15 +235,17 @@ def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> 
         output_folder,
         nr_of_simulation_steps=2,
         nr_of_equilibrium_steps=10,
+        model_properties=model_properties,
     )
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_alanine_dipeptide_protocol(
-    ensemble: str, nnp: str, implementation: str
-) -> None:
+@pytest.mark.parametrize("model_properties", NNP_MODELS)
+def test_run_alanine_dipeptide_protocol(ensemble: str, model_properties: Dict) -> None:
     from guardowl.protocols import run_alanine_dipeptide_protocol
+
+    nnp = model_properties["model"]
+    implementation = "SPICE"
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -224,13 +271,17 @@ def test_run_alanine_dipeptide_protocol(
         ensemble=ensemble,
         nr_of_simulation_steps=2,
         env="vacuum",
+        model_properties=model_properties,
     )
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_pure_liquid_protocol(ensemble: str, nnp: str, implementation: str) -> None:
+@pytest.mark.parametrize("model_properties", NNP_MODELS)
+def test_run_pure_liquid_protocol(ensemble: str, model_properties: Dict) -> None:
     from guardowl.protocols import run_pure_liquid_protocol
+
+    nnp = model_properties["model"]
+    implementation = "SPICE"
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -259,19 +310,32 @@ def test_run_pure_liquid_protocol(ensemble: str, nnp: str, implementation: str) 
         ensemble=ensemble,
         nr_of_simulation_steps=2,
         nr_of_equilibration_steps=10,
+        model_properties=model_properties,
     )
 
 
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_DOF_protocol(nnp: str, implementation: str) -> None:
+@pytest.mark.parametrize("model_properties", NNP_MODELS)
+def test_DOF_protocol(model_properties: Dict) -> None:
     """Test if we can run a simulation for a number of steps"""
+
+    nnp = model_properties["model"]
+    implementation = "SPICE"
 
     # ---------------------------#
     platform = get_fastest_platform()
 
     testsystem = SmallMoleculeTestsystemFactory().generate_testsystems(name="ethanol")
 
-    nnp_instance = MLPotential(nnp)
+    nnp_instance = MLPotential(
+        "physicsml_model",
+        repo_url="git@bitbucket.org:exscientia/qmml-experiments.git",
+        rev=model_properties["rev"],
+        model_path_in_repo=model_properties["model_path_in_repo"],
+        precision=model_properties["precision"],
+        position_scaling=10.0,
+        output_scaling=4.184,
+        device=platform.getName().lower(),
+    )
 
     system = SystemFactory().initialize_pure_ml_system(
         nnp_instance,
