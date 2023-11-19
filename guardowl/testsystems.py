@@ -45,12 +45,13 @@ class PureLiquidBoxTestSystem(TestSystem):
         if n_atoms < 50:
             edge_length = 10
         else:
-            edge_length = np.round(0.003813 * n_atoms) + 22
+            edge_length = np.round(0.002 * n_atoms) + 20
         # NOTE: original regression line Y = 0.003813*X + 19.27
         log.debug(f"Calculated intial {edge_length} Angstrom for {n_atoms} atoms")
         success = False  # Repeat until sucess is True
         while not success:
             increase_packing = 0
+            fail_counter = 0
             try:
                 log.debug(
                     f"Trying to pack {nr_of_copies} copies of {molecule_name} in box with edge length {edge_length+increase_packing} ..."
@@ -64,8 +65,13 @@ class PureLiquidBoxTestSystem(TestSystem):
                 )
                 success = True
             except Exception as e:
+                fail_counter += 1
                 log.error(f"Packmol failed with the following error: {e}")
-                increase_packing += 2
+                increase_packing += 1
+                if fail_counter > 10:
+                    raise RuntimeError(
+                        f"Packmol failed with the following error: {e}"
+                    ) from e
         log.debug("Packmol has finished ...")
 
         sage = ForceField("openff-2.0.0.offxml")

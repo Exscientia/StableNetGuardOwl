@@ -21,7 +21,7 @@ tests:
   - protocol: "hipen_protocol"
     hipen_idx: [0, 1, 15]
     nnp: "ani2x"
-    implementation: "nnpops"
+    implementation: "torchani"
     temperature: [300, 400, 500]
     nr_of_simulation_steps: 50
 
@@ -29,7 +29,7 @@ tests:
     edge_length: 30
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "nnpops"
+    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     temperature: 300
@@ -38,13 +38,13 @@ tests:
     edge_length: 30
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "nnpops"
+    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     temperature: 500
 
   - protocol: "pure_liquid_protocol"
-    molecule_name: ["ethane", "butane"]
+    molecule_name: ["ethane", "butane", "methanol"]
     nr_of_molecule: [100, 200]
     ensemble: "npt"
     nnp: "ani2x"

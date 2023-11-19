@@ -866,7 +866,7 @@ def run_detect_minimum_test(
     nnp: str,
     implementation: str,
     platform: Platform,
-    output_folder: str,
+    extracted_dir: str,
     percentage: int = 10,
 ):
     """
@@ -886,7 +886,7 @@ def run_detect_minimum_test(
 
     # This assumes 'my_package.data' is the package and 'filename' is the file in the 'data' directory
     with pkg_resources.path("guardowl.data", "drugbank.tar.gz") as data_file_path:
-        extract_tar_gz(data_file_path, ".")
+        extract_tar_gz(data_file_path, extracted_dir)
 
     (
         minimized_xyz_files,

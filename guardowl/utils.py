@@ -74,6 +74,14 @@ def extract_tar_gz(tar_path, extract_path="."):
     """
     import tarfile
 
-    with tarfile.open(tar_path, "r:gz") as tar:
-        tar.extractall(path=extract_path)
-        print(f"Extracted {tar_path} to {extract_path}")
+    print(f"{extract_path=}")
+    print(f"{tar_path=}")
+    # Check if the extraction is already done
+    expected_file_or_dir = extract_path.join("99")
+    if not expected_file_or_dir.check():
+        # Extract the tar file if the expected file/directory is not found
+        with tarfile.open(tar_path, "r:gz") as tar:
+            tar.extractall(path=extract_path)
+            print(f"Extracted {tar_path} to {extract_path}")
+    else:
+        print(f"Found {expected_file_or_dir} in {extract_path}, skipping extraction")
