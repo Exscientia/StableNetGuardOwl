@@ -124,7 +124,9 @@ def test_setup_waterbox_protocol_individual_parts(
     )
 
     output_folder = "test_stability_protocol"
-    log_file_name = f"waterbox_{edge_size}A_{nnp}_{implementation}_{ensemble}_{temperature}K"
+    log_file_name = (
+        f"waterbox_{edge_size}A_{nnp}_{implementation}_{ensemble}_{temperature}K"
+    )
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     stability_test = PropagationProtocol()
@@ -308,11 +310,11 @@ def test_input_generation_for_minimization_tests():
 
 
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_detect_minimum_test(nnp, implementation):
+def test_run_detect_minimum_test(nnp, implementation, extracted_dir):
     from guardowl.protocols import run_detect_minimum_test
 
     platform = get_fastest_platform()
 
     run_detect_minimum_test(
-        nnp, implementation, platform, output_folder="test", percentage=10
+        nnp, implementation, platform, extracted_dir, percentage=10
     )
