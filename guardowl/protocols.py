@@ -642,8 +642,10 @@ def run_pure_liquid_protocol(
         molecule_name_ = [molecule_name]
         nr_of_molecule_ = [nr_of_molecule]
     else:
-        molecule_name_ = molecule_name
-        nr_of_molecule_ = nr_of_molecule
+        molecule_name_ = molecule_name * len(nr_of_molecule)
+        nr_of_molecule_ = [
+            element for element in nr_of_molecule for _ in range(len(molecule_name))
+        ]
 
     for name, n_atoms in zip(molecule_name_, nr_of_molecule_):
         print(

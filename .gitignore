@@ -112,3 +112,4 @@ scripts/test_stability_protocol/
 *pdb
 *dcd
 *pt
+test_stability_protocol/*

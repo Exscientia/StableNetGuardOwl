@@ -45,7 +45,7 @@ class PureLiquidBoxTestSystem(TestSystem):
         if n_atoms < 50:
             edge_length = 10
         else:
-            edge_length = np.round(0.002 * n_atoms) + 20
+            edge_length = np.round(0.002 * n_atoms) + 15
         # NOTE: original regression line Y = 0.003813*X + 19.27
         log.debug(f"Calculated intial {edge_length} Angstrom for {n_atoms} atoms")
         success = False  # Repeat until sucess is True
