@@ -1,7 +1,7 @@
 import csv
 import os
 import sys
-from typing import List, TextIO, Tuple, Union, Optional
+from typing import List, TextIO, Tuple, Union, Optional, Dict
 
 import numpy as np
 from loguru import logger as log
@@ -496,7 +496,7 @@ def run_hipen_protocol(
     :param implementation: The implementation to use.
     :param nr_of_simulation_steps: The number of simulation steps to perform (default=5_000_000).
     """
-    from guardowl.testsystems import HipenTestsystemFactory, hipen_systems
+    from guardowl.testsystems import SmallMoleculeTestsystemFactory, hipen_systems
 
     def _run_protocol(hipen_idx: int):
         name = list(hipen_systems.keys())[hipen_idx]
@@ -510,7 +510,9 @@ def run_hipen_protocol(
             """
         )
 
-        testsystem = HipenTestsystemFactory().generate_testsystems(name)
+        testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_name(
+            name
+        )
         system = initialize_ml_system(nnp, testsystem.topology, implementation)
         log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
         if isinstance(temperature, int):
@@ -806,64 +808,6 @@ def run_DOF_scan(
         raise NotImplementedError
 
 
-def _generate_file_list_for_minimization_test() -> (
-    Tuple[List[str], List[str], List[str], List[str]]
-):
-    import os
-
-    import importlib.resources as pkg_resources
-
-    # This assumes 'my_package.data' is the package and 'filename' is the file in the 'data' directory
-    with pkg_resources.path("guardowl.data", "drugbank.tar.gz") as DATA_DIR:
-        log.info("Reading in data for minimzation test")
-        log.debug(f"Reading from {DATA_DIR}")
-        # read in all directories in DATA_DIR
-        directories = [x[0] for x in os.walk(DATA_DIR)]
-        # read in all xyz files in directories
-        minimized_xyz_files = []
-        start_xyz_files = []
-        sdf_files = []
-        for directory in directories:
-            all_files = os.listdir(directory)
-            # test if there is a xyz, orca and sdf file in the list and only then continue
-            test_orca = any("orca" in file for file in all_files)
-            test_xyz = any("xyz" in file for file in all_files)
-            test_sdf = any("sdf" in file for file in all_files)
-            if (test_orca and test_xyz and test_sdf) == False:
-                log.debug(f"Skipping {directory}")
-                print(f"Skipping {directory}")
-                continue
-
-            for file in all_files:
-                if file.endswith(".xyz"):
-                    if file.startswith("orca"):
-                        minimized_xyz_files.append(os.path.join(directory, file))
-                    else:
-                        start_xyz_files.append(os.path.join(directory, file))
-                        sdf_files.append(
-                            os.path.join(directory, file.replace(".xyz", ".sdf"))
-                        )
-
-    return (minimized_xyz_files, start_xyz_files, sdf_files, directories)
-
-
-def _generate_input_for_minimization_test(
-    minimized_xyz_files: List[str], start_xyz_files: List[str]
-) -> Tuple[List[str], List[str]]:
-    # read in coordinates from xyz files
-    def read_positions(files):
-        for file in files:
-            with open(file, "r") as f:
-                lines = f.readlines()
-                positions = [[float(x) for x in line.split()[1:]] for line in lines[2:]]
-                yield file, positions
-
-    minimized_positions = read_positions(minimized_xyz_files)
-    start_positions = read_positions(start_xyz_files)
-
-    return (start_positions, minimized_positions)
-
-
 def run_detect_minimum_test(
     nnp: str,
     implementation: str,
@@ -880,45 +824,28 @@ def run_detect_minimum_test(
 
     from guardowl.testsystems import SmallMoleculeTestsystemFactory
     import mdtraj as md
-    from .utils import extract_tar_gz
+    from .utils import (
+        extract_drugbank_tar_gz,
+        _generate_file_list_for_minimization_test,
+        _generate_input_for_minimization_test,
+    )
 
     # extract files relative to installation path
 
-    import importlib.resources as pkg_resources
+    extract_drugbank_tar_gz()
 
-    # This assumes 'my_package.data' is the package and 'filename' is the file in the 'data' directory
-    with pkg_resources.path("guardowl.data", "drugbank.tar.gz") as data_file_path:
-        extract_tar_gz(data_file_path, extracted_dir)
+    files = _generate_file_list_for_minimization_test(shuffel=True)
 
-    (
-        minimized_xyz_files,
-        start_xyz_files,
-        sdf_files,
-        directories,
-    ) = _generate_file_list_for_minimization_test()
-
-    nr_of_molecules = len(directories)
+    nr_of_molecules = files["total_number_of_systems"]
     nr_of_molecules_to_test = int(nr_of_molecules * (percentage / 100))
-    shuffeled_idx = np.random.permutation(np.arange(nr_of_molecules))
-
-    minimized_xyz_files = [
-        minimized_xyz_files[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]
-    ]
-    start_xyz_files = [
-        start_xyz_files[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]
-    ]
-    dir_list = [directories[idx] for idx in shuffeled_idx[:nr_of_molecules_to_test]]
-
-    start_positions, minimized_positions = _generate_input_for_minimization_test(
-        minimized_xyz_files,
-        start_xyz_files,
-    )
 
     score = {}
-    for dir_, start_position, minimized_position, sdf_file in zip(
-        dir_list, start_positions, minimized_positions, sdf_files
-    ):
-        name = os.path.basename(dir_)
+    for (minimized_file, minimized_position), (
+        start_file,
+        start_position,
+    ) in _generate_input_for_minimization_test(files):
+        working_dir = "".join(minimized_file.split("/")[:-1])
+        name = os.path.basename(working_dir)
 
         log.debug(f"Testing {name}")
         print(
@@ -931,11 +858,11 @@ def run_detect_minimum_test(
         )
 
         reference_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems(
-            sdf_file, start_position
+            start_file, start_position
         )
 
         minimize_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems(
-            sdf_file, minimized_position
+            start_file, minimized_position
         )
 
         system = initialize_ml_system(

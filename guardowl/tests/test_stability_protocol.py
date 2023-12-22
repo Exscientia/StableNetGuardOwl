@@ -15,7 +15,6 @@ from guardowl.protocols import (
 )
 from guardowl.simulation import SystemFactory
 from guardowl.testsystems import (
-    HipenTestsystemFactory,
     SmallMoleculeTestsystemFactory,
     WaterboxTestsystemFactory,
 )
@@ -30,7 +29,7 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -
     platform = get_fastest_platform()
     name = "ZINC00107550"
 
-    testsystem = HipenTestsystemFactory().generate_testsystems(name)
+    testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_name(name)
     nnp_instance = MLPotential(nnp)
 
     system = SystemFactory().initialize_pure_ml_system(
@@ -182,7 +181,7 @@ def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> 
     output_folder = "test_stability_protocol"
 
     run_waterbox_protocol(
-        10,
+        5,
         ensemble,
         nnp,
         implementation,
@@ -299,13 +298,45 @@ def test_DOF_protocol(nnp: str, implementation: str) -> None:
 
 
 def test_input_generation_for_minimization_tests():
-    from guardowl.protocols import _generate_input_for_minimization_test
+    from guardowl.utils import (
+        _generate_input_for_minimization_test,
+        _generate_file_list_for_minimization_test,
+        extract_drugbank_tar_gz,
+    )
+    import numpy as np
 
-    input = _generate_input_for_minimization_test()
+    # extract tar.gz data
+    extract_drugbank_tar_gz()
+    # read in file names and build Iterators
+    files = _generate_file_list_for_minimization_test()
+    # read in first file
+    (minimized_file, minimized_position), (start_file, start_position) = next(
+        _generate_input_for_minimization_test(files)
+    )
+    # test if the file base is the same
     assert (
-        len(input["minimized"])
-        == len(input["start_positions"])
-        == len(input["directories"])
+        minimized_file
+        == "/home/mwieder/Work/Projects/StableNetGuardOwl/guardowl/data/drugbank/owl/11117974/orca_input.xyz"
+    )
+    assert "".join(minimized_file.split("/")[:-1]) == "".join(
+        start_file.split("/")[:-1]
+    )
+
+    assert np.allclose(
+        minimized_position[0], [-1.33526786531436, 2.48368695037195, 1.04890049484746]
+    )
+
+    # now shuffel
+    files = _generate_file_list_for_minimization_test(shuffel=True)
+    (minimized_file, minimized_position), (start_file, start_position) = next(
+        _generate_input_for_minimization_test(files)
+    )
+    assert not (
+        minimized_file
+        == "/home/mwieder/Work/Projects/StableNetGuardOwl/guardowl/data/drugbank/owl/11117974/orca_input.xyz"
+    )
+    assert "".join(minimized_file.split("/")[:-1]) == "".join(
+        start_file.split("/")[:-1]
     )
 
 
@@ -315,6 +346,4 @@ def test_run_detect_minimum_test(nnp, implementation, extracted_dir):
 
     platform = get_fastest_platform()
 
-    run_detect_minimum_test(
-        nnp, implementation, platform, extracted_dir, percentage=10
-    )
+    run_detect_minimum_test(nnp, implementation, platform, extracted_dir, percentage=10)
