@@ -52,7 +52,7 @@ def create_system_from_mol(mol: Molecule) -> Tuple[System, Topology]:
 
     topology = mol.to_topology()
     system = forcefield.create_openmm_system(topology)
-    return (system, topology)
+    return (system, topology.to_openmm())
 
 
 def generate_molecule_from_sdf():

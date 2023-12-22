@@ -12,6 +12,7 @@ from openmmtools.testsystems import (
     WaterBox,
 )
 from openmmtools.utils import get_fastest_platform
+from openff.toolkit.topology import Molecule, Topology
 
 from .constants import collision_rate, stepsize, temperature
 
@@ -85,43 +86,7 @@ class PureLiquidBoxTestSystem(TestSystem):
         )
 
 
-class BaseMoleculeTestSystem:
-    """Base class for molecule test systems.
-
-    This class encapsulates the common functionality for creating
-    molecule-based test systems.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        smiles: Optional[str],
-        sdf_file: Optional[str] = None,
-        positions: Optional[List] = None,
-    ):
-        from .setup import (
-            create_system_from_mol,
-            generate_molecule_from_smiles,
-            generate_molecule_from_sdf,
-        )
-
-        self.testsystem_name = name
-        self.smiles = smiles
-
-        if self.smiles:
-            mol = generate_molecule_from_smiles(self.smiles)
-        elif sdf_file:
-            mol = generate_molecule_from_sdf(sdf_file, positions)
-        else:
-            raise RuntimeError("Either smiles or sdf_file must be provided")
-
-        self.system, topology = create_system_from_mol(mol)
-        self.topology = topology.to_openmm()
-        self.positions = to_openmm(mol.conformers[0])
-        self.mol = mol
-
-
-class SmallMoleculeVacuumTestSystem(BaseMoleculeTestSystem):
+class SmallMoleculeVacuumTestSystem:
     """Class for small molecule in vacuum test systems.
 
     Parameters
@@ -132,50 +97,11 @@ class SmallMoleculeVacuumTestSystem(BaseMoleculeTestSystem):
         SMILES string of the molecule.
     """
 
-    pass  # All functionality is currently in the base class
-
-
-class HipenSystemVacuum(BaseMoleculeTestSystem):
-    """Class for HiPen molecule in vacuum test systems.
-
-    Parameters
-    ----------
-    zink_id : str
-        ZINC identifier for the molecule.
-    smiles : str
-        SMILES string of the molecule.
-    """
-
-    def __init__(self, zink_id: str, smiles: str):
-        super().__init__(zink_id, smiles)
-        self.zink_id = zink_id
-
-
-class HipenTestsystemFactory:
-    """Factory for generating HiPen test systems.
-
-    This factory class provides methods to generate HiPen test systems.
-    """
-
-    def __init__(self) -> None:
-        """Factory that returns HipenSystemVacuum"""
-        self.hipen_systems = hipen_systems
-        self.name = "hipen_testsystem"
-
-    def generate_testsystems(self, name: str) -> HipenSystemVacuum:
-        """Generate a HiPen test system.
-
-        Parameters
-        ----------
-        name : str
-            Name of the test system to generate.
-
-        Returns
-        -------
-        HipenSystemVacuum
-            Generated test system.
-        """
-        return HipenSystemVacuum(name, hipen_systems[name])
+    def __init__(self, name, system, topology, positions):
+        self.name = name
+        self.system = system
+        self.topology = topology
+        self.positions = positions
 
 
 class SmallMoleculeTestsystemFactory:
@@ -185,16 +111,54 @@ class SmallMoleculeTestsystemFactory:
     """
 
     def __init__(self) -> None:
-        """Factory that returns SmallMoleculeTestsystems"""
-        self._mols = {
-            "ethanol": "OCC",
-            "methanol": "OC",
-            "propanol": "OCC",
-            "methane": "C",
-        }
+        pass
+
+    @staticmethod
+    def generate_testsystems_from_mol(
+        mol: Molecule, name: Optional[str] = None
+    ) -> SmallMoleculeVacuumTestSystem:
+        """Generate a SmallMoleculeVacuum test system.
+
+        Parameters
+        ----------
+        mol : openff.toolkit.topology.Molecule
+            Molecule to generate test system from.
+        name : str
+            Name of the test system to generate.
+
+        Returns
+        -------
+        SmallMoleculeVacuum
+            Generated test system.
+        """
+        from .setup import create_system_from_mol
+
+        system, topology = create_system_from_mol(mol)
+        positions = to_openmm(mol.conformers[0])
+        return SmallMoleculeVacuumTestSystem(name, system, topology, positions)
+
+    def generate_testsystem_from_smiles(self, smiles: str, name: Optional[str] = None):
+        """Generate a SmallMoleculeVacuum test system.
+
+        Parameters
+        ----------
+        smiles : str
+            SMILES string of the molecule.
+
+        Returns
+        -------
+        SmallMoleculeVacuum
+            Generated test system.
+        """
+        from .setup import generate_molecule_from_smiles
+
+        mol = generate_molecule_from_smiles(smiles)
+        return self.generate_testsystems_from_mol(mol, name)
 
     @lru_cache(maxsize=None)
-    def generate_testsystems(self, name: str) -> SmallMoleculeVacuumTestSystem:
+    def generate_testsystems_from_name(
+        self, name: str
+    ) -> SmallMoleculeVacuumTestSystem:
         """Generate a SmallMoleculeVacuum test system.
 
         Parameters
@@ -207,12 +171,16 @@ class SmallMoleculeTestsystemFactory:
         SmallMoleculeVacuum
             Generated test system.
         """
-        if name not in list(self._mols.keys()):
-            raise RuntimeError(
-                f"Molecule is not in the list of available systems: {self._mols.keys()}"
+        if name in list(standard_test_systems.keys()):
+            return self.generate_testsystem_from_smiles(
+                standard_test_systems[name], name
             )
-
-        return SmallMoleculeVacuumTestSystem(name, self._mols[name])
+        elif name in list(hipen_systems.keys()):
+            return self.generate_testsystem_from_smiles(hipen_systems[name], name)
+        else:
+            raise RuntimeError(
+                f"Molecule is not in the list of available systems: {hipen_systems.keys()} and {standard_test_systems.keys()}"
+            )
 
 
 class LiquidTestsystemFactory:
@@ -249,9 +217,8 @@ class LiquidTestsystemFactory:
         sim.context.setPositions(testsystem.positions)
         sim.step(nr_of_steps)
         state = sim.context.getState(getPositions=True)
-        testsystem.positions = (
-            state.getPositions()
-        )  # pylint: disable=unexpected-keyword-arg
+        testsystem.positions = state.getPositions()
+        testsystem.box_vectors = state.getPeriodicBoxVectors()
         return testsystem
 
 
@@ -424,4 +391,25 @@ hipen_systems = {
     "ZINC04363792": r"Clc1cc(Cl)cc(/N=c2\ssnc2-c2ccccc2Cl)c1",  # hipen 20
     "ZINC06568023": r"O=C(NNC(=O)c1ccccc1)c1ccccc1",  # hipen 21
     "ZINC33381936": r"O=S(=O)(O/N=C1/CCc2ccccc21)c1ccc(Cl)cc1",  # hipen 22
+}
+
+standard_test_systems = {
+    "ethanol": "CCO",
+    "methanol": "CO",
+    "methane": "C",
+    "propane": "CCC",
+    "butane": "CCCC",
+    "pentane": "CCCCC",
+    "hexane": "CCCCCC",
+    "cylohexane": "C1CCCCC1",
+    "isobutane": "CC(C)C",
+    "isopentane": "CCC(C)C",
+    "propanol": "CCCO",
+    "acetylacetone": "CC(=O)CC(=O)C",
+    "acetone": "CC(=O)C",
+    "acetamide": "CC(=O)N",
+    "acetonitrile": "CC#N",
+    "aceticacid": "CC(=O)O",
+    "acetaldehyde": "CC=O",
+    "benzene": "c1ccccc1",
 }

@@ -651,7 +651,7 @@ def run_pure_liquid_protocol(
         print(
             f""" 
     ------------------------------------------------------------------------------------
-    |  Performing pure liquid stability test for {n_atoms} {name} in PBC.
+    |  Performing pure liquid stability test for {n_atoms} {name} in PBC at {temperature}.
     |  The simulation will use the {nnp} potential with the {implementation} implementation.
     ------------------------------------------------------------------------------------
             """
