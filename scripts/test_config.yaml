@@ -45,7 +45,7 @@ tests:
 
   - protocol: "pure_liquid_protocol"
     molecule_name: ["ethane", "butane", "methanol"]
-    nr_of_molecule: [100, 200]
+    nr_of_molecule: [100, 200, 300]
     ensemble: "npt"
     nnp: "ani2x"
     implementation: "torchani"

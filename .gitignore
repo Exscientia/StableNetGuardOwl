@@ -107,9 +107,9 @@ ENV/
 
 # In-tree generated files
 */_version.py
-owl/
 scripts/test_stability_protocol/
 *pdb
 *dcd
 *pt
-test_stability_protocol/*
+test_stability_protocol/
+guardowl/data/drugbank/
