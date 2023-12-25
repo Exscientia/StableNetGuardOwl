@@ -847,6 +847,9 @@ def run_detect_minimum_test(
         working_dir = "".join(minimized_file.split("/")[:-1])
         name = os.path.basename(working_dir)
 
+        sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
+        log.debug(f"sdf_file: {sdf_file}")
+
         log.debug(f"Testing {name}")
         print(
             f""" 
@@ -857,27 +860,27 @@ def run_detect_minimum_test(
           """
         )
 
-        reference_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(
-            start_file
+        # initialize the system that has been minimized using DFT
+        reference_testsystem = (
+            SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
         )
-        reference_testsystem
+        # set the minimized positions
+        reference_testsystem.positions = minimized_position
 
-        minimize_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(
-            start_file, minimized_position
+        # initialize the system that will be minimized using NNPs
+        minimize_testsystem = (
+            SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
         )
+        minimize_testsystem.positions = start_position
 
-        system = initialize_ml_system(
-            nnp, reference_testsystem.topology, implementation
-        )
-        log_file_name = (
-            f"minimize_{reference_testsystem.testsystem_name}_{nnp}_{implementation}"
-        )
+        system = initialize_ml_system(nnp, minimize_testsystem.topology, implementation)
+        log_file_name = f"minimize_{minimize_testsystem.name}_{nnp}_{implementation}"
 
         params = MinimizationTestParameters(
             platform=platform,
             system=system,
             testsystem=minimize_testsystem,
-            output_folder=output_folder,
+            output_folder=".",
             log_file_name=log_file_name,
         )
 
@@ -885,7 +888,7 @@ def run_detect_minimum_test(
         stability_test.perform_stability_test(params)
 
         initial_traj = md.Trajectory(
-            minimize_testsystem.position, reference_testsystem.topology
+            minimize_testsystem.positions, minimize_testsystem.topology
         )
 
         minimized_traj = md.Trajectory(

@@ -55,5 +55,6 @@ def create_system_from_mol(mol: Molecule) -> Tuple[System, Topology]:
     return (system, topology.to_openmm())
 
 
-def generate_molecule_from_sdf():
-    pass
+def generate_molecule_from_sdf(path: str):
+    mol = Molecule.from_file(path)
+    return mol

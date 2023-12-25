@@ -340,6 +340,13 @@ def test_input_generation_for_minimization_tests():
     assert "".join(minimized_file.split("/")[:-1]) == "".join(
         start_file.split("/")[:-1]
     )
+    # generate mol from sdf file
+    sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
+    reference_testsystem = (
+        SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
+    )
+    # set positions
+    reference_testsystem.positions = minimized_position
 
 
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
