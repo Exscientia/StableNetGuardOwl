@@ -9,12 +9,19 @@ from guardowl.testsystems import hipen_systems
 
 
 @pytest.fixture(scope="session")
-def generate_hipen_system() -> Tuple[System, Topology, Molecule]:
+def single_hipen_system() -> Tuple[System, Topology, Molecule]:
+    """
+    Generate a hipen system.
+
+    Returns:
+        A tuple containing the generated system, topology, and molecule.
+    """
     name = list(hipen_systems.keys())[1]
     smiles = hipen_systems[name]
     mol = generate_molecule_from_smiles(smiles)
     system, topology = create_system_from_mol(mol)
     return (system, topology, mol)
+
 
 @pytest.fixture(scope="session")
 def extracted_dir(tmpdir_factory):

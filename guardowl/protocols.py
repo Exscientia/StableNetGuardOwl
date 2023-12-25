@@ -21,7 +21,7 @@ def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> S
     from guardowl.simulation import SystemFactory
 
     nnp_instance = MLPotential(nnp)
-    system = SystemFactory().initialize_pure_ml_system(
+    system = SystemFactory().initialize_ml_system(
         nnp_instance, topology, implementation=implementation
     )
     return system
@@ -857,11 +857,12 @@ def run_detect_minimum_test(
           """
         )
 
-        reference_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems(
-            start_file, start_position
+        reference_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(
+            start_file
         )
+        reference_testsystem
 
-        minimize_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems(
+        minimize_testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(
             start_file, minimized_position
         )
 

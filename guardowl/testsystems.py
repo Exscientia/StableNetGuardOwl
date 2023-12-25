@@ -103,6 +103,7 @@ class SmallMoleculeVacuumTestSystem:
         self.topology = topology
         self.positions = positions
 
+    
 
 class SmallMoleculeTestsystemFactory:
     """Factory for generating SmallMoleculeVacuum test systems.
@@ -155,7 +156,6 @@ class SmallMoleculeTestsystemFactory:
         mol = generate_molecule_from_smiles(smiles)
         return self.generate_testsystems_from_mol(mol, name)
 
-    @lru_cache(maxsize=None)
     def generate_testsystems_from_name(
         self, name: str
     ) -> SmallMoleculeVacuumTestSystem:
@@ -182,7 +182,27 @@ class SmallMoleculeTestsystemFactory:
                 f"Molecule is not in the list of available systems: {hipen_systems.keys()} and {standard_test_systems.keys()}"
             )
 
+    def generate_testsystems_from_sdf(
+        self, path: str
+    ) -> SmallMoleculeVacuumTestSystem:
+        """Generate a SmallMoleculeVacuum test system.
 
+        Parameters
+        ----------
+        path : str
+            Path to the sdf file.
+
+        Returns
+        -------
+        SmallMoleculeVacuum
+            Generated test system.
+        """
+        from .setup import generate_molecule_from_sdf
+
+        mol = generate_molecule_from_sdf(path)
+        return self.generate_testsystems_from_mol(mol)
+        
+        
 class LiquidTestsystemFactory:
     def _run_equilibration(
         self,

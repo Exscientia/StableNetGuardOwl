@@ -78,7 +78,7 @@ class SimulationFactory:
 
 class SystemFactory:
     @staticmethod
-    def initialize_pure_ml_system(
+    def initialize_ml_system(
         potential: Type[MLPotential],
         topology: Topology,
         remove_constraints: bool = True,
@@ -103,6 +103,11 @@ class SystemFactory:
         System
             The OpenMM System object.
 
+        Examples
+        --------
+        >>> potential = MLPotential
+        >>> topology = Topology()
+        >>> system = initialize_pure_ml_system(potential, topology)
         """
         # create system & simulation instance
         if implementation:

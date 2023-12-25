@@ -32,7 +32,7 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -
     testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_name(name)
     nnp_instance = MLPotential(nnp)
 
-    system = SystemFactory().initialize_pure_ml_system(
+    system = SystemFactory().initialize_ml_system(
         nnp_instance,
         testsystem.topology,
         implementation=implementation,
@@ -116,7 +116,7 @@ def test_setup_waterbox_protocol_individual_parts(
     )
     nnp_instance = MLPotential(nnp)
 
-    system = SystemFactory().initialize_pure_ml_system(
+    system = SystemFactory().initialize_ml_system(
         nnp_instance,
         testsystem.topology,
         implementation=implementation,
@@ -270,18 +270,20 @@ def test_DOF_protocol(nnp: str, implementation: str) -> None:
     # ---------------------------#
     platform = get_fastest_platform()
 
-    testsystem = SmallMoleculeTestsystemFactory().generate_testsystems(name="ethanol")
+    testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_name(
+        name="ethanol"
+    )
 
     nnp_instance = MLPotential(nnp)
 
-    system = SystemFactory().initialize_pure_ml_system(
+    system = SystemFactory().initialize_ml_system(
         nnp_instance,
         testsystem.topology,
         implementation=implementation,
     )
 
     output_folder = "test_stability_protocol"
-    log_file_name = f"vacuum_{testsystem.testsystem_name}_{nnp}_{implementation}"
+    log_file_name = f"vacuum_{testsystem.name}_{nnp}_{implementation}"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     stability_test = BondProfileProtocol()

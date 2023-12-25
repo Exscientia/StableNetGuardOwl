@@ -143,11 +143,13 @@ def _generate_input_for_minimization_test(
     files: Dict[str, List]
 ) -> Iterator[Tuple[Tuple[str, List], Tuple[str, List]]]:
     # read in coordinates from xyz files
+    import numpy as np
+    from openmm import unit
     def read_positions(files) -> Iterator[Tuple[str, List]]:
         for file in files:
             with open(file, "r") as f:
                 lines = f.readlines()
-                positions = [[float(x) for x in line.split()[1:]] for line in lines[2:]]
+                positions = unit.Quantity(np.array([[float(x) for x in line.split()[1:]] for line in lines[2:]]), unit.angstrom)
                 yield file, positions
 
     minimized_xyz_files = files["minimized_xyz_files"]
