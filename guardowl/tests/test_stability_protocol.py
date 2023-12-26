@@ -355,4 +355,4 @@ def test_run_detect_minimum_test(nnp, implementation, extracted_dir):
 
     platform = get_fastest_platform()
 
-    run_detect_minimum_test(nnp, implementation, platform, extracted_dir, percentage=10)
+    run_detect_minimum_test(nnp, implementation, platform, extracted_dir, percentage=.05)

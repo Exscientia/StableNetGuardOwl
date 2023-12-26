@@ -1,7 +1,7 @@
 import csv
 import os
 import sys
-from typing import List, TextIO, Tuple, Union, Optional, Dict
+from typing import List, Tuple, Union, Optional, Dict
 
 import numpy as np
 from loguru import logger as log
@@ -13,79 +13,8 @@ from .parameters import (
     MinimizationTestParameters,
     DOFTestParameters,
 )
-
-
-def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> System:
-    from openmmml import MLPotential
-
-    from guardowl.simulation import SystemFactory
-
-    nnp_instance = MLPotential(nnp)
-    system = SystemFactory().initialize_ml_system(
-        nnp_instance, topology, implementation=implementation
-    )
-    return system
-
-
-# StateDataReporter with custom print function
-class ContinuousProgressReporter(object):
-    """A class for reporting the progress of a simulation continuously.
-
-    Parameters
-    ----------
-    iostream : TextIO
-        Output stream to write the progress report to.
-    total_steps : int
-        Total number of steps in the simulation.
-    reportInterval : int
-        Interval at which to report the progress.
-
-    Attributes
-    ----------
-    _out : TextIO
-        The output stream.
-    _reportInterval : int
-        The report interval.
-    _total_steps : int
-        Total number of steps.
-    """
-
-    def __init__(self, iostream: TextIO, total_steps: int, reportInterval: int):
-        self._out = iostream
-        self._reportInterval = reportInterval
-        self._total_steps = total_steps
-
-    def describeNextReport(self, simulation: Simulation) -> Tuple:
-        """
-        Returns information about the next report.
-
-        Parameters
-        ----------
-        simulation : Simulation
-            The simulation to report on.
-
-        Returns
-        -------
-        Tuple
-            A tuple containing information about the next report.
-        """
-        steps = self._reportInterval - simulation.currentStep % self._reportInterval
-        return (steps, False, False, True, False, None)
-
-    def report(self, simulation: Simulation, state: State) -> None:
-        """
-        Reports the progress of the simulation.
-
-        Parameters
-        ----------
-        simulation : Simulation
-            The simulation to report on.
-        state : State
-            The state of the simulation.
-        """
-        progress = 100.0 * simulation.currentStep / self._total_steps
-        self._out.write(f"\rProgress: {progress:.2f}")
-        self._out.flush()
+from .reporter import ContinuousProgressReporter
+from .simulation import initialize_ml_system
 
 
 class DOFTest:
@@ -274,6 +203,7 @@ params.log_file_name: {parameters.log_file_name}
     def _setup_simulation(
         parameters: StabilityTestParameters,
         minimization_tolerance=10 * unit.kilojoule_per_mole / unit.nanometer,
+        minimize: bool = True,
     ) -> None:
         """
         Runs a simulation for stability tests on molecular systems.
@@ -297,7 +227,7 @@ params.log_file_name: {parameters.log_file_name}
             system,
             parameters.testsystem.topology,
             platform=parameters.platform,
-            temperature=parameters.temperature * unit.kelvin,
+            temperature=parameters.temperature,
             env=parameters.env,
             device_index=parameters.device_index,
             ensemble=parameters.ensemble,
@@ -305,9 +235,14 @@ params.log_file_name: {parameters.log_file_name}
 
         qsim.context.setPositions(parameters.testsystem.positions)
 
-        qsim.minimizeEnergy(tolerance=minimization_tolerance)
+        if minimize:
+            qsim.minimizeEnergy(tolerance=minimization_tolerance)
 
-        if parameters.simulated_annealing:
+        # check if simulated_annealing is an atrribute of parameters
+        if (
+            hasattr(parameters, "simulated_annealing")
+            and parameters.simulated_annealing
+        ):
             print("Running Simulated Annealing MD")
             # every 1000 steps raise the temperature by 5 K, ending at 325 K
             for temp in np.linspace(0, 300, 60):
@@ -412,27 +347,39 @@ class MinimizationProtocol(StabilityTest):
         """
         super().__init__()
 
-    def perform_stability_test(
-        self,
-        parms: StabilityTestParameters,
-    ) -> None:
-        from openmm.app import PDBFile
+    def _assert_input(self, parameters: MinimizationTestParameters):
+        log.debug(
+            f""" 
+------------------------------------------------------------------------------------
+Minimization test parameters:
+params.convergence_criteria: {parameters.convergence_criteria}
+params.env: {parameters.env}
+params.platform: {parameters.platform.getName()}
+params.device_index: {parameters.device_index}
+params.output_folder: {parameters.output_folder}
+params.log_file_name: {parameters.log_file_name}
+------------------------------------------------------------------------------------
+            """
+        )
 
-        assert isinstance(parms.temperature, int)
+    def perform_stability_test(
+        self, parms: MinimizationTestParameters, minimize: bool = True
+    ) -> State:
+        from openmm.app import PDBFile
 
         self._assert_input(parms)
         qsim = self._setup_simulation(
-            parms,
-            minimization_tolerance=1.0 * unit.kilojoule_per_mole / unit.nanometer,
+            parms, minimization_tolerance=parms.convergence_criteria, minimize=minimize
         )
 
         output_file_name = f"{parms.output_folder}/{parms.log_file_name}"
-
+        state = qsim.context.getState(getPositions=True, getEnergy=True)
         PDBFile.writeFile(
             parms.testsystem.topology,
-            qsim.state.getPositions(),
+            state.getPositions(),
             open(f"{output_file_name}.pdb", "w"),
         )
+        return state
 
 
 class MultiTemperatureProtocol(PropagationProtocol):
@@ -812,16 +759,15 @@ def run_detect_minimum_test(
     nnp: str,
     implementation: str,
     platform: Platform,
-    extracted_dir: str,
+    output_folder: str,
     percentage: int = 10,
-):
+) -> Dict[str, Tuple[float, float]]:
     """
     Perform a minimization on a selected compound.
     :param nnp: The neural network potential to use.
     :param implementation: The implementation to use.
     :param name: The name of the molecule to simulation.
     """
-
     from guardowl.testsystems import SmallMoleculeTestsystemFactory
     import mdtraj as md
     from .utils import (
@@ -830,43 +776,68 @@ def run_detect_minimum_test(
         _generate_input_for_minimization_test,
     )
 
-    # extract files relative to installation path
-
+    # extract drugbank tar.gz file
     extract_drugbank_tar_gz()
 
+    # generate all relevenat input files
     files = _generate_file_list_for_minimization_test(shuffel=True)
 
+    # calculate the number of molecules to test
     nr_of_molecules = files["total_number_of_systems"]
     nr_of_molecules_to_test = int(nr_of_molecules * (percentage / 100))
 
     score = {}
+    counter = 0
+
+    print(
+        f""" 
+------------------------------------------------------------------------------------
+|  Performing minimization for {nr_of_molecules_to_test} molecules.
+|  The scan will use the {nnp} potential with the {implementation} implementation.
+------------------------------------------------------------------------------------
+        """
+    )
+
     for (minimized_file, minimized_position), (
         start_file,
         start_position,
     ) in _generate_input_for_minimization_test(files):
-        working_dir = "".join(minimized_file.split("/")[:-1])
-        name = os.path.basename(working_dir)
+        log.info(f"Minimize test: {counter}/{nr_of_molecules_to_test}")
+
+        # extract directory and name of minimized file
+        working_dir = "".join(start_file.split("/")[-1])
+        name = os.path.basename(working_dir.removesuffix(".xyz"))
 
         sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
-        log.debug(f"sdf_file: {sdf_file}")
 
         log.debug(f"Testing {name}")
-        print(
-            f""" 
-------------------------------------------------------------------------------------
-|  Performing minimization for {name}.
-|  The scan will use the {nnp} potential with the {implementation} implementation.
-------------------------------------------------------------------------------------
-          """
-        )
 
+        #########################################
+        #########################################
         # initialize the system that has been minimized using DFT
         reference_testsystem = (
             SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
         )
         # set the minimized positions
         reference_testsystem.positions = minimized_position
+        system = initialize_ml_system(
+            nnp, reference_testsystem.topology, implementation
+        )
+        log_file_name = "ref"
 
+        params = MinimizationTestParameters(
+            platform=platform,
+            system=system,
+            testsystem=reference_testsystem,
+            output_folder=output_folder,
+            log_file_name=log_file_name,
+        )
+
+        stability_test = MinimizationProtocol()
+        state = stability_test.perform_stability_test(params, minimize=False)
+        energy_ref = state.getPotentialEnergy()
+        #########################################
+        #########################################
         # initialize the system that will be minimized using NNPs
         minimize_testsystem = (
             SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
@@ -874,18 +845,24 @@ def run_detect_minimum_test(
         minimize_testsystem.positions = start_position
 
         system = initialize_ml_system(nnp, minimize_testsystem.topology, implementation)
-        log_file_name = f"minimize_{minimize_testsystem.name}_{nnp}_{implementation}"
+        log_file_name = f"minimize_{name}_{nnp}_{implementation}"
 
         params = MinimizationTestParameters(
             platform=platform,
             system=system,
             testsystem=minimize_testsystem,
-            output_folder=".",
+            output_folder=output_folder,
             log_file_name=log_file_name,
         )
 
         stability_test = MinimizationProtocol()
-        stability_test.perform_stability_test(params)
+        state = stability_test.perform_stability_test(params, minimize=True)
+
+        energy_min = state.getPotentialEnergy()
+        minimize_testsystem.positions = state.getPositions(asNumpy=True)
+
+        # calculate the energy error between the NNP minimized and the DFT minimized conformation
+        d_energy = abs(energy_ref - energy_min)
 
         initial_traj = md.Trajectory(
             minimize_testsystem.positions, minimize_testsystem.topology
@@ -895,5 +872,19 @@ def run_detect_minimum_test(
             reference_testsystem.positions, reference_testsystem.topology
         )
 
+        # calculate the RMSD between the NNP minimized and the DFT minimized conformation
         _score_minimized = md.rmsd(initial_traj, minimized_traj)
-        score[name] = _score_minimized
+
+        log.debug(f"RMSD: {_score_minimized}; Energy error: {d_energy}")
+        score[name] = (_score_minimized, d_energy)
+
+        counter += 1
+        if counter >= nr_of_molecules_to_test:
+            break
+
+    # print the results to stdout
+    print(f"{'Name':<40} {'RMSD':<20} {'Energy error':<20}")
+    for name, (rmsd, energy_error) in score.items():
+        print(f"{name:<40} {rmsd:<20} {energy_error:<20}")
+
+    return score

@@ -117,7 +117,6 @@ def _generate_file_list_for_minimization_test(
             test_sdf = any("sdf" in file for file in all_files)
             if (test_orca and test_xyz and test_sdf) == False:
                 log.debug(f"Skipping {directory}")
-                print(f"Skipping {directory}")
                 continue
 
             for file in all_files:

@@ -76,6 +76,18 @@ class SimulationFactory:
             )
 
 
+def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> System:
+    from openmmml import MLPotential
+
+    from guardowl.simulation import SystemFactory
+
+    nnp_instance = MLPotential(nnp)
+    system = SystemFactory().initialize_ml_system(
+        nnp_instance, topology, implementation=implementation
+    )
+    return system
+
+
 class SystemFactory:
     @staticmethod
     def initialize_ml_system(

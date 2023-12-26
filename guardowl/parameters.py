@@ -17,8 +17,17 @@ class BaseParameters:
 @dataclass
 class MinimizationTestParameters(BaseParameters):
     convergence_criteria: unit.Quantity = field(
-        default_factory=1.0 * unit.kilojoule_per_mole / unit.nanometer
+        default_factory=lambda: unit.Quantity(
+            1.0, unit.kilojoule_per_mole / unit.nanometer
+        )
     )
+    env: str = "vacuum"
+    device_index: int = 0
+    temperature: int = field(
+        default_factory=lambda: unit.Quantity(300, unit.kelvin)
+    )
+
+    ensemble: str = "NVT"
 
 
 @dataclass
