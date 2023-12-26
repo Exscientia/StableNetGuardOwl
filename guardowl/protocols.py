@@ -823,7 +823,7 @@ def run_detect_minimum_test(
         system = initialize_ml_system(
             nnp, reference_testsystem.topology, implementation
         )
-        log_file_name = "ref"
+        log_file_name = f"ref_{name}_{nnp}_{implementation}"
 
         params = MinimizationTestParameters(
             platform=platform,
