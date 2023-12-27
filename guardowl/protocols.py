@@ -202,7 +202,7 @@ params.log_file_name: {parameters.log_file_name}
     @staticmethod
     def _setup_simulation(
         parameters: StabilityTestParameters,
-        minimization_tolerance=10 * unit.kilojoule_per_mole / unit.nanometer,
+        minimization_tolerance=1 * unit.kilojoule_per_mole / unit.angstrom,
         minimize: bool = True,
     ) -> None:
         """
@@ -236,6 +236,8 @@ params.log_file_name: {parameters.log_file_name}
         qsim.context.setPositions(parameters.testsystem.positions)
 
         if minimize:
+            log.info("Minimizing energy")
+            log.debug(f"{minimization_tolerance=}")
             qsim.minimizeEnergy(tolerance=minimization_tolerance)
 
         # check if simulated_annealing is an atrribute of parameters
@@ -886,14 +888,14 @@ def run_detect_minimum_test(
         _score_minimized = md.rmsd(minimized_traj, reference_traj)[0]
 
         log.debug(f"RMSD: {_score_minimized}; Energy error: {d_energy}")
-        score[name] = (_score_minimized, d_energy)
+        score[name] = (_score_minimized, d_energy._value)
 
         counter += 1
         if counter >= nr_of_molecules_to_test:
             break
 
     # print the results to stdout
-    print(f"{'Name':<40} {'RMSD':<20} {'Energy error':<20}")
+    print(f"{'Name':<40} {'RMSD [A]':<20} {'Energy error [kJ/mol]':<20}")
     for name, (rmsd, energy_error) in score.items():
         print(f"{name:<40} {rmsd:<20} {energy_error:<20}")
 
