@@ -818,6 +818,12 @@ def run_detect_minimum_test(
         reference_testsystem = (
             SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
         )
+        # test if phosphores is in molecule, if yes skip
+        for atom in reference_testsystem.topology.atoms():
+            if atom.element.symbol == "P":
+                log.debug(f"Skipping {name} because it contains phosphores")
+                continue
+
         # set the minimized positions
         reference_testsystem.positions = minimized_position
         system = initialize_ml_system(
