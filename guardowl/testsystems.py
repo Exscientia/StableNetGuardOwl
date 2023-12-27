@@ -103,6 +103,16 @@ class SmallMoleculeVacuumTestSystem:
         self.topology = topology
         self.positions = positions
 
+    def __copy__(self):
+        from copy import deepcopy
+
+        return SmallMoleculeVacuumTestSystem(
+            self.name,
+            deepcopy(self.system),
+            deepcopy(self.topology),
+            deepcopy(self.positions),
+        )
+
 
 class SmallMoleculeTestsystemFactory:
     """Factory for generating SmallMoleculeVacuum test systems.

@@ -1,5 +1,42 @@
 import pytest
-from guardowl.testsystems import PureLiquidTestsystemFactory
+from guardowl.testsystems import (
+    PureLiquidTestsystemFactory,
+    SmallMoleculeTestsystemFactory,
+)
+from guardowl.utils import get_data_filename
+
+
+def test_generate_small_molecule(tmp_dir) -> None:
+    """Test if we can generate a small molecule"""
+    factory = SmallMoleculeTestsystemFactory()
+    sdf_file = f"{get_data_filename('tests/data/156613987')}/156613987.sdf"
+    system = factory.generate_testsystems_from_sdf(sdf_file)
+    from openmm.app import PDBFile
+
+    print(system.topology)  # <openmm.app.topology.Topology object>
+    PDBFile.writeFile(
+        system.topology,
+        system.positions,
+        open(f"{tmp_dir}/tmp1.pdb", "w"),
+    )
+
+    import copy
+
+    system_copy = copy.copy(system)
+    print(system_copy.topology)
+
+    top = system_copy.topology
+    for atom in top.atoms():
+        print(atom.index, atom.name, atom.residue.name)
+
+    for bond in top.bonds():
+        print(bond)
+
+    PDBFile.writeFile(
+        system.topology,
+        system_copy.positions,
+        open(f"{tmp_dir}/tmp2.pdb", "w"),
+    )
 
 
 def test_generate_molecule(single_hipen_system) -> None:

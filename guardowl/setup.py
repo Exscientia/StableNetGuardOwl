@@ -8,7 +8,6 @@ from openmm import System
 
 forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
 
-
 def generate_molecule_from_smiles(
     smiles: str, nr_of_conformations: int = 10
 ) -> Molecule:

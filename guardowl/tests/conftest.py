@@ -24,7 +24,7 @@ def single_hipen_system() -> Tuple[System, Topology, Molecule]:
 
 
 @pytest.fixture(scope="session")
-def extracted_dir(tmpdir_factory):
+def tmp_dir(tmpdir_factory):
     # Create a temporary directory for the session
     temp_dir = tmpdir_factory.mktemp("data")
 

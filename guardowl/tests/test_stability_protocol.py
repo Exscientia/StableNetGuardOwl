@@ -350,9 +350,9 @@ def test_input_generation_for_minimization_tests():
 
 
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_detect_minimum_test(nnp, implementation, extracted_dir):
+def test_run_detect_minimum_test(nnp, implementation, tmp_dir):
     from guardowl.protocols import run_detect_minimum_test
 
     platform = get_fastest_platform()
 
-    run_detect_minimum_test(nnp, implementation, platform, extracted_dir, percentage=.05)
+    run_detect_minimum_test(nnp, implementation, platform, tmp_dir, percentage=0.05)

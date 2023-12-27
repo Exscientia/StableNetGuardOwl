@@ -818,11 +818,18 @@ def run_detect_minimum_test(
         reference_testsystem = (
             SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
         )
+
         # test if phosphores is in molecule, if yes skip
-        for atom in reference_testsystem.topology.atoms():
-            if atom.element.symbol == "P":
-                log.debug(f"Skipping {name} because it contains phosphores")
-                continue
+        def _contains_phosphores(topology: Topology) -> bool:
+            for atom in topology.atoms():
+                if atom.element.symbol == "P":
+                    log.debug(f"Skipping {name} because it contains phosphores")
+                    return True
+            return False
+
+        # ANI-2x is not trained on phosphores
+        if _contains_phosphores(reference_testsystem.topology):
+            continue
 
         # set the minimized positions
         reference_testsystem.positions = minimized_position
@@ -839,15 +846,17 @@ def run_detect_minimum_test(
             log_file_name=log_file_name,
         )
 
-        stability_test = MinimizationProtocol()
-        state = stability_test.perform_stability_test(params, minimize=False)
-        energy_ref = state.getPotentialEnergy()
+        state = MinimizationProtocol().perform_stability_test(params, minimize=False)
+        reference_energy = state.getPotentialEnergy()
+
+        reference_traj = md.Trajectory(
+            reference_testsystem.positions, reference_testsystem.topology
+        )
         #########################################
         #########################################
         # initialize the system that will be minimized using NNPs
-        minimize_testsystem = (
-            SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
-        )
+
+        minimize_testsystem = reference_testsystem
         minimize_testsystem.positions = start_position
 
         system = initialize_ml_system(nnp, minimize_testsystem.topology, implementation)
@@ -861,25 +870,20 @@ def run_detect_minimum_test(
             log_file_name=log_file_name,
         )
 
-        stability_test = MinimizationProtocol()
-        state = stability_test.perform_stability_test(params, minimize=True)
+        state = MinimizationProtocol().perform_stability_test(params, minimize=True)
 
-        energy_min = state.getPotentialEnergy()
+        minimized_energy = state.getPotentialEnergy()
         minimize_testsystem.positions = state.getPositions(asNumpy=True)
 
         # calculate the energy error between the NNP minimized and the DFT minimized conformation
-        d_energy = abs(energy_ref - energy_min)
+        d_energy = abs(reference_energy - minimized_energy)
 
-        initial_traj = md.Trajectory(
+        minimized_traj = md.Trajectory(
             minimize_testsystem.positions, minimize_testsystem.topology
         )
 
-        minimized_traj = md.Trajectory(
-            reference_testsystem.positions, reference_testsystem.topology
-        )
-
         # calculate the RMSD between the NNP minimized and the DFT minimized conformation
-        _score_minimized = md.rmsd(initial_traj, minimized_traj)
+        _score_minimized = md.rmsd(minimized_traj, reference_traj)[0]
 
         log.debug(f"RMSD: {_score_minimized}; Energy error: {d_energy}")
         score[name] = (_score_minimized, d_energy)
