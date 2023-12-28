@@ -763,6 +763,7 @@ def run_detect_minimum_test(
     platform: Platform,
     output_folder: str,
     percentage: int = 10,
+    only_molecules_below_10_heavy_atoms: bool = False,
 ) -> Dict[str, Tuple[float, float]]:
     """
     Perform a minimization on a selected compound.
@@ -806,13 +807,48 @@ def run_detect_minimum_test(
     ) in _generate_input_for_minimization_test(files):
         log.info(f"Minimize test: {counter}/{nr_of_molecules_to_test}")
 
+        from openff.toolkit.topology import Molecule
+
         # extract directory and name of minimized file
         working_dir = "".join(start_file.split("/")[-1])
         name = os.path.basename(working_dir.removesuffix(".xyz"))
 
         sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
+        mol = Molecule.from_file(sdf_file, allow_undefined_stereo=True)
 
         log.debug(f"Testing {name}")
+
+        # test if phosphores is in molecule, if yes skip
+        def _contains_phosphores(mol: Molecule) -> bool:
+            for atom in mol.atoms:
+                if atom.atomic_number == 15:
+                    log.debug(f"Skipping {name} because it contains phosphores")
+                    return True
+            return False
+
+        # test if molecules has below 10 heavy atoms, if yes return True
+        def _below_10_heavy_atoms(mol: Molecule) -> bool:
+            heavy_atoms = 0
+            for atom in mol.atoms:
+                if atom.atomic_number != 1:
+                    heavy_atoms += 1
+            if heavy_atoms > 10:
+                log.debug(
+                    f"Skipping {name} because it has more than 10 heavy atoms: {heavy_atoms} heavy atoms"
+                )
+                return False
+            log.debug(
+                f"Using {name} because it has less than 10 heavy atoms: {heavy_atoms} heavy atoms"
+            )
+            return True
+
+        # ANI-2x is not trained on phosphores
+        if _contains_phosphores(mol):
+            continue
+
+        if only_molecules_below_10_heavy_atoms:
+            if not _below_10_heavy_atoms(mol):
+                continue
 
         #########################################
         #########################################
@@ -820,18 +856,6 @@ def run_detect_minimum_test(
         reference_testsystem = (
             SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
         )
-
-        # test if phosphores is in molecule, if yes skip
-        def _contains_phosphores(topology: Topology) -> bool:
-            for atom in topology.atoms():
-                if atom.element.symbol == "P":
-                    log.debug(f"Skipping {name} because it contains phosphores")
-                    return True
-            return False
-
-        # ANI-2x is not trained on phosphores
-        if _contains_phosphores(reference_testsystem.topology):
-            continue
 
         # set the minimized positions
         reference_testsystem.positions = minimized_position

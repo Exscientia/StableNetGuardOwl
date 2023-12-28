@@ -317,8 +317,8 @@ def test_input_generation_for_minimization_tests():
     )
     # test if the file base is the same
     assert (
-        minimized_file
-        == "/home/mwieder/Work/Projects/StableNetGuardOwl/guardowl/data/drugbank/owl/11117974/orca_input.xyz"
+        "/".join(minimized_file.split("/")[-6:])
+        == "guardowl/data/drugbank/owl/11117974/orca_input.xyz"
     )
     assert "".join(minimized_file.split("/")[:-1]) == "".join(
         start_file.split("/")[:-1]
@@ -334,8 +334,8 @@ def test_input_generation_for_minimization_tests():
         _generate_input_for_minimization_test(files)
     )
     assert not (
-        minimized_file
-        == "/home/mwieder/Work/Projects/StableNetGuardOwl/guardowl/data/drugbank/owl/11117974/orca_input.xyz"
+        "/".join(minimized_file.split("/")[-6:])
+        == "guardowl/data/drugbank/owl/11117974/orca_input.xyz"
     )
     assert "".join(minimized_file.split("/")[:-1]) == "".join(
         start_file.split("/")[:-1]
@@ -355,4 +355,11 @@ def test_run_detect_minimum_test(nnp, implementation, tmp_dir):
 
     platform = get_fastest_platform()
 
-    run_detect_minimum_test(nnp, implementation, platform, tmp_dir, percentage=0.05)
+    run_detect_minimum_test(
+        nnp,
+        implementation,
+        platform,
+        tmp_dir,
+        percentage=0.1,
+        only_molecules_below_10_heavy_atoms=True,
+    )
