@@ -818,11 +818,11 @@ def run_detect_minimum_test(
 
         log.debug(f"Testing {name}")
 
-        # test if phosphores is in molecule, if yes skip
-        def _contains_phosphores(mol: Molecule) -> bool:
+        # test if not implemented elements are in molecule, if yes skip
+        def _contains_unknown_elements(mol: Molecule) -> bool:
             for atom in mol.atoms:
-                if atom.atomic_number == 15:
-                    log.debug(f"Skipping {name} because it contains phosphores")
+                if atom.atomic_number >= 15:
+                    log.debug(f"Skipping {name} because it contains unknown elements")
                     return True
             return False
 
@@ -842,8 +842,8 @@ def run_detect_minimum_test(
             )
             return True
 
-        # ANI-2x is not trained on phosphores
-        if _contains_phosphores(mol):
+        # ANI-2x is trained on limited elements, if molecule contains unknown elements skip
+        if _contains_unknown_elements(mol):
             continue
 
         if only_molecules_below_10_heavy_atoms:
