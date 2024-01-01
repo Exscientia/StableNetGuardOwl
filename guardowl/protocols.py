@@ -853,12 +853,14 @@ def run_detect_minimum_test(
         #########################################
         #########################################
         # initialize the system that has been minimized using DFT
+        from openff.interchange.exceptions import UnassignedBondError
+
         try:
             reference_testsystem = (
                 SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
             )
-        except ValueError as e:
-            log.info(f"Skipping {name} because of {e}")
+        except (ValueError, UnassignedBondError) as e:
+            log.warning(f"Skipping {name} because of {e}")
             continue
         # set the minimized positions
         reference_testsystem.positions = minimized_position
