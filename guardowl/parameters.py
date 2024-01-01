@@ -16,7 +16,18 @@ class BaseParameters:
 
 @dataclass
 class MinimizationTestParameters(BaseParameters):
-    convergence_criteria: unit.Quantity = field(default_factory=1.0 * unit.kilojoule_per_mole / unit.nanometer)
+    convergence_criteria: unit.Quantity = field(
+        default_factory=lambda: unit.Quantity(
+            .5, unit.kilojoule_per_mole / unit.angstrom
+        )
+    )
+    env: str = "vacuum"
+    device_index: int = 0
+    temperature: int = field(
+        default_factory=lambda: unit.Quantity(300, unit.kelvin)
+    )
+
+    ensemble: str = "NVT"
 
 
 @dataclass
@@ -50,7 +61,7 @@ class StabilityTestParameters(BaseParameters):
     """
 
     protocol_length: int
-    temperature: Union[int, List[int]]
+    temperature: unit.Quantity
     env: str
     simulated_annealing: bool
     state_data_reporter: StateDataReporter

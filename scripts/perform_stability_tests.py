@@ -120,6 +120,8 @@ def _setup_logging():
 if __name__ == "__main__":
     import typer
     import warnings
+    import torch
+    torch._C._jit_set_nvfuser_enabled(False)
 
     _setup_logging()
     with warnings.catch_warnings():

@@ -1,0 +1,191 @@
+156613987
+ OpenBabel11072317473D
+
+ 33 32  0  0  1  0  0  0  0  0999 V2000
+    1.8323   -0.7109    0.5118 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2105    1.6824   -1.3758 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4475   -0.2620    1.7084 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7555   -0.1585    0.0337 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3864    0.9264   -0.4882 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8539   -2.0695   -1.3564 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.8587    0.7932    0.1181 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0671    0.5865   -0.5056 C   0  0  1  0  0  0  0  0  0  0  0  0
+    1.5905    0.4309   -0.3121 C   0  0  1  0  0  0  0  0  0  0  0  0
+   -0.6842    0.8270    0.8178 C   0  0  1  0  0  0  0  0  0  0  0  0
+    2.2234    1.6596    0.3480 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1958    0.9965    0.6464 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7229    1.7290    0.1592 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9424   -1.9003   -0.1478 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1066   -0.1267   -0.1735 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1929   -3.0013    0.8376 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.5529   -1.4023   -0.8216 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3226   -0.3264   -0.9719 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0532    0.3077   -1.3008 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3109    1.7394    1.2969 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8227    2.5882   -0.0719 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0497    1.6562    1.4298 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4129    1.8794    0.0344 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6609    1.1257    1.6314 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2503    1.5127   -2.2151 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8913   -0.0575    2.5491 H   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2123    2.5870    0.6520 H   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1263   -2.8131    1.3740 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3547   -3.0714    1.5353 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2830   -3.9519    0.3042 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0566   -1.5198   -1.7882 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3279   -2.2483   -0.1675 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.6336   -1.3667   -0.9867 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  9  1  0  0  0  0
+  1 14  1  0  0  0  0
+  2  8  1  0  0  0  0
+  2 25  1  0  0  0  0
+  3 10  1  0  0  0  0
+  3 26  1  0  0  0  0
+  4 12  1  0  0  0  0
+  4 15  1  0  0  0  0
+  5 13  2  0  0  0  0
+  6 14  2  0  0  0  0
+  7 15  2  0  0  0  0
+  8  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+  8 18  1  6  0  0  0
+  9 11  1  0  0  0  0
+  9 19  1  6  0  0  0
+ 10 12  1  0  0  0  0
+ 10 20  1  1  0  0  0
+ 11 13  1  0  0  0  0
+ 11 21  1  0  0  0  0
+ 11 22  1  0  0  0  0
+ 12 23  1  0  0  0  0
+ 12 24  1  0  0  0  0
+ 13 27  1  0  0  0  0
+ 14 16  1  0  0  0  0
+ 15 17  1  0  0  0  0
+ 16 28  1  0  0  0  0
+ 16 29  1  0  0  0  0
+ 16 30  1  0  0  0  0
+ 17 31  1  0  0  0  0
+ 17 32  1  0  0  0  0
+ 17 33  1  0  0  0  0
+M  END
+>  <DATABASE_ID>
+DB17192
+
+>  <DATABASE_NAME>
+drugbank
+
+>  <ORIGINAL_SOURCE>
+PUBCHEM
+
+>  <ORIGINAL_SOURCE_URL>
+https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/BYPTXUKSDKAPKO-OPRDCNLKSA-N/SDF?record_type=3d
+
+>  <SMILES>
+[H][C@@](O)(COC(C)=O)[C@@]([H])(O)[C@@]([H])(CC=O)OC(C)=O
+
+>  <INCHI_IDENTIFIER>
+InChI=1S/C10H16O7/c1-6(12)16-5-8(14)10(15)9(3-4-11)17-7(2)13/h4,8-10,14-15H,3,5H2,1-2H3/t8-,9-,10-/m1/s1
+
+>  <INCHI_KEY>
+BYPTXUKSDKAPKO-OPRDCNLKSA-N
+
+>  <FORMULA>
+C10H16O7
+
+>  <MOLECULAR_WEIGHT>
+248.231
+
+>  <EXACT_MASS>
+248.089602855
+
+>  <JCHEM_ACCEPTOR_COUNT>
+5
+
+>  <JCHEM_ATOM_COUNT>
+33
+
+>  <JCHEM_AVERAGE_NEUTRAL_MICROSPECIES_CHARGE>
+-1.3146369446636756e-06
+
+>  <JCHEM_AVERAGE_POLARIZABILITY>
+23.354368581827025
+
+>  <JCHEM_BIOAVAILABILITY>
+1
+
+>  <JCHEM_DONOR_COUNT>
+2
+
+>  <JCHEM_FORMAL_CHARGE>
+0
+
+>  <JCHEM_GHOSE_FILTER>
+0
+
+>  <JCHEM_IUPAC>
+(3R,4R,5R)-6-(acetyloxy)-4,5-dihydroxy-1-oxohexan-3-yl acetate
+
+>  <ALOGPS_LOGP>
+-0.72
+
+>  <JCHEM_LOGP>
+-1.9709512816666668
+
+>  <ALOGPS_LOGS>
+-0.46
+
+>  <JCHEM_MDDR_LIKE_RULE>
+0
+
+>  <JCHEM_NEUTRAL_CHARGE>
+0
+
+>  <JCHEM_NUMBER_OF_RINGS>
+0
+
+>  <JCHEM_PHYSIOLOGICAL_CHARGE>
+0
+
+>  <JCHEM_PKA>
+14.35808691156093
+
+>  <JCHEM_PKA_STRONGEST_ACIDIC>
+12.90518799939591
+
+>  <JCHEM_PKA_STRONGEST_BASIC>
+-3.531566236525625
+
+>  <JCHEM_POLAR_SURFACE_AREA>
+110.13000000000001
+
+>  <JCHEM_REFRACTIVITY>
+54.3104
+
+>  <JCHEM_ROTATABLE_BOND_COUNT>
+9
+
+>  <JCHEM_RULE_OF_FIVE>
+1
+
+>  <ALOGPS_SOLUBILITY>
+8.64e+01 g/l
+
+>  <JCHEM_TRADITIONAL_IUPAC>
+altiratinib
+
+>  <JCHEM_VEBER_RULE>
+0
+
+>  <DRUGBANK_ID>
+DB17192
+
+>  <DRUG_GROUPS>
+investigational
+
+>  <GENERIC_NAME>
+WP-1122
+
+>  <SYNONYMS>
+3,6-di-O-acetyl-2-deoxy-D-glucopyranose
+
+$$$$
