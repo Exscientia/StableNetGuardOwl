@@ -1,4 +1,8 @@
+from typing import Literal, Tuple
 import numpy as np
+from openff.toolkit.topology.molecule import Molecule
+from openff.toolkit.topology.topology import Topology
+from openmm.openmm import System
 import pytest
 from openff.units.openmm import to_openmm
 from openmm import unit
@@ -17,13 +21,15 @@ from guardowl.utils import (
     "nnp, e_lamb_0, e_lamb_1", [("ani2x", 295.1235918998718, -2346060.437261855)]
 )
 def test_generate_simulation_instance(
-    nnp: str, e_lamb_0: float, e_lamb_1: float, generate_hipen_system
+    nnp: str,
+    e_lamb_0: float,
+    e_lamb_1: float,
+    single_hipen_system: Tuple[System, Topology, Molecule],
 ) -> None:
     """Test if we can generate a simulation instance"""
 
     # set up system and topology and define ml region
-    system, topology, mol = generate_hipen_system
-    topology = topology.to_openmm()
+    system, topology, mol = single_hipen_system
     platform = get_fastest_platform()
     qml = MLPotential(nnp)
     ########################################################
@@ -49,7 +55,7 @@ def test_generate_simulation_instance(
     ########################################################
     # create ML simulation
     rsim = SimulationFactory.create_simulation(
-        SystemFactory().initialize_pure_ml_system(
+        SystemFactory().initialize_ml_system(
             qml,
             topology,
         ),
@@ -77,19 +83,22 @@ def test_generate_simulation_instance(
 
 
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_simulating(nnp: str, implementation: str, generate_hipen_system) -> None:
+def test_simulating(
+    nnp: str,
+    implementation: str,
+    single_hipen_system: Tuple[System, Topology, Molecule],
+) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # set up system and topology and define ml region
-    system, topology, mol = generate_hipen_system
+    system, topology, mol = single_hipen_system
     qml = MLPotential(nnp)
     platform = get_fastest_platform()
-    topology = topology.to_openmm()
     ########################################################
     # ---------------------------#
     # generate pure ML simulation
     qsim = SimulationFactory.create_simulation(
-        SystemFactory().initialize_pure_ml_system(
+        SystemFactory().initialize_ml_system(
             qml,
             topology,
             implementation=implementation,
@@ -111,7 +120,10 @@ def test_simulating(nnp: str, implementation: str, generate_hipen_system) -> Non
 @pytest.mark.parametrize(
     "nnp, implementation", gpu_memory_constrained_nnps_and_implementation
 )
-def test_pure_liquid_simulation(nnp, implementation):
+def test_pure_liquid_simulation(
+    nnp: tuple[Literal["ani2x"], Literal["torchani"]],
+    implementation: tuple[Literal["ani2x"], Literal["torchani"]],
+):
     from guardowl.testsystems import PureLiquidTestsystemFactory
 
     factory = PureLiquidTestsystemFactory()
@@ -124,7 +136,7 @@ def test_pure_liquid_simulation(nnp, implementation):
     # ---------------------------#
     # generate pure ML simulation
     qsim = SimulationFactory.create_simulation(
-        SystemFactory().initialize_pure_ml_system(
+        SystemFactory().initialize_ml_system(
             qml,
             liquid_box.topology,
             implementation=implementation,

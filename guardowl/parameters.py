@@ -7,6 +7,24 @@ from typing import List, Union, Optional
 
 @dataclass
 class BaseParameters:
+    """
+    Base class for simulation parameters.
+
+    Attributes
+    ----------
+    system : System
+        The OpenMM System object to be used for the simulation.
+    platform : Platform
+        The OpenMM Platform object specifying the computation platform.
+    testsystem : TestSystem
+        The test system object containing the molecular system setup.
+    output_folder : str
+        Directory path where output files will be saved.
+    log_file_name : str
+        Filename for the log file.
+
+    """
+
     system: System
     platform: Platform
     testsystem: TestSystem
@@ -16,7 +34,36 @@ class BaseParameters:
 
 @dataclass
 class MinimizationTestParameters(BaseParameters):
-    convergence_criteria: unit.Quantity = field(default_factory=1.0 * unit.kilojoule_per_mole / unit.nanometer)
+    """
+    Parameters specific to minimization tests.
+
+    Attributes
+    ----------
+    convergence_criteria : unit.Quantity
+        The energy convergence criteria for the minimization process.
+    env : str
+        The environment of the simulation (e.g., 'vacuum', 'solution').
+    device_index : int
+        Index of the GPU device to use for the simulation.
+    temperature : unit.Quantity
+        The temperature at which the simulation is performed.
+    ensemble : str
+        The statistical ensemble for the simulation (e.g., 'NVT').
+
+    """
+
+    convergence_criteria: unit.Quantity = field(
+        default_factory=lambda: unit.Quantity(
+            0.5, unit.kilojoule_per_mole / unit.angstrom
+        )
+    )
+    env: str = "vacuum"
+    device_index: int = 0
+    temperature: unit.Quantity = field(
+        default_factory=lambda: unit.Quantity(300, unit.kelvin)
+    )
+
+    ensemble: str = "NVT"
 
 
 @dataclass
@@ -28,29 +75,24 @@ class StabilityTestParameters(BaseParameters):
     Attributes
     ----------
     protocol_length : int
-        Length of the protocol in time units.
+        The duration of the test protocol.
     temperature : unit.Quantity
-        Temperature of the simulation.
-    ensemble : str
-        Ensemble type ('NVT', 'NPT', etc.).
+        The temperature at which the test is conducted.
+    env : str
+        The environment for the simulation (e.g., 'vacuum', 'solution').
     simulated_annealing : bool
-        Whether simulated annealing is to be used.
-    system : System
-        The OpenMM System object.
-    platform : Platform
-        The OpenMM Platform object.
-    testsystem : TestSystem
-        The test system for the simulation.
-    output_folder : str
-        Path to the output folder.
-    log_file_name : str
-        Name of the log file.
+        Flag to indicate if simulated annealing is used.
     state_data_reporter : StateDataReporter
-        The OpenMM StateDataReporter object.
+        The OpenMM StateDataReporter object for logging.
+    device_index : int
+        Index of the GPU device to use for the simulation.
+    ensemble : Optional[str]
+        The statistical ensemble for the simulation (e.g., 'NVT', 'NPT'). None if not applicable.
+
     """
 
     protocol_length: int
-    temperature: Union[int, List[int]]
+    temperature: unit.Quantity
     env: str
     simulated_annealing: bool
     state_data_reporter: StateDataReporter

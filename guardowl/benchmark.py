@@ -100,7 +100,7 @@ class PerformTest(Process):
         print(f"{self.implementation=} {self.platform=}")
         potential = MLPotential(self.nnp)
 
-        system = self.system_factory.initialize_pure_ml_system(
+        system = self.system_factory.initialize_ml_system(
             potential,
             self.testsystem.topology,
             self.remove_constraints,

@@ -20,6 +20,7 @@ class MonitoringPlotter:
     """
 
     def __init__(self, traj_file: str, top_file: str, data_file: str) -> None:
+        self.data_file = data_file
         self.canvas = widgets.Output()
         self.md_traj_instance = md.load(traj_file, top=top_file)
         self.x_label_names = ['#"Step"', "Time (ps)", "bond distance [A]"]
@@ -122,11 +123,18 @@ class MonitoringPlotter:
         """
 
         # generate x axis labels
-        if '#"Step"' in self.data.keys():
-            frames = [idx for idx, _ in enumerate(self.data['#"Step"'])]
-        elif "bond distance [A]" in self.data.keys():
-            # frames = self.data["bond distance [A]"]
-            frames = [idx for idx, _ in enumerate(self.data["bond distance [A]"])]
+        nr_of_frames = -1
+        try:
+            nr_of_frames = len(self.data['#"Step"'])
+        except KeyError as e:
+            log.debug(e)
+            try:
+                nr_of_frames = len(self.data["bond distance [A]"])
+            except KeyError as e:
+                log.debug(e)
+
+        assert nr_of_frames > 0, f"No frames found in data file: {self.data_file}"
+        frames = [idx for idx in range(nr_of_frames)]
 
         labels, observable_data = self._generate_report_data(bonded_scan=bonded_scan)
         label_to_data_map = {labels[i]: observable_data[i] for i in range(len(labels))}
@@ -228,7 +236,7 @@ class MonitoringPlotter:
                 verticalalignment="top",
                 bbox=props,
             )
-        except KeyError as e:
+        except (KeyError, AttributeError) as e:
             log.debug(e)
 
         try:
