@@ -77,6 +77,25 @@ class SimulationFactory:
 
 
 def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> System:
+    """
+    Initializes a machine learning system with the given neural network potential,
+    topology, and implementation details.
+
+    Parameters
+    ----------
+    nnp : str
+        The name or identifier of the neural network potential.
+    topology : Topology
+        The topology of the system to be initialized.
+    implementation : str
+        The specific implementation to use for the machine learning potential.
+
+    Returns
+    -------
+    system : System
+        The initialized OpenMM System object.
+    """
+
     from openmmml import MLPotential
 
     from guardowl.simulation import SystemFactory
