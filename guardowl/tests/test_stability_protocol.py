@@ -326,24 +326,22 @@ def test_input_generation_for_minimization_tests():
     # test if the file base is the same
     assert (
         "/".join(minimized_file.split("/")[-6:])
-        == "guardowl/data/drugbank/owl/11117974/orca_input.xyz"
+        == "guardowl/data/drugbank/owl/49957/orca_input.xyz"
     )
     assert "".join(minimized_file.split("/")[:-1]) == "".join(
         start_file.split("/")[:-1]
     )
 
-    assert np.allclose(
-        minimized_position[0], [-1.33526786531436, 2.48368695037195, 1.04890049484746]
-    )
+    assert np.allclose(minimized_position[0], [5.07249404, -0.21016912, -0.0933702])
 
     # now shuffel
-    files = _generate_file_list_for_minimization_test(shuffel=True)
+    files = _generate_file_list_for_minimization_test(shuffle=True)
     (minimized_file, minimized_position), (start_file, start_position) = next(
         _generate_input_for_minimization_test(files)
     )
     assert not (
         "/".join(minimized_file.split("/")[-6:])
-        == "guardowl/data/drugbank/owl/11117974/orca_input.xyz"
+        == "guardowl/data/drugbank/owl/49957/orca_input.xyz"
     )
     assert "".join(minimized_file.split("/")[:-1]) == "".join(
         start_file.split("/")[:-1]

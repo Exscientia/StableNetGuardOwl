@@ -90,7 +90,7 @@ def extract_drugbank_tar_gz():
 
 
 def _generate_file_list_for_minimization_test(
-    dir_name: str = "drugbank", shuffel: bool = False
+    dir_name: str = "drugbank", shuffle: bool = False
 ) -> Dict[str, List]:
     import os
 
@@ -103,7 +103,7 @@ def _generate_file_list_for_minimization_test(
         log.debug(f"Reading from {DATA_DIR}")
         # read in all directories in DATA_DIR
         directories = [x[0] for x in os.walk(DATA_DIR)]
-        if shuffel:
+        if shuffle:
             np.random.shuffle(directories)
         # read in all xyz files in directories
         minimized_xyz_files = []
@@ -144,11 +144,17 @@ def _generate_input_for_minimization_test(
     # read in coordinates from xyz files
     import numpy as np
     from openmm import unit
+
     def read_positions(files) -> Iterator[Tuple[str, List]]:
         for file in files:
             with open(file, "r") as f:
                 lines = f.readlines()
-                positions = unit.Quantity(np.array([[float(x) for x in line.split()[1:]] for line in lines[2:]]), unit.angstrom)
+                positions = unit.Quantity(
+                    np.array(
+                        [[float(x) for x in line.split()[1:]] for line in lines[2:]]
+                    ),
+                    unit.angstrom,
+                )
                 yield file, positions
 
     minimized_xyz_files = files["minimized_xyz_files"]

@@ -218,6 +218,7 @@ class DOFTest(ABC):
             env="vacuum",
         )
 
+        # write pdb file
         pdb_path = f"{parameters.output_folder}/{parameters.log_file_name}.pdb"
         with open(pdb_path, "w") as pdb_file:
 
@@ -226,6 +227,7 @@ class DOFTest(ABC):
                 parameters.testsystem.positions,
                 pdb_path,
             )
+        return sim
 
     def perform_scan(self, parameters: DOFTestParameters) -> None:
         """
@@ -335,10 +337,12 @@ class BondProfileProtocol(DOFTest):
             state = sim.context.getState(getEnergy=True, getPositions=True)
             energy = state.getPotentialEnergy()
             potential_energy.append(energy.value_in_unit(unit.kilojoule_per_mole))
-            conformations.append(state.getPositions())
+            conformations.append(
+                state.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
+            )
             bond_length.append(b)
 
-        return (potential_energy, conformations, bond_length)
+        return (potential_energy, conformations * unit.nanometer, bond_length)
 
 
 class PropagationProtocol(StabilityTest):
@@ -928,8 +932,12 @@ def run_detect_minimum(
         from openff.toolkit.topology import Molecule
 
         # Extract directory and name of the molecule file
-        name = os.path.splitext(os.path.basename(start_file))[0]
-        mol = Molecule.from_file(start_file, allow_undefined_stereo=True)
+        working_dir = "".join(start_file.split("/")[-1])
+        name = os.path.basename(working_dir.removesuffix(".xyz"))
+
+        sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
+        mol = Molecule.from_file(sdf_file, allow_undefined_stereo=True)
+
 
 
         # test if not implemented elements are in molecule, if yes skip
