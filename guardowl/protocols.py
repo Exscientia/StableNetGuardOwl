@@ -19,34 +19,23 @@ from .simulation import initialize_ml_system
 
 class StabilityTest:
     """
-    Abstract base class for stability tests on molecular systems.
+    Abstract base class for stability tests on molecular systems using OpenMM.
     """
 
+    implemented_ensembles = ["npt", "nvt", "nve"]
+
     def __init__(self) -> None:
-        """
-        Initializes a BondProfileProtocol object.
-
-        This method initializes a BondProfileProtocol object and sets the potential_simulation_factory attribute to a new SimulationFactory object.
-        It also sets the implemented_ensembles attribute to a list of strings representing the ensembles that are implemented in the protocol.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
         from .simulation import SimulationFactory
 
         self.potential_simulation_factory = SimulationFactory()
-        self.implemented_ensembles = ["npt", "nvt", "nve"]
 
     @classmethod
     def _get_name(cls) -> str:
         return cls.__name__
 
-    def _assert_input(self, parameters: StabilityTestParameters):
+    def _assert_input(
+        self, parameters: Union[StabilityTestParameters, MinimizationTestParameters]
+    ):
         assert parameters.simulated_annealing in [
             True,
             False,
@@ -61,22 +50,7 @@ class StabilityTest:
             ensemble = parameters.ensemble.lower()
             assert ensemble in self.implemented_ensembles, f"{ensemble} not implemented"
 
-        log.debug(
-            f""" 
-------------------------------------------------------------------------------------
-Stability test parameters:
-params.protocol_length: {parameters.protocol_length}
-params.temperature: {parameters.temperature}
-params.ensemble: {parameters.ensemble}
-params.env: {parameters.env}
-params.simulated_annealing: {parameters.simulated_annealing}
-params.platform: {parameters.platform.getName()}
-params.device_index: {parameters.device_index}
-params.output_folder: {parameters.output_folder}
-params.log_file_name: {parameters.log_file_name}
-------------------------------------------------------------------------------------
-            """
-        )
+        log.debug(f"Stability test parameters: {parameters}")
 
     @staticmethod
     def _run_simulation(
@@ -91,6 +65,7 @@ params.log_file_name: {parameters.log_file_name}
 
         output_file_name = f"{parameters.output_folder}/{parameters.log_file_name}"
 
+        # Writing PDB file
         PDBFile.writeFile(
             parameters.testsystem.topology,
             parameters.testsystem.positions,
@@ -123,7 +98,7 @@ params.log_file_name: {parameters.log_file_name}
 
     @staticmethod
     def _setup_simulation(
-        parameters: StabilityTestParameters,
+        parameters: Union[StabilityTestParameters, MinimizationTestParameters],
         minimization_tolerance: unit.Quantity = 1
         * unit.kilojoule_per_mole
         / unit.angstrom,
@@ -135,7 +110,7 @@ params.log_file_name: {parameters.log_file_name}
 
         Parameters
         ----------
-        parameters : StabilityTestParameters
+        parameters : Union[StabilityTestParameters, MinimizationTestParameters]
             The parameters defining the simulation environment, system, and conditions under which the simulation will be run.
         minimization_tolerance : unit.Quantity, optional
             The energy tolerance to which the system will be minimized. Default is 1 kJ/mol/Å.
@@ -151,10 +126,8 @@ params.log_file_name: {parameters.log_file_name}
 
         from .simulation import SimulationFactory
 
-        system = parameters.system
-
         sim = SimulationFactory.create_simulation(
-            system,
+            parameters.system,
             parameters.testsystem.topology,
             platform=parameters.platform,
             temperature=parameters.temperature,
@@ -169,7 +142,6 @@ params.log_file_name: {parameters.log_file_name}
         # Perform energy minimization if requested
         if minimize:
             log.info("Minimizing energy")
-            log.debug(f"{minimization_tolerance=}")
             sim.minimizeEnergy(tolerance=minimization_tolerance)
             log.info("Energy minimization complete.")
 
@@ -190,7 +162,9 @@ params.log_file_name: {parameters.log_file_name}
 
         return sim
 
-    def perform_stability_test(self, params: StabilityTestParameters) -> None:
+    def perform_stability_test(
+        self, params: Union[StabilityTestParameters, MinimizationTestParameters]
+    ) -> None:
         raise NotImplementedError()
 
 
@@ -365,8 +339,8 @@ class PropagationProtocol(StabilityTest):
         parms.log_file_name = f"{parms.log_file_name}_{parms.temperature}"
 
         self._assert_input(parms)
-        qsim = self._setup_simulation(parms)
-        self._run_simulation(parms, qsim)
+        sim = self._setup_simulation(parms)
+        self._run_simulation(parms, sim)
 
 
 class MinimizationProtocol(StabilityTest):
@@ -381,19 +355,7 @@ class MinimizationProtocol(StabilityTest):
         super().__init__()
 
     def _assert_input(self, parameters: MinimizationTestParameters):
-        log.debug(
-            f""" 
-------------------------------------------------------------------------------------
-Minimization test parameters:
-params.convergence_criteria: {parameters.convergence_criteria}
-params.env: {parameters.env}
-params.platform: {parameters.platform.getName()}
-params.device_index: {parameters.device_index}
-params.output_folder: {parameters.output_folder}
-params.log_file_name: {parameters.log_file_name}
-------------------------------------------------------------------------------------
-            """
-        )
+        log.debug(f"Stability test parameters: {parameters}")
 
     def perform_stability_test(
         self, parms: MinimizationTestParameters, minimize: bool = True
@@ -401,12 +363,12 @@ params.log_file_name: {parameters.log_file_name}
         from openmm.app import PDBFile
 
         self._assert_input(parms)
-        qsim = self._setup_simulation(
+        sim = self._setup_simulation(
             parms, minimization_tolerance=parms.convergence_criteria, minimize=minimize
         )
 
         output_file_name = f"{parms.output_folder}/{parms.log_file_name}"
-        state = qsim.context.getState(getPositions=True, getEnergy=True)
+        state = sim.context.getState(getPositions=True, getEnergy=True)
         PDBFile.writeFile(
             parms.testsystem.topology,
             state.getPositions(),
@@ -937,8 +899,6 @@ def run_detect_minimum(
 
         sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
         mol = Molecule.from_file(sdf_file, allow_undefined_stereo=True)
-
-
 
         # test if not implemented elements are in molecule, if yes skip
         def _contains_unknown_elements(mol: Molecule) -> bool:

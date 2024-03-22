@@ -68,6 +68,6 @@ def generate_molecule_from_sdf(path: str) -> Molecule:
     Molecule
         An OpenFF Molecule instance loaded from the SDF file.
     """
-    mol = Molecule.from_file(path)
+    mol = Molecule.from_file(path, allow_undefined_stereo=True)
     log.info(f"Molecule loaded from SDF file: {path}")
     return mol
