@@ -3,7 +3,7 @@ from typing import Tuple
 import pytest
 from openmm import System
 
-from guardowl.setup import generate_molecule_from_smiles
+from guardowl.setup import generate_molecule_from_smiles, generate_pdbfile_from_mol
 from guardowl.testsystems import hipen_systems
 from openmm.app import PDBFile
 
@@ -18,8 +18,8 @@ def single_hipen_system() -> PDBFile:
     """
     name = list(hipen_systems.keys())[1]
     smiles = hipen_systems[name]
-    pdb = generate_molecule_from_smiles(smiles)
-    return pdb
+    mol = generate_molecule_from_smiles(smiles)
+    return generate_pdbfile_from_mol(mol)
 
 
 @pytest.fixture(scope="session")

@@ -1,10 +1,7 @@
 from typing import Literal, Tuple
 import numpy as np
-from openff.toolkit.topology.molecule import Molecule
-from openff.toolkit.topology.topology import Topology
 from openmm.openmm import System
 import pytest
-from openff.units.openmm import to_openmm
 from openmm import unit
 from openmm.app import DCDReporter, PDBFile
 from openmmml import MLPotential

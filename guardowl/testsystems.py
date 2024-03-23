@@ -1,7 +1,6 @@
 from typing import List, Union, Optional
 from functools import lru_cache
 from loguru import logger as log
-from openff.units.openmm import to_openmm
 from openmm import LangevinIntegrator, unit, MonteCarloBarostat
 from openmm.app import Simulation
 from openmmtools.testsystems import (
@@ -12,7 +11,6 @@ from openmmtools.testsystems import (
     WaterBox,
 )
 from openmmtools.utils import get_fastest_platform
-from openff.toolkit.topology import Molecule, Topology
 
 from .constants import collision_rate, stepsize, temperature
 
@@ -122,6 +120,9 @@ class SmallMoleculeVacuumTestSystem:
         self._positions = value
 
 
+from rdkit import Chem
+
+
 class SmallMoleculeTestsystemFactory:
     """Factory for generating SmallMoleculeVacuum test systems.
 
@@ -133,13 +134,13 @@ class SmallMoleculeTestsystemFactory:
 
     @staticmethod
     def generate_testsystems_from_mol(
-        mol: Molecule, name: Optional[str] = None
+        mol: Chem.Mol, name: Optional[str] = None
     ) -> SmallMoleculeVacuumTestSystem:
         """Generate a SmallMoleculeVacuum test system.
 
         Parameters
         ----------
-        mol : openff.toolkit.topology.Molecule
+        mol : Chem.Mol
             Molecule to generate test system from.
         name : str
             Name of the test system to generate.
