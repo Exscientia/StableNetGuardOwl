@@ -1,7 +1,4 @@
-from typing import Tuple
-
 import pytest
-from openmm import System
 
 from guardowl.setup import generate_molecule_from_smiles, generate_pdbfile_from_mol
 from guardowl.testsystems import hipen_systems
