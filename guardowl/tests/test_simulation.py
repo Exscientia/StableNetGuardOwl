@@ -17,104 +17,77 @@ from guardowl.utils import (
 )
 
 
-@pytest.mark.parametrize(
-    "nnp, e_lamb_0, e_lamb_1", [("ani2x", 295.1235918998718, -2346060.437261855)]
-)
+@pytest.mark.parametrize("nnp, e_ref", [("ani2x", -2346020.730264931)])
 def test_generate_simulation_instance(
     nnp: str,
-    e_lamb_0: float,
-    e_lamb_1: float,
-    single_hipen_system: Tuple[System, Topology, Molecule],
+    e_ref: float,
+    single_hipen_system: PDBFile,
 ) -> None:
     """Test if we can generate a simulation instance"""
 
     # set up system and topology and define ml region
-    system, topology, mol = single_hipen_system
+    pdb = single_hipen_system
     platform = get_fastest_platform()
     qml = MLPotential(nnp)
     ########################################################
     ########################################################
-    # create MM simulation
-    rsim = SimulationFactory.create_simulation(
-        system,
-        topology,
-        platform=platform,
-        env="vacuum",
-        ensemble="NVT",
-        temperature=unit.Quantity(300, unit.kelvin),
-    )
-    rsim.context.setPositions(to_openmm(mol.conformers[0]))
-    e_sim_mm_endstate = (
-        rsim.context.getState(getEnergy=True)
-        .getPotentialEnergy()  # pylint: disable=unexpected-keyword-arg
-        .value_in_unit(unit.kilojoule_per_mole)
-    )
-    print(e_sim_mm_endstate)
-    assert np.isclose(e_sim_mm_endstate, e_lamb_0)
-    ########################################################
-    ########################################################
     # create ML simulation
-    rsim = SimulationFactory.create_simulation(
+    sim = SimulationFactory.create_simulation(
         SystemFactory().initialize_ml_system(
             qml,
-            topology,
+            pdb.topology,
         ),
-        topology,
+        pdb.topology,
         platform=platform,
         ensemble="NVT",
         env="vacuum",
         temperature=unit.Quantity(300, unit.kelvin),
     )
-    rsim.context.setPositions(to_openmm(mol.conformers[0]))
-    e_sim_mm_endstate = (
-        rsim.context.getState(getEnergy=True)
-        .getPotentialEnergy()  # pylint: disable=unexpected-keyword-arg
+    sim.context.setPositions(pdb.positions)
+    e = (
+        sim.context.getState(getEnergy=True)
+        .getPotentialEnergy()
         .value_in_unit(unit.kilojoule_per_mole)
     )
-    print(e_sim_mm_endstate)
-    assert np.isclose(e_sim_mm_endstate, e_lamb_1)
+    assert np.isclose(e, e_ref)
     # test minimization
-    rsim.minimizeEnergy(maxIterations=1000)
-    pos = rsim.context.getState(
-        getPositions=True
-    ).getPositions()  # pylint: disable=unexpected-keyword-arg
-    with open("initial_frame_lamb_1.0.pdb", "w") as f:
-        PDBFile.writeFile(topology, pos, f)
+    sim.minimizeEnergy(maxIterations=1000)
+    pos = sim.context.getState(getPositions=True).getPositions()
 
 
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
 def test_simulating(
     nnp: str,
     implementation: str,
-    single_hipen_system: Tuple[System, Topology, Molecule],
+    single_hipen_system: PDBFile,
 ) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # set up system and topology and define ml region
-    system, topology, mol = single_hipen_system
+    pdb = single_hipen_system
     qml = MLPotential(nnp)
     platform = get_fastest_platform()
     ########################################################
     # ---------------------------#
     # generate pure ML simulation
-    qsim = SimulationFactory.create_simulation(
+    sim = SimulationFactory.create_simulation(
         SystemFactory().initialize_ml_system(
             qml,
-            topology,
+            pdb.topology,
             implementation=implementation,
         ),
-        topology,
+        pdb.topology,
         env="vacuum",
         platform=platform,
         ensemble="NVT",
         temperature=unit.Quantity(300, unit.kelvin),
     )
     # set position
-    qsim.context.setPositions(to_openmm(mol.conformers[0]))
+    sim.context.setPositions(pdb.positions)
     # simulate
-    qsim.reporters.append(DCDReporter("test.dcd", 10))
-    qsim.step(5)
-    del qsim
+    sim.reporters.append(DCDReporter("test.dcd", 10))
+    sim.step(5)
+    del sim
 
 
 @pytest.mark.parametrize(

@@ -18,7 +18,6 @@ from .constants import collision_rate, stepsize, temperature
 
 
 class PureLiquidBoxTestSystem(TestSystem):
-
     """Pure liquid box."""
 
     def __init__(self, molecule_name: str, nr_of_copies: int):
@@ -93,25 +92,34 @@ class SmallMoleculeVacuumTestSystem:
     ----------
     name : str
         Name of the test system.
-    smiles : str
-        SMILES string of the molecule.
     """
 
-    def __init__(self, name, system, topology, positions):
+    def __init__(self, name, topology, positions):
         self.name = name
-        self.system = system
         self.topology = topology
-        self.positions = positions
+        self._positions = positions
 
     def __copy__(self):
         from copy import deepcopy
 
         return SmallMoleculeVacuumTestSystem(
             self.name,
-            deepcopy(self.system),
             deepcopy(self.topology),
             deepcopy(self.positions),
         )
+
+    @property
+    def positions(self):
+        return self._positions
+
+    @positions.setter
+    def positions(self, value):
+        # make sure that the positions have the same number of entries than the topology
+        assert len(value) == self.topology.getNumAtoms(), (
+            f"Number of atoms in positions ({len(value)}) does not match "
+            f"number of atoms in topology ({self.topology.getNumAtoms()})"
+        )
+        self._positions = value
 
 
 class SmallMoleculeTestsystemFactory:
@@ -141,11 +149,10 @@ class SmallMoleculeTestsystemFactory:
         SmallMoleculeVacuum
             Generated test system.
         """
-        from .setup import create_system_from_mol
+        from .setup import generate_pdbfile_from_mol
 
-        system, topology = create_system_from_mol(mol)
-        positions = to_openmm(mol.conformers[0])
-        return SmallMoleculeVacuumTestSystem(name, system, topology, positions)
+        pdb = generate_pdbfile_from_mol(mol)
+        return SmallMoleculeVacuumTestSystem(name, pdb.topology, pdb.positions)
 
     def generate_testsystem_from_smiles(self, smiles: str, name: Optional[str] = None):
         """Generate a SmallMoleculeVacuum test system.

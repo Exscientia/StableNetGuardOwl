@@ -268,11 +268,10 @@ class BondProfileProtocol(DOFTest):
             The updated positions of all atoms in the system.
         """
         diff = (position[atom2] - position[atom1]).value_in_unit(unit.angstrom)
+        position_in_angstrom = position.value_in_unit(unit.angstrom)
         normalized_diff = diff / np.linalg.norm(diff)
-        new_positions = position.copy()
-        new_positions[atom2] = position[atom1] + normalized_diff * unit.Quantity(
-            length, unit.angstrom
-        )
+        new_positions = position_in_angstrom.copy()
+        new_positions[atom2] = position_in_angstrom[atom1] + normalized_diff * length
         return unit.Quantity(new_positions, unit.angstrom)
 
     def perform_DOF_scan(
@@ -300,12 +299,12 @@ class BondProfileProtocol(DOFTest):
         initial_pos = parameters.testsystem.positions
         conformations, potential_energy, bond_length = [], [], []
 
-        for b in np.linspace(0, 8, 80):  # in angstrom
+        for length in np.linspace(0, 10, 50):  # in angstrom
             new_pos = self.set_bond_length(
                 initial_pos,
                 bond_atom1,
                 bond_atom2,
-                b,
+                length,
             )
             sim.context.setPositions(new_pos)
             state = sim.context.getState(getEnergy=True, getPositions=True)
@@ -314,7 +313,7 @@ class BondProfileProtocol(DOFTest):
             conformations.append(
                 state.getPositions(asNumpy=True).value_in_unit(unit.nanometer)
             )
-            bond_length.append(b)
+            bond_length.append(length)
 
         return (potential_energy, conformations * unit.nanometer, bond_length)
 
@@ -870,6 +869,33 @@ def run_detect_minimum(
         _generate_input_for_minimization_test,
     )
 
+    from .setup import generate_molecule_from_sdf
+    from rdkit import Chem
+
+    # test if not implemented elements are in molecule, if yes skip
+    def _contains_unknown_elements(mol: Chem.Mol) -> bool:
+        for atom in mol.GetAtoms():
+            if atom.GetAtomicNum() >= 15:
+                log.debug(f"Skipping {name} because it contains unknown elements")
+                return True
+        return False
+
+    # test if molecules has below 10 heavy atoms, if yes return True
+    def _below_10_heavy_atoms(mol: Chem.Mol) -> bool:
+        heavy_atoms = 0
+        for atom in mol.GetAtoms():
+            if atom.GetAtomicNum() != 1:
+                heavy_atoms += 1
+        if heavy_atoms > 10:
+            log.debug(
+                f"Skipping {name} because it has more than 10 heavy atoms: {heavy_atoms} heavy atoms"
+            )
+            return False
+        log.debug(
+            f"Using {name} because it has less than 10 heavy atoms: {heavy_atoms} heavy atoms"
+        )
+        return True
+
     # Extract DrugBank tar.gz file and prepare input files
     extract_drugbank_tar_gz()
     files = _generate_file_list_for_minimization_test(shuffle=True)
@@ -885,63 +911,35 @@ def run_detect_minimum(
         f"Performing minimization for {nr_of_molecules_to_test} molecules using {nnp} with {implementation}."
     )
 
-    for (minimized_file, minimized_position), (
+    for (_, minimized_position), (
         start_file,
         start_position,
     ) in _generate_input_for_minimization_test(files):
         log.info(f"Minimization test: {counter}/{nr_of_molecules_to_test}")
-
-        from openff.toolkit.topology import Molecule
 
         # Extract directory and name of the molecule file
         working_dir = "".join(start_file.split("/")[-1])
         name = os.path.basename(working_dir.removesuffix(".xyz"))
 
         sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
-        mol = Molecule.from_file(sdf_file, allow_undefined_stereo=True)
-
-        # test if not implemented elements are in molecule, if yes skip
-        def _contains_unknown_elements(mol: Molecule) -> bool:
-            for atom in mol.atoms:
-                if atom.atomic_number >= 15:
-                    log.debug(f"Skipping {name} because it contains unknown elements")
-                    return True
-            return False
-
-        # test if molecules has below 10 heavy atoms, if yes return True
-        def _below_10_heavy_atoms(mol: Molecule) -> bool:
-            heavy_atoms = 0
-            for atom in mol.atoms:
-                if atom.atomic_number != 1:
-                    heavy_atoms += 1
-            if heavy_atoms > 10:
-                log.debug(
-                    f"Skipping {name} because it has more than 10 heavy atoms: {heavy_atoms} heavy atoms"
-                )
-                return False
-            log.debug(
-                f"Using {name} because it has less than 10 heavy atoms: {heavy_atoms} heavy atoms"
-            )
-            return True
-
-        # ANI-2x is trained on limited elements, if molecule contains unknown elements skip
-        if _contains_unknown_elements(mol):
-            continue
+        mol = generate_molecule_from_sdf(sdf_file)
 
         if only_molecules_below_10_heavy_atoms:
             if not _below_10_heavy_atoms(mol):
                 continue
+        # ANI-2x is trained on limited elements, if molecule contains unknown elements skip
+        if _contains_unknown_elements(mol):
+            continue
 
         #########################################
         #########################################
         # initialize the system that has been minimized using DFT
-        from openff.interchange.exceptions import UnassignedBondError
-
+        log.debug(f"{sdf_file}")
         try:
             reference_testsystem = (
                 SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
             )
-        except (ValueError, UnassignedBondError) as e:
+        except ValueError as e:
             log.warning(f"Skipping {name} because of {e}")
             continue
         # set the minimized positions

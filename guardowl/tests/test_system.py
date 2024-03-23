@@ -5,51 +5,51 @@ from guardowl.testsystems import (
 )
 from guardowl.utils import get_data_filename
 
+from openmm.app import PDBFile
+
+
+def test_different_ways_to_generate_top(tmp_dir) -> None:
+    """Test if we can generate a molecule"""
+    from guardowl.setup import (
+        generate_pdbfile_from_mol,
+        generate_molecule_from_smiles,
+        generate_molecule_from_sdf,
+    )
+    from rdkit import Chem
+
+    smiles = "CCO"
+    mol = generate_molecule_from_smiles(smiles)
+    assert isinstance(mol, Chem.Mol)
+
+    sdf_file = f"{get_data_filename('tests/data/156613987')}/156613987.sdf"
+    mol = generate_molecule_from_sdf(sdf_file)
+    assert isinstance(mol, Chem.Mol)
+
+    # test that we can derive topology correctly
+    pdb = generate_pdbfile_from_mol(mol)
+    top = pdb.topology
+    positions = pdb.positions
+
 
 def test_generate_small_molecule(tmp_dir) -> None:
     """Test if we can generate a small molecule"""
     factory = SmallMoleculeTestsystemFactory()
     sdf_file = f"{get_data_filename('tests/data/156613987')}/156613987.sdf"
-    system = factory.generate_testsystems_from_sdf(sdf_file)
-    from openmm.app import PDBFile
-
-    print(system.topology)  # <openmm.app.topology.Topology object>
-    PDBFile.writeFile(
-        system.topology,
-        system.positions,
-        open(f"{tmp_dir}/tmp1.pdb", "w"),
-    )
-
-    import copy
-
-    system_copy = copy.copy(system)
-    print(system_copy.topology)
-
-    top = system_copy.topology
-    for atom in top.atoms():
-        print(atom.index, atom.name, atom.residue.name)
-
-    for bond in top.bonds():
-        print(bond)
-
-    PDBFile.writeFile(
-        system.topology,
-        system_copy.positions,
-        open(f"{tmp_dir}/tmp2.pdb", "w"),
-    )
+    testsystem = factory.generate_testsystems_from_sdf(sdf_file)
+    assert testsystem is not None
 
 
 def test_generate_molecule(single_hipen_system) -> None:
     """Test if we can generate a molecule instance"""
-    system, top, mol = single_hipen_system
-    assert mol.n_conformers >= 1
+    pdb = single_hipen_system
+    assert len(pdb.positions) >= 1
 
 
 def test_generate_system_top_instances(single_hipen_system) -> None:
     """Test if we can generate a system/topology instance"""
-    system, topology, mol = single_hipen_system
-    assert system.getNumParticles() > 0
-    indices = [atom.index for atom in topology.atoms()]
+    pdb = single_hipen_system
+    assert pdb.topology.getNumAtoms() > 0
+    indices = [atom.index for atom in pdb.topology.atoms()]
     assert len(indices) > 0
 
 
