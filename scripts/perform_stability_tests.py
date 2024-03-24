@@ -79,6 +79,7 @@ def main(config: str):
         test["output_folder"] = setup_logging_and_output()
         test["reporter"] = create_state_data_reporter()
         test["platform"] = get_fastest_platform()
+        log.info("--------- Test starts --------- ")
 
         if protocol == "hipen_protocol":
             log.info("Performing hipen protocol")
@@ -105,6 +106,8 @@ def main(config: str):
             log.warning(f"Unknown protocol: {protocol}")
             raise NotImplementedError(f"Unknown protocol: {protocol}")
 
+        log.info("--------- Test finishs --------- ")
+
 
 def _setup_logging():
     import logging
@@ -121,6 +124,7 @@ if __name__ == "__main__":
     import typer
     import warnings
     import torch
+
     torch._C._jit_set_nvfuser_enabled(False)
 
     _setup_logging()
