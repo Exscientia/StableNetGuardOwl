@@ -71,14 +71,16 @@ def main(config: str):
 
     log.info(f"Loaded config: {config}")
     config = load_config(config)
+    platform = get_fastest_platform()
+    output = setup_logging_and_output()
 
     for test in config.get("tests", []):
         protocol = test.get("protocol")
         validate_input(test.get("nnp"), test.get("implementation"))
         # add reporter and output folder
-        test["output_folder"] = setup_logging_and_output()
+        test["output_folder"] = output
         test["reporter"] = create_state_data_reporter()
-        test["platform"] = get_fastest_platform()
+        test["platform"] = platform
         log.info("--------- Test starts --------- ")
 
         if protocol == "hipen_protocol":
