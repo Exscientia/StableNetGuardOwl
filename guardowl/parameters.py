@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
+from typing import List, Literal, Optional, Union
+
 from openmm import Platform, System, unit
 from openmm.app import StateDataReporter
 from openmmtools.testsystems import TestSystem
-from typing import List, Union, Optional, Literal, Literal
-from .constants import Environment
 
 
 @dataclass

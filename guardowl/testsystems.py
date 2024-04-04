@@ -1,14 +1,15 @@
-from typing import List, Union, Optional
+from dataclasses import dataclass, field
+from typing import List, Optional, Union
+
 from loguru import logger as log
+from openmm import unit
+from openmm.app import Topology
 from openmmtools.testsystems import (
     AlanineDipeptideExplicit,
     AlanineDipeptideVacuum,
     WaterBox,
 )
 from openmmtools.utils import get_fastest_platform
-from openmm.app import Topology
-from openmm import unit
-from dataclasses import dataclass, field
 
 
 class Testsystem:
@@ -119,17 +120,20 @@ class TestsystemFactory:
                 raise NotImplementedError(
                     f"Only the following molecules are implemented: {TestsystemFactory._AVAILABLE_SYSTEM_FOR_PURE_LIQUIDS.keys()}"
                 )
-        if isinstance(testsystem_option, SmallMoleculeVacuumOption):
+        elif isinstance(testsystem_option, SmallMoleculeVacuumOption):
             if testsystem_option.name == "ala_dipeptide":
                 ala = AlanineDipeptideVacuum(constraints=None)
                 return Testsystem(ala.topology, ala.positions)
             else:
                 return self._generate_small_molecule_testsystem(testsystem_option)
 
-        if isinstance(testsystem_option, SolvatedSystemOption):
+        elif isinstance(testsystem_option, SolvatedSystemOption):
             if testsystem_option.name == "ala_dipeptide":
                 ala = AlanineDipeptideExplicit(constraints=None)
                 return Testsystem(ala.topology, ala.positions)
+
+        else:
+            raise RuntimeError("No valid input provided")
 
     def _generate_small_molecule_testsystem(
         self, testsystem_option: SmallMoleculeVacuumOption
@@ -152,8 +156,8 @@ class TestsystemFactory:
     def _generate_organic_liquid_testsystem(
         self, name: str, nr_of_copies: int
     ) -> Testsystem:
-        from openff.interchange.components._packmol import UNIT_CUBE, pack_box
         import numpy as np
+        from openff.interchange.components._packmol import UNIT_CUBE, pack_box
         from openff.toolkit import ForceField, Molecule
         from openff.units import unit as ofunit
 

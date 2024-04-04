@@ -150,7 +150,6 @@ class StabilityTest:
 
 
 from abc import ABC, abstractmethod
-from .constants import Environment
 
 
 class DOFTest(ABC):
@@ -171,7 +170,7 @@ class DOFTest(ABC):
             parameters.testsystem.topology,
             platform=parameters.platform,
             temperature=unit.Quantity(300, unit.kelvin),
-            env=Environment.VACUUM,
+            env="vacuum",
         )
 
         # write pdb file
@@ -319,7 +318,7 @@ class PropagationProtocol(StabilityTest):
 
         parms.log_file_name = f"{parms.log_file_name}_{parms.temperature}"
 
-        sim = self._setup_simulation(parms)
+        sim = self._setup_simulation(parms, minimize=False)
         self._run_simulation(parms, sim)
 
 
@@ -393,9 +392,8 @@ class MultiTemperatureProtocol(PropagationProtocol):
             _parms.temperature = temperature
             _parms.log_file_name = f"{parms.log_file_name}_{temperature}K"
             log.info(f"Running simulation at temperature: {temperature} K")
-            self._assert_input(_parms)
 
-            qsim = self._setup_simulation(_parms)
+            qsim = self._setup_simulation(_parms, minimize=False)
             self._run_simulation(_parms, qsim)
 
 
@@ -465,7 +463,7 @@ def run_hipen_protocol(
             temperature=temperature,
             ensemble="nvt",
             simulated_annealing=False,
-            env=Environment.VACUUM,
+            env="vacuum",
             system=system,
             platform=platform,
             testsystem=testsystem,
@@ -710,7 +708,7 @@ def run_alanine_dipeptide_protocol(
         Whether to perform simulated annealing, defaults to False.
     nr_of_simulation_steps : int, optional
         The total number of simulation steps, defaults to 5,000,000.
-    env : Environment, optional
+    env : str, optional
         The environment to simulate in ('vacuum' or 'solution'), defaults to 'vacuum'.
 
     """
@@ -936,7 +934,7 @@ def run_detect_minimum(
         opt = SmallMoleculeVacuumOption(path=sdf_file)
 
         try:
-            reference_testsystem = TestsystemFactory().generate_testsystem(sdf_file)
+            reference_testsystem = TestsystemFactory().generate_testsystem(opt)
         except ValueError as e:
             log.warning(f"Skipping {name} because of {e}")
             continue

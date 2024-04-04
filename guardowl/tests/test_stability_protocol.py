@@ -1,11 +1,6 @@
 from pathlib import Path
 
 import pytest
-from openmm import unit
-from openmm.app import StateDataReporter
-from openmmml import MLPotential
-from openmmtools.utils import get_fastest_platform
-
 from guardowl.protocols import (
     BondProfileProtocol,
     DOFTestParameters,
@@ -15,14 +10,18 @@ from guardowl.protocols import (
 )
 from guardowl.simulation import SystemFactory
 from guardowl.testsystems import (
-    TestsystemFactory,
     LiquidOption,
     SmallMoleculeVacuumOption,
+    TestsystemFactory,
 )
 from guardowl.utils import (
     get_available_nnps_and_implementation,
     gpu_memory_constrained_nnps_and_implementation,
 )
+from openmm import unit
+from openmm.app import StateDataReporter
+from openmmml import MLPotential
+from openmmtools.utils import get_fastest_platform
 
 
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
@@ -116,9 +115,9 @@ def test_setup_waterbox_protocol_individual_parts(
 
     # ---------------------------#
     platform = get_fastest_platform()
-    edge_size = 5
-    opt = LiquidOption(name="water", edge_size=edge_size)
-    testsystem = TestsystemFactory().generate_testsystems(opt)
+    edge_length = 5
+    opt = LiquidOption(name="water", edge_length=edge_length * unit.angstrom)
+    testsystem = TestsystemFactory().generate_testsystem(opt)
     nnp_instance = MLPotential(nnp)
 
     system = SystemFactory().initialize_system(
@@ -129,7 +128,7 @@ def test_setup_waterbox_protocol_individual_parts(
 
     output_folder = "test_stability_protocol"
     log_file_name = (
-        f"waterbox_{edge_size}A_{nnp}_{implementation}_{ensemble}_{temperature}K"
+        f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}_{temperature}K"
     )
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
@@ -317,12 +316,12 @@ IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
     IN_GITHUB_ACTIONS, reason="Github Actions does not return the same file order"
 )
 def test_input_generation_for_minimization_tests():
+    import numpy as np
     from guardowl.utils import (
-        _generate_input_for_minimization_test,
         _generate_file_list_for_minimization_test,
+        _generate_input_for_minimization_test,
         extract_drugbank_tar_gz,
     )
-    import numpy as np
 
     # extract tar.gz data
     extract_drugbank_tar_gz()
@@ -370,9 +369,10 @@ def test_run_detect_minimum(nnp, implementation, tmp_dir):
     from guardowl.protocols import run_detect_minimum
 
     platform = get_fastest_platform()
+    nnp_instance = MLPotential(nnp)
 
     run_detect_minimum(
-        nnp,
+        nnp_instance,
         implementation,
         platform,
         tmp_dir,

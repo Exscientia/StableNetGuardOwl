@@ -7,8 +7,9 @@ from openmm.app import Simulation, Topology
 from openmmml import MLPotential
 from openmmtools.integrators import BAOABIntegrator
 
-from .constants import collision_rate, stepsize, Environment
+from .constants import collision_rate, stepsize
 from typing import Literal
+
 
 class SimulationFactory:
     @staticmethod
@@ -17,7 +18,7 @@ class SimulationFactory:
         topology: Topology,
         platform: Platform,
         temperature: unit.Quantity,
-        env: Environment,
+        env: Literal["vacuum", "solution"],
         device_index: int = 0,
         ensemble: str = "NVT",
     ) -> Simulation:
@@ -34,7 +35,7 @@ class SimulationFactory:
             The OpenMM Platform object for simulation.
         temperature : unit.Quantity
             The temperature for the simulation.
-        env : Environment
+        env : str
             The environment of the simulation ("vacuum" or "solution").
         device_index : int, optional
             GPU device index for CUDA platform, by default 0.
@@ -53,9 +54,7 @@ class SimulationFactory:
         else:
             integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
 
-        if (
-            ensemble.casefold() == "npt" and env != Environment.VACUUM
-        ):  # for NpT add barostat
+        if ensemble.casefold() == "npt" and env != "vacuum":  # for NpT add barostat
             barostate_force_id = system.addForce(
                 MonteCarloBarostat(unit.Quantity(1, unit.atmosphere), temperature)
             )
