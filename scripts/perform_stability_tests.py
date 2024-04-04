@@ -171,6 +171,7 @@ def main(config: str) -> None:
     config_path : str
         The path to the YAML configuration file.
     """
+    from openmmml import MLPotential
 
     log.info(f"Loaded config from {config}")
     config = load_config(config)
@@ -182,6 +183,8 @@ def main(config: str) -> None:
         test["output_folder"] = output
         test["reporter"] = create_state_data_reporter()
         test["platform"] = platform
+        test["nnp"] = MLPotential(test["nnp"])
+
         process_test(test, platform, output)
         print("--------- Test finishs --------- ")
 
