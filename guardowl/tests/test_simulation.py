@@ -25,13 +25,13 @@ def test_generate_simulation_instance(
     # set up system and topology and define ml region
     pdb = single_hipen_system
     platform = get_fastest_platform()
-    qml = MLPotential(nnp)
+    nnp = MLPotential(nnp)
     ########################################################
     ########################################################
     # create ML simulation
     sim = SimulationFactory.create_simulation(
-        SystemFactory().initialize_ml_system(
-            qml,
+        SystemFactory.initialize_system(
+            nnp,
             pdb.topology,
         ),
         pdb.topology,
@@ -64,11 +64,12 @@ def test_simulating(
     pdb = single_hipen_system
     qml = MLPotential(nnp)
     platform = get_fastest_platform()
+
     ########################################################
     # ---------------------------#
     # generate pure ML simulation
     sim = SimulationFactory.create_simulation(
-        SystemFactory().initialize_ml_system(
+        SystemFactory().initialize_system(
             qml,
             pdb.topology,
             implementation=implementation,
@@ -94,20 +95,20 @@ def test_pure_liquid_simulation(
     nnp: tuple[Literal["ani2x"], Literal["torchani"]],
     implementation: tuple[Literal["ani2x"], Literal["torchani"]],
 ):
-    from guardowl.testsystems import PureLiquidTestsystemFactory
+    from guardowl.testsystems import TestsystemFactory, LiquidOption
 
-    factory = PureLiquidTestsystemFactory()
-    liquid_box = factory.generate_testsystems(
-        name="ethane", nr_of_copies=150, nr_of_equilibration_steps=500
-    )
-    qml = MLPotential(nnp)
+    opt = LiquidOption(name="ethane", nr_of_copies=150)
+
+    factory = TestsystemFactory()
+    liquid_box = factory.generate_testsystem(opt)
+    nnp = MLPotential(nnp)
     platform = get_fastest_platform()
     ########################################################
     # ---------------------------#
     # generate pure ML simulation
-    qsim = SimulationFactory.create_simulation(
-        SystemFactory().initialize_ml_system(
-            qml,
+    sim = SimulationFactory.create_simulation(
+        SystemFactory().initialize_system(
+            nnp,
             liquid_box.topology,
             implementation=implementation,
         ),
@@ -118,7 +119,7 @@ def test_pure_liquid_simulation(
         temperature=unit.Quantity(300, unit.kelvin),
     )
     # set position
-    qsim.context.setPositions(liquid_box.positions)
+    sim.context.setPositions(liquid_box.positions)
     # simulate
-    qsim.reporters.append(DCDReporter("test.dcd", 10))
-    qsim.step(5)
+    sim.reporters.append(DCDReporter("test.dcd", 10))
+    sim.step(5)

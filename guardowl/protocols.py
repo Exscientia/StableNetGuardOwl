@@ -14,7 +14,7 @@ from .parameters import (
     DOFTestParameters,
 )
 from .reporter import ContinuousProgressReporter
-from .simulation import initialize_ml_system
+from .simulation import SystemFactory
 
 
 class StabilityTest:
@@ -32,25 +32,6 @@ class StabilityTest:
     @classmethod
     def _get_name(cls) -> str:
         return cls.__name__
-
-    def _assert_input(
-        self, parameters: Union[StabilityTestParameters, MinimizationTestParameters]
-    ):
-        assert parameters.simulated_annealing in [
-            True,
-            False,
-        ], f"Invalid input: {parameters.simulated_annealing}"
-        assert parameters.env in [
-            "vacuum",
-            "solution",
-        ], f"Invalid input: {parameters.env}"
-        ensemble = parameters.ensemble
-
-        if ensemble:
-            ensemble = parameters.ensemble.lower()
-            assert ensemble in self.implemented_ensembles, f"{ensemble} not implemented"
-
-        log.debug(f"Stability test parameters: {parameters}")
 
     @staticmethod
     def _run_simulation(
@@ -169,6 +150,7 @@ class StabilityTest:
 
 
 from abc import ABC, abstractmethod
+from .constants import Environment
 
 
 class DOFTest(ABC):
@@ -189,7 +171,7 @@ class DOFTest(ABC):
             parameters.testsystem.topology,
             platform=parameters.platform,
             temperature=unit.Quantity(300, unit.kelvin),
-            env="vacuum",
+            env=Environment.VACUUM,
         )
 
         # write pdb file
@@ -246,14 +228,14 @@ class BondProfileProtocol(DOFTest):
         super().__init__()
 
     def set_bond_length(
-        self, position: unit.Quantity, atom1: int, atom2: int, length: float
+        self, positions: unit.Quantity, atom1: int, atom2: int, length: float
     ) -> unit.Quantity:
         """
         Adjusts the bond length between two specified atoms in a given set of positions.
 
         Parameters
         ----------
-        position : unit.Quantity
+        positions : unit.Quantity
             The current positions of all atoms in the system.
         atom1 : int
             The index of the first atom in the bond.
@@ -267,8 +249,8 @@ class BondProfileProtocol(DOFTest):
         unit.Quantity
             The updated positions of all atoms in the system.
         """
-        diff = (position[atom2] - position[atom1]).value_in_unit(unit.angstrom)
-        position_in_angstrom = position.value_in_unit(unit.angstrom)
+        diff = (positions[atom2] - positions[atom1]).value_in_unit(unit.angstrom)
+        position_in_angstrom = positions.value_in_unit(unit.angstrom)
         normalized_diff = diff / np.linalg.norm(diff)
         new_positions = position_in_angstrom.copy()
         new_positions[atom2] = position_in_angstrom[atom1] + normalized_diff * length
@@ -337,7 +319,6 @@ class PropagationProtocol(StabilityTest):
 
         parms.log_file_name = f"{parms.log_file_name}_{parms.temperature}"
 
-        self._assert_input(parms)
         sim = self._setup_simulation(parms)
         self._run_simulation(parms, sim)
 
@@ -456,19 +437,20 @@ def run_hipen_protocol(
         The total number of simulation steps to perform, defaults to 5,000,000.
 
     """
-    from guardowl.testsystems import SmallMoleculeTestsystemFactory, hipen_systems
+    from guardowl.testsystems import TestsystemFactory, SmallMoleculeVacuumOption
 
     def _run_protocol(hipen_idx: int):
-        name = list(hipen_systems.keys())[hipen_idx]
+        name = list(TestsystemFactory._HIPEN_SYSTEMS.keys())[hipen_idx]
 
         log.info(
             f"Performing vacuum stability test for {name} using {nnp} with {implementation}."
         )
+        opt = SmallMoleculeVacuumOption(name)
 
-        testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_name(
-            name
+        testsystem = TestsystemFactory().generate_testsystem(opt)
+        system = SystemFactory.initialize_system(
+            nnp, testsystem.topology, implementation
         )
-        system = initialize_ml_system(nnp, testsystem.topology, implementation)
         log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
 
         # Select protocol based on whether temperature is a list or a single value
@@ -483,7 +465,7 @@ def run_hipen_protocol(
             temperature=temperature,
             ensemble="nvt",
             simulated_annealing=False,
-            env="vacuum",
+            env=Environment.VACUUM,
             system=system,
             platform=platform,
             testsystem=testsystem,
@@ -554,12 +536,12 @@ def run_waterbox_protocol(
         f"Initiating waterbox stability test: {edge_length}A edge, {nnp} potential, {implementation} implementation, {ensemble} ensemble."
     )
     from openmm import unit
-    from guardowl.testsystems import WaterboxTestsystemFactory
+    from guardowl.testsystems import TestsystemFactory, LiquidOption
 
-    testsystem = WaterboxTestsystemFactory().generate_testsystems(
-        edge_length * unit.angstrom, nr_of_equilibrium_steps
-    )
-    system = initialize_ml_system(nnp, testsystem.topology, implementation)
+    opt = LiquidOption(name="water", edge_length=edge_length * unit.angstrom)
+
+    testsystem = TestsystemFactory().generate_testsystem(opt)
+    system = SystemFactory.initialize_system(nnp, testsystem.topology, implementation)
 
     log_file_name = f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}"
     if isinstance(temperature, list):
@@ -638,7 +620,7 @@ def run_pure_liquid_protocol(
         The number of equilibration steps before the stability test, defaults to 50,000.
 
     """
-    from guardowl.testsystems import PureLiquidTestsystemFactory
+    from guardowl.testsystems import TestsystemFactory, LiquidOption
 
     # Ensure inputs are listified for uniform processing
     molecule_names = (
@@ -648,22 +630,21 @@ def run_pure_liquid_protocol(
         [nr_of_molecule] if isinstance(nr_of_molecule, int) else nr_of_molecule
     )
 
-    for name, n_atoms in zip(molecule_names, nr_of_molecules):
+    for name, nr_of_molecules in zip(molecule_names, nr_of_molecules):
         log.info(
-            f"Initiating pure liquid stability test for {n_atoms} molecules of {name} at {temperature}K."
+            f"Initiating pure liquid stability test for {nr_of_molecules} molecules of {name} at {temperature}K."
         )
 
-        testsystem = PureLiquidTestsystemFactory().generate_testsystems(
-            name=name,
-            nr_of_copies=n_atoms,
-            nr_of_equilibration_steps=nr_of_equilibration_steps,
+        opt = LiquidOption(name, nr_of_molecules)
+        testsystem = TestsystemFactory().generate_testsystem(opt)
+        system = SystemFactory.initialize_system(
+            nnp, testsystem.topology, implementation
         )
-        system = initialize_ml_system(nnp, testsystem.topology, implementation)
 
         temperature_str = (
             f"{temperature}K" if isinstance(temperature, int) else "multi-temp"
         )
-        log_file_name = f"pure_liquid_{name}_{n_atoms}_{nnp}_{implementation}_{ensemble}_{temperature_str}"
+        log_file_name = f"pure_liquid_{name}_{nr_of_molecules}_{nnp}_{implementation}_{ensemble}_{temperature_str}"
 
         log.info(f"Simulation output will be written to {log_file_name}")
 
@@ -688,6 +669,9 @@ def run_pure_liquid_protocol(
         log.info(f"Simulation files saved to {output_folder}")
 
 
+from typing import Literal
+
+
 def run_alanine_dipeptide_protocol(
     nnp: str,
     implementation: str,
@@ -699,7 +683,7 @@ def run_alanine_dipeptide_protocol(
     ensemble: Optional[str] = None,
     annealing: bool = False,
     nr_of_simulation_steps: int = 5_000_000,
-    env: str = "vacuum",
+    env: Literal["vacuum", "solution"] = "vacuum",
 ):
     """
     Executes a stability test for an alanine dipeptide system within specified environmental conditions using a neural network potential (NNP) and its implementation.
@@ -726,17 +710,28 @@ def run_alanine_dipeptide_protocol(
         Whether to perform simulated annealing, defaults to False.
     nr_of_simulation_steps : int, optional
         The total number of simulation steps, defaults to 5,000,000.
-    env : str, optional
+    env : Environment, optional
         The environment to simulate in ('vacuum' or 'solution'), defaults to 'vacuum'.
 
     """
     log.info(
         f"Initiating alanine dipeptide stability test in {env} using {nnp} potential with {implementation} implementation."
     )
-    from guardowl.testsystems import AlaninDipeptideTestsystemFactory
+    from guardowl.testsystems import (
+        SmallMoleculeVacuumOption,
+        TestsystemFactory,
+        SolvatedSystemOption,
+    )
 
-    testsystem = AlaninDipeptideTestsystemFactory().generate_testsystems(env=env)
-    system = initialize_ml_system(nnp, testsystem.topology, implementation)
+    if env == "vacuum":
+        opt = SmallMoleculeVacuumOption(name="ala_dipeptide")
+    elif env == "solution":
+        opt = SolvatedSystemOption(name="ala_dipeptide")
+    else:
+        raise RuntimeError(f"Invalid environment option: {env}")
+
+    testsystem = TestsystemFactory().generate_testsystem(opt)
+    system = SystemFactory.initialize_system(nnp, testsystem.topology, implementation)
     env_str = "vacuum" if env == "vacuum" else f"{env}_{ensemble}"
     log_file_name = f"alanine_dipeptide_{env_str}_{nnp}_{implementation}_{temperature}K"
 
@@ -796,10 +791,12 @@ def run_DOF_scan(
     )
 
     from guardowl.protocols import BondProfileProtocol, DOFTestParameters
-    from guardowl.testsystems import SmallMoleculeTestsystemFactory
+    from guardowl.testsystems import TestsystemFactory, SmallMoleculeVacuumOption
 
-    testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_name(name)
-    system = initialize_ml_system(nnp, testsystem.topology, implementation)
+    opt = SmallMoleculeVacuumOption(name=name)
+
+    testsystem = TestsystemFactory().generate_testsystem(name)
+    system = SystemFactory.initialize_system(nnp, testsystem.topology, implementation)
 
     log_file_name = f"DOF_scan_{name}_{nnp}_{implementation}"
 
@@ -861,7 +858,8 @@ def run_detect_minimum(
     Dict[str, Tuple[float, float]]
         A dictionary with molecule names as keys and tuples of RMSD and energy difference as values.
     """
-    from guardowl.testsystems import SmallMoleculeTestsystemFactory
+    from guardowl.testsystems import TestsystemFactory, SmallMoleculeVacuumOption
+
     import mdtraj as md
     from .utils import (
         extract_drugbank_tar_gz,
@@ -935,16 +933,16 @@ def run_detect_minimum(
         #########################################
         # initialize the system that has been minimized using DFT
         log.debug(f"{sdf_file}")
+        opt = SmallMoleculeVacuumOption(path=sdf_file)
+
         try:
-            reference_testsystem = (
-                SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
-            )
+            reference_testsystem = TestsystemFactory().generate_testsystem(sdf_file)
         except ValueError as e:
             log.warning(f"Skipping {name} because of {e}")
             continue
         # set the minimized positions
         reference_testsystem.positions = minimized_position
-        system = initialize_ml_system(
+        system = SystemFactory.initialize_system(
             nnp, reference_testsystem.topology, implementation
         )
         log_file_name = f"ref_{name}_{nnp}_{implementation}"
@@ -970,7 +968,9 @@ def run_detect_minimum(
         minimize_testsystem = reference_testsystem
         minimize_testsystem.positions = start_position
 
-        system = initialize_ml_system(nnp, minimize_testsystem.topology, implementation)
+        system = SystemFactory.initialize_system(
+            nnp, minimize_testsystem.topology, implementation
+        )
         log_file_name = f"minimize_{name}_{nnp}_{implementation}"
 
         params = MinimizationTestParameters(

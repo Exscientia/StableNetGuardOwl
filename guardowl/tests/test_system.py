@@ -1,7 +1,8 @@
 import pytest
 from guardowl.testsystems import (
-    PureLiquidTestsystemFactory,
-    SmallMoleculeTestsystemFactory,
+    TestsystemFactory,
+    LiquidOption,
+    SmallMoleculeVacuumOption,
 )
 from guardowl.utils import get_data_filename
 
@@ -33,9 +34,10 @@ def test_different_ways_to_generate_top(tmp_dir) -> None:
 
 def test_generate_small_molecule(tmp_dir) -> None:
     """Test if we can generate a small molecule"""
-    factory = SmallMoleculeTestsystemFactory()
+    factory = TestsystemFactory()
     sdf_file = f"{get_data_filename('tests/data/156613987')}/156613987.sdf"
-    testsystem = factory.generate_testsystems_from_sdf(sdf_file)
+    opt = SmallMoleculeVacuumOption(path=sdf_file)
+    testsystem = factory.generate_testsystem(opt)
     assert testsystem is not None
 
 
@@ -54,13 +56,12 @@ def test_generate_system_top_instances(single_hipen_system) -> None:
 
 
 @pytest.mark.parametrize(
-    "molecule_name", PureLiquidTestsystemFactory._AVAILABLE_SYSTEM.keys()
+    "molecule_name", TestsystemFactory._AVAILABLE_SYSTEM_FOR_PURE_LIQUIDS.keys()
 )
 @pytest.mark.parametrize("nr_of_copies", [100, 200])
 def test_generate_pure_liquids(molecule_name, nr_of_copies) -> None:
     """ "Test if we can generate a pure liquid"""
 
-    factory = PureLiquidTestsystemFactory()
-    factory.generate_testsystems(
-        name=molecule_name, nr_of_copies=nr_of_copies, nr_of_equilibration_steps=1
-    )
+    opt = LiquidOption(name=molecule_name, nr_of_copies=nr_of_copies)
+    factory = TestsystemFactory()
+    factory.generate_testsystem(opt)

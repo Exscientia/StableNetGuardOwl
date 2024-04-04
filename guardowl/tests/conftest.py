@@ -1,8 +1,8 @@
 import pytest
 
 from guardowl.setup import generate_molecule_from_smiles, generate_pdbfile_from_mol
-from guardowl.testsystems import hipen_systems
 from openmm.app import PDBFile
+from guardowl.testsystems import TestsystemFactory, SmallMoleculeVacuumOption
 
 
 @pytest.fixture(scope="session")
@@ -13,10 +13,10 @@ def single_hipen_system() -> PDBFile:
     Returns:
         A tuple containing the generated system, topology, and molecule.
     """
-    name = list(hipen_systems.keys())[1]
-    smiles = hipen_systems[name]
-    mol = generate_molecule_from_smiles(smiles)
-    return generate_pdbfile_from_mol(mol)
+    name = list(TestsystemFactory._HIPEN_SYSTEMS.keys())[1]
+    opt = SmallMoleculeVacuumOption(name=name)
+    pdb = TestsystemFactory().generate_testsystem(opt)
+    return pdb
 
 
 @pytest.fixture(scope="session")

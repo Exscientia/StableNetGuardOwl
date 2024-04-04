@@ -1,47 +1,66 @@
-from typing import Tuple
+from typing import Tuple, Optional
 from loguru import logger as log
 
-from openmm import System
 from openmm.app import PDBFile
 
 from rdkit import Chem
+from rdkit.Chem import AllChem
+from io import StringIO
 
 
-def generate_molecule_from_smiles(smiles: str) -> Chem.Mol:
+def generate_molecule_from_smiles(smiles: str) -> Optional[Chem.Mol]:
     """
-    Generates a rdkit molecule instance from a SMILES string.
+    Generates an RDKit molecule instance from a SMILES string with added hydrogens and a generated 3D conformer.
 
     Parameters
     ----------
     smiles : str
         The SMILES string representing the molecule.
+
     Returns
     -------
-    Chem.Mol
-        A rdkit molecule instance with generated conformer.
+    Optional[Chem.Mol]
+        An RDKit molecule instance with a generated 3D conformer, or None if molecule generation fails.
     """
-    from rdkit import Chem
-    from rdkit.Chem import AllChem
-
     molecule = Chem.MolFromSmiles(smiles)
+    if molecule is None:
+        log.error(f"Failed to generate molecule from SMILES: {smiles}")
+        return None
+
     molecule = Chem.AddHs(molecule)
-    AllChem.EmbedMolecule(molecule)
+    if AllChem.EmbedMolecule(molecule) == -1:
+        log.error(f"Failed to generate 3D conformer for molecule: {smiles}")
+        return None
 
     return molecule
 
 
-def generate_pdbfile_from_mol(molecule: Chem.Mol) -> PDBFile:
-    import io
-    from rdkit import Chem
-
-    pdb_block = Chem.MolToPDBBlock(molecule)
-    pdb_file = io.StringIO(pdb_block)
-    return PDBFile(pdb_file)
-
-
-def generate_molecule_from_sdf(path: str) -> Chem.Mol:
+def generate_pdbfile_from_mol(molecule: Chem.Mol) -> Optional[PDBFile]:
     """
-    Generates a rdkit molecule instance from an SDF file.
+    Generates a PDBFile object from an RDKit molecule instance.
+
+    Parameters
+    ----------
+    molecule : Chem.Mol
+        The RDKit molecule instance.
+
+    Returns
+    -------
+    Optional[PDBFile]
+        An OpenMM PDBFile object representing the molecule, or None if conversion fails.
+    """
+    try:
+        pdb_block = Chem.MolToPDBBlock(molecule)
+        pdb_file = StringIO(pdb_block)
+        return PDBFile(pdb_file)
+    except Exception as e:
+        log.error(f"Error generating PDB file from molecule: {e}")
+        return None
+
+
+def generate_molecule_from_sdf(path: str) -> Optional[Chem.Mol]:
+    """
+    Generates an RDKit molecule instance from an SDF file.
 
     Parameters
     ----------
@@ -50,13 +69,13 @@ def generate_molecule_from_sdf(path: str) -> Chem.Mol:
 
     Returns
     -------
-    Chem.Mol
-        A rdkit molecule instance loaded from the SDF file.
+    Optional[Chem.Mol]
+        An RDKit molecule instance loaded from the SDF file, or None if loading fails.
     """
-    from rdkit import Chem
-    from rdkit.Chem import AllChem
+    suppl = Chem.SDMolSupplier(path, removeHs=False)
+    for mol in suppl:
+        if mol is not None:
+            return mol
 
-    suppl = Chem.SDMolSupplier(path)
-    mol = next(suppl)
-    mol = Chem.AddHs(mol)
-    return mol
+    log.error(f"Failed to load molecule from SDF file: {path}")
+    return None

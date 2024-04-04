@@ -1,7 +1,6 @@
 from openmm import unit
 from openmm.unit import Quantity
 from openmmtools.constants import kB
-
 # define units
 distance_unit = unit.angstrom
 time_unit = unit.femto * unit.seconds
