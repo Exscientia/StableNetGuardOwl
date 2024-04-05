@@ -72,7 +72,6 @@ class SystemFactory:
     def initialize_system(
         potential: Type[MLPotential],
         topology: Topology,
-        implementation: str = "torchani",
     ) -> System:
         """
         Initialize an OpenMM system using a machine learning potential.
@@ -83,8 +82,6 @@ class SystemFactory:
             The machine learning potential class.
         topology : Topology
             The OpenMM topology object.
-        implementation : str, optional
-            The specific implementation of the ML potential, by default "".
 
         Returns
         -------
@@ -97,7 +94,4 @@ class SystemFactory:
         >>> topology = Topology()
         >>> system = SystemFactory.initialize_system(potential, topology)
         """
-        return potential.createSystem(
-            topology,
-            implementation=implementation,
-        )
+        return potential.createSystem(topology, implementation="torchani")

@@ -3,29 +3,19 @@ import os
 from typing import Tuple, List, Optional, Dict, Iterator
 from loguru import logger as log
 
-available_nnps_and_implementation = [
-    ("ani2x", "nnpops"),
-    ("ani2x", "torchani"),
-]
-
-gh_available_nnps_and_implementation = [
-    ("ani2x", "torchani"),
-]
-
-gpu_memory_constrained_nnps_and_implementation = [
-    ("ani2x", "torchani"),
-]
+available_nnps = ["ani2x"]
+gh_available_nnps = ["ani2x"]
 
 _IMPLEMENTED_ELEMENTS = [1, 6, 7, 8, 9, 16, 17]
 
 
-def get_available_nnps_and_implementation() -> list:
-    """Return a list of available neural network potentials and implementations"""
+def get_available_nnps() -> list:
+    """Return a list of available neural network potentials"""
     IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
     if IN_GITHUB_ACTIONS:
-        return gh_available_nnps_and_implementation
+        return gh_available_nnps
     else:
-        return available_nnps_and_implementation
+        return available_nnps
 
 
 def get_data_filename(relative_path):

@@ -79,3 +79,13 @@ def generate_molecule_from_sdf(path: str) -> Optional[Chem.Mol]:
 
     log.error(f"Failed to load molecule from SDF file: {path}")
     return None
+
+
+class PotentialFactory:
+    
+    def __init__(self) -> None:
+        pass
+    
+    def initialize_potential(self, params):
+
+        nnp_instance = MLPotential(nnp)

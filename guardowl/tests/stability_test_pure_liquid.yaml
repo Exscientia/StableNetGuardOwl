@@ -5,7 +5,6 @@ tests:
     nr_of_molecule: [10, 20]
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 5
     nr_of_equilibration_steps: 5

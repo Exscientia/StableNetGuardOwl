@@ -6,9 +6,9 @@ def test_generate_visualization():
 
     prefix_path = f"{prefix}/ZINC00061095/"
     s = MonitoringPlotter(
-        f"{prefix_path}/vacuum_ZINC00061095_ani2x_nnpops_300.dcd",
-        f"{prefix_path}/vacuum_ZINC00061095_ani2x_nnpops_300.pdb",
-        f"{prefix_path}/vacuum_ZINC00061095_ani2x_nnpops_300.csv",
+        f"{prefix_path}/vacuum_ZINC00061095_ani2x_300.dcd",
+        f"{prefix_path}/vacuum_ZINC00061095_ani2x_300.pdb",
+        f"{prefix_path}/vacuum_ZINC00061095_ani2x_300.csv",
     )
     s.set_nglview()
     s.generate_summary()
@@ -19,9 +19,9 @@ def test_visualize_DOF_scan():
 
     prefix_path = f"{prefix}/ethanol/"
     s = MonitoringPlotter(
-        f"{prefix_path}/vacuum_ethanol_ani2x_nnpops.dcd",
-        f"{prefix_path}/vacuum_ethanol_ani2x_nnpops.pdb",
-        f"{prefix_path}/vacuum_ethanol_ani2x_nnpops.csv",
+        f"{prefix_path}/vacuum_ethanol_ani2x.dcd",
+        f"{prefix_path}/vacuum_ethanol_ani2x.pdb",
+        f"{prefix_path}/vacuum_ethanol_ani2x.csv",
     )
     s.set_nglview()
     s.generate_summary(bonded_scan=True)
@@ -34,11 +34,10 @@ def test_waterbox():
     prefix_path = f"{prefix}/{system_name}/"
     ensemble = "npt"
     nnp = "ani2x"
-    implementation = "torchani"
     s = MonitoringPlotter(
-        f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.dcd",
-        f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.pdb",
-        f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.csv",
+        f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}.dcd",
+        f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}.pdb",
+        f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}.csv",
     )
 
     s.set_nglview(wrap=True, periodic=True)

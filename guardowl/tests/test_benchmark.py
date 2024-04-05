@@ -22,7 +22,7 @@
 
 
 # @pytest.mark.parametrize(
-#     "nnp, implementation", [("ani2x", "nnpops"), ("ani2x", "torchani")]
+#     "nnp, [("ani2x"), ("ani2x", "torchani")]
 # )
 # def test_run_benchmark_for_waterbox(nnp: str, implementation: str) -> None:
 #     ########################################

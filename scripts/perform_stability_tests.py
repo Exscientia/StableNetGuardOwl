@@ -40,27 +40,25 @@ def setup_logging_and_output() -> str:
     return output_folder
 
 
-def validate_input(nnp: str, implementation: str):
+def validate_input(nnp: str):
     """
-    Validates the combination of neural network potential and implementation.
+    Validates the combination of neural network potential.
 
     Parameters
     ----------
     nnp : str
         The neural network potential to validate.
-    implementation : str
-        The implementation to validate.
 
     Raises
     ------
     RuntimeError
-        If the combination of NNP and implementation is invalid.
+        If the NNP is invalid.
     """
 
-    from guardowl.utils import available_nnps_and_implementation
+    from guardowl.utils import available_nnps
 
-    if (nnp, implementation) not in available_nnps_and_implementation:
-        error_message = f"Invalid nnp/implementation combination. Valid combinations are: {available_nnps_and_implementation}. Got {nnp}/{implementation}"
+    if nnp not in available_nnps:
+        error_message = f"Invalid nnp. Got {nnp}"
         log.error(error_message)
         raise RuntimeError(error_message)
 

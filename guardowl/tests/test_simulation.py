@@ -9,8 +9,7 @@ from openmmtools.utils import get_fastest_platform
 
 from guardowl.simulation import SimulationFactory, SystemFactory
 from guardowl.utils import (
-    get_available_nnps_and_implementation,
-    gpu_memory_constrained_nnps_and_implementation,
+    get_available_nnps,
 )
 
 
@@ -52,10 +51,9 @@ def test_generate_simulation_instance(
     pos = sim.context.getState(getPositions=True).getPositions()
 
 
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+@pytest.mark.parametrize("nnp", get_available_nnps())
 def test_simulating(
     nnp: str,
-    implementation: str,
     single_hipen_system: PDBFile,
 ) -> None:
     """Test if we can run a simulation for a number of steps"""
@@ -72,7 +70,6 @@ def test_simulating(
         SystemFactory().initialize_system(
             qml,
             pdb.topology,
-            implementation=implementation,
         ),
         pdb.topology,
         env="vacuum",
@@ -88,12 +85,9 @@ def test_simulating(
     del sim
 
 
-@pytest.mark.parametrize(
-    "nnp, implementation", gpu_memory_constrained_nnps_and_implementation
-)
+@pytest.mark.parametrize("nnp", get_available_nnps())
 def test_pure_liquid_simulation(
-    nnp: tuple[Literal["ani2x"], Literal["torchani"]],
-    implementation: tuple[Literal["ani2x"], Literal["torchani"]],
+    nnp: str,
 ):
     from guardowl.testsystems import TestsystemFactory, LiquidOption
 
@@ -110,7 +104,6 @@ def test_pure_liquid_simulation(
         SystemFactory().initialize_system(
             nnp,
             liquid_box.topology,
-            implementation=implementation,
         ),
         liquid_box.topology,
         env="solution",

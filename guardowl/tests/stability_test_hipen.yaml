@@ -3,6 +3,5 @@ tests:
   - protocol: "hipen_protocol"
     hipen_idx: [0,1]
     nnp: "ani2x"
-    implementation: "torchani"
     temperature: 300
     nr_of_simulation_steps: 5

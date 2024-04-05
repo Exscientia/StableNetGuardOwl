@@ -65,7 +65,6 @@ class PerformTest(Process):
         platform: str,
         qml_timing,
         reference_timing,
-        implementation: str = "",
     ) -> None:
         Process.__init__(self)
         self.simulation_factory = SimulationFactory()
@@ -74,7 +73,6 @@ class PerformTest(Process):
         self.nnp = nnp
         self.remove_constraints = remove_constraints
         self.platform = platform
-        self.implementation = implementation
         self.qml_timing = qml_timing
         self.reference_timing = reference_timing
 
@@ -97,14 +95,13 @@ class PerformTest(Process):
     def run(self) -> None:
         # this is executed as soon as the process is started
 
-        print(f"{self.implementation=} {self.platform=}")
+        print(f"{self.platform=}")
         potential = MLPotential(self.nnp)
 
         system = self.system_factory.initialize_system(
             potential,
             self.testsystem.topology,
             self.remove_constraints,
-            implementation=self.implementation,
         )
 
         psim = self.simulation_factory.create_simulation(
@@ -164,7 +161,6 @@ class Benchmark:
         testsystems: Generator[TestSystem, None, None],
         remove_constraints: bool,
         platform: str,
-        implementation: str = "",
     ) -> None:
         self.reference_timing, self.qml_timing, self.gpu_memory = [], [], []
         # start memory logger
@@ -186,7 +182,6 @@ class Benchmark:
                 platform,
                 qml_timing,
                 reference_timing,
-                implementation,
             )
             simulation_test.start()
             log.info("Started simulation")

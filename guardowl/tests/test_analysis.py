@@ -8,10 +8,9 @@ def generate_water_mdtraj_instance() -> md.Trajectory:
     prefix_path = f"{prefix}/{system_name}/"
     ensemble = "npt"
     nnp = "ani2x"
-    implementation = "torchani"
 
-    traj_file = f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.dcd"
-    top_file = f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.pdb"
+    traj_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}.dcd"
+    top_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}.pdb"
     return md.load(traj_file, top=top_file)
 
 
@@ -20,9 +19,8 @@ def get_water_csv_file():
     prefix_path = f"{prefix}/{system_name}/"
     ensemble = "npt"
     nnp = "ani2x"
-    implementation = "torchani"
 
-    csv_file = f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.csv"
+    csv_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}.csv"
     return csv_file
 
 

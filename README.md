@@ -71,12 +71,11 @@ tests:
     edge_length: 15                # waterbox edge length in Angstrom
     ensemble: "NVT"                # thermodynamic esamble that is used. Oter options are 'NpT' and 'NVE'.
     nnp: "ani2x"                   # the NNP used
-    implementation: "nnpops"       # the implementation if multiple are available
     annealing: false               # simulated annealing to slowly reheat the system at the beginning of a simulation
     nr_of_simulation_steps: 10_000 # number of simulation steps
     temperature: 300               # in Kelvin
 ```
-It defines the potential (nnp and implementation), the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_guardowls.py` script runs the tests
+It defines the potential, the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_guardowls.py` script runs the tests
 
 To visualize the results, use the `visualize_results.ipynb` notebook.
 
@@ -105,7 +104,6 @@ To perform a DOF scan over a bond in ethanol you need to generate a yaml file co
 tests:
   - protocol: "perform_DOF_scan"
     nnp: "ani2x"
-    implementation: "torchani"
     DOF_definition: { "bond": [0, 2] }
     molecule_name: "ethanol"
 ```

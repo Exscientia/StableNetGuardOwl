@@ -14,18 +14,15 @@ from guardowl.testsystems import (
     SmallMoleculeVacuumOption,
     TestsystemFactory,
 )
-from guardowl.utils import (
-    get_available_nnps_and_implementation,
-    gpu_memory_constrained_nnps_and_implementation,
-)
+from guardowl.utils import get_available_nnps
 from openmm import unit
 from openmm.app import StateDataReporter
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
 
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -> None:
+@pytest.mark.parametrize("nnp", get_available_nnps())
+def test_setup_vacuum_protocol_individual_parts(nnp: str) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # ---------------------------#
@@ -41,10 +38,9 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -
     system = SystemFactory().initialize_system(
         nnp_instance,
         testsystem.topology,
-        implementation=implementation,
     )
     output_folder = "test_stability_protocol"
-    log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
+    log_file_name = f"vacuum_{name}_{nnp}"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
     stability_test = MultiTemperatureProtocol()
 
@@ -76,8 +72,8 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -
     stability_test.perform_stability_test(params)
 
 
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_vacuum_protocol(nnp: str, implementation: str) -> None:
+@pytest.mark.parametrize("nnp", get_available_nnps())
+def test_run_vacuum_protocol(nnp: str) -> None:
     from guardowl.protocols import run_hipen_protocol
 
     reporter = StateDataReporter(
@@ -97,7 +93,6 @@ def test_run_vacuum_protocol(nnp: str, implementation: str) -> None:
     run_hipen_protocol(
         1,
         nnp,
-        implementation,
         300,
         reporter,
         platform,
@@ -107,9 +102,9 @@ def test_run_vacuum_protocol(nnp: str, implementation: str) -> None:
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+@pytest.mark.parametrize("nnp", get_available_nnps())
 def test_setup_waterbox_protocol_individual_parts(
-    ensemble: str, nnp: str, implementation: str, temperature: int = 300
+    ensemble: str, nnp: str, temperature: int = 300
 ) -> None:
     """Test if we can run a simulation for a number of steps"""
 
@@ -123,13 +118,10 @@ def test_setup_waterbox_protocol_individual_parts(
     system = SystemFactory().initialize_system(
         nnp_instance,
         testsystem.topology,
-        implementation=implementation,
     )
 
     output_folder = "test_stability_protocol"
-    log_file_name = (
-        f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}_{temperature}K"
-    )
+    log_file_name = f"waterbox_{edge_length}A_{nnp}_{ensemble}_{temperature}K"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     stability_test = PropagationProtocol()
@@ -166,8 +158,8 @@ def test_setup_waterbox_protocol_individual_parts(
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> None:
+@pytest.mark.parametrize("nnp", get_available_nnps())
+def test_run_waterbox_protocol(ensemble: str, nnp: str) -> None:
     from guardowl.protocols import run_waterbox_protocol
 
     reporter = StateDataReporter(
@@ -189,7 +181,6 @@ def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> 
         5,
         ensemble,
         nnp,
-        implementation,
         300,
         reporter,
         platform,
@@ -201,11 +192,9 @@ def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> 
 
 @pytest.mark.parametrize("environment", ["vacuum", "solution"])
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize(
-    "nnp, implementation", gpu_memory_constrained_nnps_and_implementation
-)
+@pytest.mark.parametrize("nnp", get_available_nnps())
 def test_run_alanine_dipeptide_protocol(
-    environment: str, ensemble: str, nnp: str, implementation: str
+    environment: str, ensemble: str, nnp: str
 ) -> None:
     from guardowl.protocols import run_alanine_dipeptide_protocol
 
@@ -225,7 +214,6 @@ def test_run_alanine_dipeptide_protocol(
     nnp = MLPotential(nnp)
     run_alanine_dipeptide_protocol(
         nnp,
-        implementation,
         300,
         reporter,
         platform,
@@ -237,8 +225,8 @@ def test_run_alanine_dipeptide_protocol(
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_pure_liquid_protocol(ensemble: str, nnp: str, implementation: str) -> None:
+@pytest.mark.parametrize("nnp", get_available_nnps())
+def test_run_pure_liquid_protocol(ensemble: str, nnp: str) -> None:
     from guardowl.protocols import run_pure_liquid_protocol
 
     reporter = StateDataReporter(
@@ -259,7 +247,6 @@ def test_run_pure_liquid_protocol(ensemble: str, nnp: str, implementation: str) 
 
     run_pure_liquid_protocol(
         nnp=nnp,
-        implementation=implementation,
         temperature=300,
         reporter=reporter,
         platform=platform,
@@ -272,8 +259,8 @@ def test_run_pure_liquid_protocol(ensemble: str, nnp: str, implementation: str) 
     )
 
 
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_DOF_protocol(nnp: str, implementation: str) -> None:
+@pytest.mark.parametrize("nnp", get_available_nnps())
+def test_DOF_protocol(nnp: str) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # ---------------------------#
@@ -287,11 +274,10 @@ def test_DOF_protocol(nnp: str, implementation: str) -> None:
     system = SystemFactory().initialize_system(
         nnp_instance,
         testsystem.topology,
-        implementation=implementation,
     )
 
     output_folder = "test_stability_protocol"
-    log_file_name = f"vacuum_{opt.name}_{nnp}_{implementation}"
+    log_file_name = f"vacuum_{opt.name}_{nnp}"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     stability_test = BondProfileProtocol()
@@ -364,8 +350,8 @@ def test_input_generation_for_minimization_tests():
     reference_testsystem.positions = minimized_position
 
 
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
-def test_run_detect_minimum(nnp, implementation, tmp_dir):
+@pytest.mark.parametrize("nnp", get_available_nnps())
+def test_run_detect_minimum(nnp, tmp_dir):
     from guardowl.protocols import run_detect_minimum
 
     platform = get_fastest_platform()
@@ -373,7 +359,6 @@ def test_run_detect_minimum(nnp, implementation, tmp_dir):
 
     run_detect_minimum(
         nnp_instance,
-        implementation,
         platform,
         tmp_dir,
         percentage=0.1,

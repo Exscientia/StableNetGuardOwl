@@ -1,10 +1,19 @@
 # config.yaml
 tests:
+  - physicsml-model: # if requested
+      - precision: 64
+      - position_scaling: 10.0
+      - output_scaling: 4.184 * 627
+      - model_path: "path_to_model"
+
+  - potential:
+      - name: "ANI2x"
+      - provider: "openmm-ml" # either 'openmm-ml' or 'physicsml'
+
   - protocol: "alanine_dipeptide_protocol"
     env: "solution"
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     temperature: 300
@@ -13,7 +22,6 @@ tests:
     env: "vacuum"
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 500
     temperature: 300
@@ -21,7 +29,6 @@ tests:
   - protocol: "hipen_protocol"
     hipen_idx: [0, 1, 15]
     nnp: "ani2x"
-    implementation: "torchani"
     temperature: [300, 400, 500]
     nr_of_simulation_steps: 500
 
@@ -29,7 +36,6 @@ tests:
     edge_length: 25
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     temperature: 300
@@ -38,7 +44,6 @@ tests:
     edge_length: 25
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     temperature: 500
@@ -48,7 +53,6 @@ tests:
     nr_of_molecule: [100, 200, 300]
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     nr_of_equilibration_steps: 50

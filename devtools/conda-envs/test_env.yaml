@@ -8,6 +8,7 @@ dependencies:
   - python
   - pip
   - openmm>=8.0
+  - openmm-ml
   - openmm-torch
   - openff-toolkit
   - openmmtools
@@ -35,6 +36,4 @@ dependencies:
 
     # Pip-only installs
   - pip:
-      - nvidia-ml-py3
-      - nptyping
-      - git+https://github.com/openmm/openmm-ml.git
+      - physicsml

@@ -401,7 +401,6 @@ class MultiTemperatureProtocol(PropagationProtocol):
 def run_hipen_protocol(
     hipen_idx: Union[int, List[int]],
     nnp: str,
-    implementation: str,
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
     platform: Platform,
@@ -411,7 +410,7 @@ def run_hipen_protocol(
 ):
     """
     Executes stability tests for specified hipen molecules in vacuum using a neural network potential (NNP)
-    with a specific implementation at multiple temperatures.
+    at multiple temperatures.
 
     Parameters
     ----------
@@ -419,8 +418,6 @@ def run_hipen_protocol(
         The index or indices of the hipen molecule(s) to simulate.
     nnp : str
         The neural network potential to use for the simulation.
-    implementation : str
-        The specific implementation of the NNP.
     temperature : Union[int, List[int]]
         The temperature or list of temperatures at which to perform the simulations.
         Multiple temperatures trigger a multi-temperature protocol.
@@ -442,15 +439,15 @@ def run_hipen_protocol(
         name = list(TestsystemFactory._HIPEN_SYSTEMS.keys())[hipen_idx]
 
         log.info(
-            f"Performing vacuum stability test for {name} using {nnp} with {implementation}."
+            f"Performing vacuum stability test for {name} using {nnp}."
         )
         opt = SmallMoleculeVacuumOption(name)
 
         testsystem = TestsystemFactory().generate_testsystem(opt)
         system = SystemFactory.initialize_system(
-            nnp, testsystem.topology, implementation
+            nnp, testsystem.topology
         )
-        log_file_name = f"vacuum_{name}_{nnp}_{implementation}"
+        log_file_name = f"vacuum_{name}_{nnp}"
 
         # Select protocol based on whether temperature is a list or a single value
         stability_test = (
@@ -489,7 +486,6 @@ def run_waterbox_protocol(
     edge_length: int,
     ensemble: str,
     nnp: str,
-    implementation: str,
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
     platform: Platform,
@@ -501,7 +497,7 @@ def run_waterbox_protocol(
 ):
     """
     Performs a stability test on a waterbox system with specified edge length using a
-    neural network potential (NNP) and implementation in a given ensemble at multiple temperatures.
+    neural network potential (NNP) in a given ensemble at multiple temperatures.
 
     Parameters
     ----------
@@ -511,8 +507,6 @@ def run_waterbox_protocol(
         The ensemble to simulate (e.g., 'NVT', 'NPT').
     nnp : str
         The neural network potential to use.
-    implementation : str
-        The specific implementation of the NNP.
     temperature : Union[int, List[int]]
         The simulation temperature or list of temperatures for multi-temperature protocols.
     reporter : StateDataReporter
@@ -532,7 +526,7 @@ def run_waterbox_protocol(
 
     """
     log.info(
-        f"Initiating waterbox stability test: {edge_length}A edge, {nnp} potential, {implementation} implementation, {ensemble} ensemble."
+        f"Initiating waterbox stability test: {edge_length}A edge, {nnp} potential, {ensemble} ensemble."
     )
     from openmm import unit
     from guardowl.testsystems import TestsystemFactory, LiquidOption
@@ -540,9 +534,9 @@ def run_waterbox_protocol(
     opt = LiquidOption(name="water", edge_length=edge_length * unit.angstrom)
 
     testsystem = TestsystemFactory().generate_testsystem(opt)
-    system = SystemFactory.initialize_system(nnp, testsystem.topology, implementation)
+    system = SystemFactory.initialize_system(nnp, testsystem.topology)
 
-    log_file_name = f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}"
+    log_file_name = f"waterbox_{edge_length}A_{nnp}_{ensemble}"
     if isinstance(temperature, list):
         log_file_name += f"_multi-temp"
     else:
@@ -576,7 +570,6 @@ def run_pure_liquid_protocol(
     nr_of_molecule: Union[int, List[int]],
     ensemble: str,
     nnp: str,
-    implementation: str,
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
     platform: Platform,
@@ -587,7 +580,7 @@ def run_pure_liquid_protocol(
     nr_of_equilibration_steps: int = 50_000,
 ):
     """
-    Executes stability tests for specified pure liquid systems, each containing a defined number of molecules, using a neural network potential (NNP) with a specified implementation at various temperatures.
+    Executes stability tests for specified pure liquid systems, each containing a defined number of molecules, using a neural network potential (NNP) at various temperatures.
 
     Parameters
     ----------
@@ -599,8 +592,6 @@ def run_pure_liquid_protocol(
         The ensemble to simulate (e.g., 'NVT', 'NPT').
     nnp : str
         The neural network potential to use.
-    implementation : str
-        The specific implementation of the NNP.
     temperature : Union[int, List[int]]
         The simulation temperature(s) for the stability test.
     reporter : StateDataReporter
@@ -637,13 +628,13 @@ def run_pure_liquid_protocol(
         opt = LiquidOption(name, nr_of_molecules)
         testsystem = TestsystemFactory().generate_testsystem(opt)
         system = SystemFactory.initialize_system(
-            nnp, testsystem.topology, implementation
+            nnp, testsystem.topology
         )
 
         temperature_str = (
             f"{temperature}K" if isinstance(temperature, int) else "multi-temp"
         )
-        log_file_name = f"pure_liquid_{name}_{nr_of_molecules}_{nnp}_{implementation}_{ensemble}_{temperature_str}"
+        log_file_name = f"pure_liquid_{name}_{nr_of_molecules}_{nnp}_{ensemble}_{temperature_str}"
 
         log.info(f"Simulation output will be written to {log_file_name}")
 
@@ -673,7 +664,6 @@ from typing import Literal
 
 def run_alanine_dipeptide_protocol(
     nnp: str,
-    implementation: str,
     temperature: int,
     reporter: StateDataReporter,
     platform: Platform,
@@ -685,14 +675,12 @@ def run_alanine_dipeptide_protocol(
     env: Literal["vacuum", "solution"] = "vacuum",
 ):
     """
-    Executes a stability test for an alanine dipeptide system within specified environmental conditions using a neural network potential (NNP) and its implementation.
+    Executes a stability test for an alanine dipeptide system within specified environmental conditions using a neural network potential (NNP).
 
     Parameters
     ----------
     nnp : str
         The neural network potential to use for the simulation.
-    implementation : str
-        The specific implementation of the NNP.
     temperature : int
         The temperature at which to perform the simulation, in Kelvin.
     reporter : StateDataReporter
@@ -714,7 +702,7 @@ def run_alanine_dipeptide_protocol(
 
     """
     log.info(
-        f"Initiating alanine dipeptide stability test in {env} using {nnp} potential with {implementation} implementation."
+        f"Initiating alanine dipeptide stability test in {env} using {nnp} potential."
     )
     from guardowl.testsystems import (
         SmallMoleculeVacuumOption,
@@ -730,9 +718,9 @@ def run_alanine_dipeptide_protocol(
         raise RuntimeError(f"Invalid environment option: {env}")
 
     testsystem = TestsystemFactory().generate_testsystem(opt)
-    system = SystemFactory.initialize_system(nnp, testsystem.topology, implementation)
+    system = SystemFactory.initialize_system(nnp, testsystem.topology)
     env_str = "vacuum" if env == "vacuum" else f"{env}_{ensemble}"
-    log_file_name = f"alanine_dipeptide_{env_str}_{nnp}_{implementation}_{temperature}K"
+    log_file_name = f"alanine_dipeptide_{env_str}_{nnp}_{temperature}K"
 
     log.info(f"Simulation output will be written to {log_file_name}")
 
@@ -759,7 +747,6 @@ def run_alanine_dipeptide_protocol(
 
 def run_DOF_scan(
     nnp: str,
-    implementation: str,
     DOF_definition: Dict[str, list],
     platform: Platform,
     output_folder: str,
@@ -767,14 +754,11 @@ def run_DOF_scan(
 ):
     """
     Executes a scan over a specified degree of freedom (DOF) for a given molecule using a neural
-    network potential (NNP) and its implementation.
-
+    network potential (NNP).
     Parameters
     ----------
     nnp : str
         The neural network potential to use for the simulation.
-    implementation : str
-        The specific implementation of the NNP.
     DOF_definition : Dict[str, list]
         The degrees of freedom to scan. Supported keys are 'bond', 'angle', and 'torsion'. Each key maps to a list of atom indices defining the DOF.
     platform : Platform
@@ -786,7 +770,7 @@ def run_DOF_scan(
 
     """
     log.info(
-        f"Initiating DOF scan for {name} using {nnp} with {implementation} implementation."
+        f"Initiating DOF scan for {name} using {nnp}."
     )
 
     from guardowl.protocols import BondProfileProtocol, DOFTestParameters
@@ -795,9 +779,9 @@ def run_DOF_scan(
     opt = SmallMoleculeVacuumOption(name=name)
 
     testsystem = TestsystemFactory().generate_testsystem(name)
-    system = SystemFactory.initialize_system(nnp, testsystem.topology, implementation)
+    system = SystemFactory.initialize_system(nnp, testsystem.topology)
 
-    log_file_name = f"DOF_scan_{name}_{nnp}_{implementation}"
+    log_file_name = f"DOF_scan_{name}_{nnp}"
 
     if "bond" in DOF_definition:
         protocol = BondProfileProtocol()
@@ -828,7 +812,6 @@ def run_DOF_scan(
 
 def run_detect_minimum(
     nnp: str,
-    implementation: str,
     platform: Platform,
     output_folder: str,
     percentage: int = 10,
@@ -841,8 +824,6 @@ def run_detect_minimum(
     ----------
     nnp : str
         The neural network potential to use for the minimization test.
-    implementation : str
-        The implementation details of the neural network potential.
     platform : Platform
         The OpenMM Platform to perform simulations on.
     output_folder : str
@@ -907,7 +888,7 @@ def run_detect_minimum(
     counter = 0
 
     log.info(
-        f"Performing minimization for {nr_of_molecules_to_test} molecules using {nnp} with {implementation}."
+        f"Performing minimization for {nr_of_molecules_to_test} molecules using {nnp}."
     )
 
     for (_, minimized_position), (
@@ -946,9 +927,9 @@ def run_detect_minimum(
         # set the minimized positions
         reference_testsystem.positions = minimized_position
         system = SystemFactory.initialize_system(
-            nnp, reference_testsystem.topology, implementation
+            nnp, reference_testsystem.topology
         )
-        log_file_name = f"ref_{name}_{nnp}_{implementation}"
+        log_file_name = f"ref_{name}_{nnp}"
 
         params = MinimizationTestParameters(
             platform=platform,
@@ -972,9 +953,9 @@ def run_detect_minimum(
         minimize_testsystem.positions = start_position
 
         system = SystemFactory.initialize_system(
-            nnp, minimize_testsystem.topology, implementation
+            nnp, minimize_testsystem.topology
         )
-        log_file_name = f"minimize_{name}_{nnp}_{implementation}"
+        log_file_name = f"minimize_{name}_{nnp}"
 
         params = MinimizationTestParameters(
             platform=platform,
