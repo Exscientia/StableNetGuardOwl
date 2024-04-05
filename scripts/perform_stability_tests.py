@@ -170,21 +170,27 @@ def main(config: str) -> None:
         The path to the YAML configuration file.
     """
     from openmmml import MLPotential
+    from guardowl.setup import PotentialFactory
 
     log.info(f"Loaded config from {config}")
     config = load_config(config)
     platform = get_fastest_platform()
     output = setup_logging_and_output()
 
-    for test in config.get("tests", []):
-        print("--------- Test starts --------- ")
-        test["output_folder"] = output
-        test["reporter"] = create_state_data_reporter()
-        test["platform"] = platform
-        test["nnp"] = MLPotential(test["nnp"])
+    for potential in config.get("potentials", []):
 
-        process_test(test, platform, output)
-        print("--------- Test finishs --------- ")
+        for test in config.get("tests", []):
+            print("--------- Test starts --------- ")
+            test["output_folder"] = output
+            test["reporter"] = create_state_data_reporter()
+            test["platform"] = platform
+
+            test["nnp"] = PotentialFactory().initialize_potential(potential)
+
+            test["nnp"] = MLPotential(test["nnp"])
+
+            process_test(test, platform, output)
+            print("--------- Test finishs --------- ")
 
 
 def _setup_logging():
