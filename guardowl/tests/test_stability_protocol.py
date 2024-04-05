@@ -377,5 +377,5 @@ def test_run_detect_minimum(nnp, implementation, tmp_dir):
         platform,
         tmp_dir,
         percentage=0.1,
-        only_molecules_below_10_heavy_atoms=True,
+        skip_molecules_above_heavy_atom_threshold=8,
     )

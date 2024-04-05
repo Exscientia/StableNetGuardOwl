@@ -831,7 +831,7 @@ def run_detect_minimum(
     platform: Platform,
     output_folder: str,
     percentage: int = 10,
-    only_molecules_below_10_heavy_atoms: bool = False,
+    skip_molecules_above_heavy_atom_threshold: int = 20,
 ) -> Dict[str, Tuple[float, float]]:
     """
     Performs a minimization test on a subset of molecules from the DrugBank database, comparing the energy minimized conformations between DFT and a specified neural network potential (NNP).
@@ -878,20 +878,21 @@ def run_detect_minimum(
         return False
 
     # test if molecules has below 10 heavy atoms, if yes return True
-    def _below_10_heavy_atoms(mol: Chem.Mol) -> bool:
+    def _above_threshold(mol: Chem.Mol) -> bool:
+        # returns True if molecule has more heavy atoms than specified as threshold
         heavy_atoms = 0
         for atom in mol.GetAtoms():
             if atom.GetAtomicNum() != 1:
                 heavy_atoms += 1
-        if heavy_atoms > 10:
+        if heavy_atoms > skip_molecules_above_heavy_atom_threshold:
             log.debug(
-                f"Skipping {name} because it has more than 10 heavy atoms: {heavy_atoms} heavy atoms"
+                f"Skipping {name} because it has more than {skip_molecules_above_heavy_atom_threshold} heavy atoms: {heavy_atoms} heavy atoms"
             )
-            return False
+            return True
         log.debug(
             f"Using {name} because it has less than 10 heavy atoms: {heavy_atoms} heavy atoms"
         )
-        return True
+        return False
 
     # Extract DrugBank tar.gz file and prepare input files
     extract_drugbank_tar_gz()
@@ -923,9 +924,9 @@ def run_detect_minimum(
         if not mol:
             log.debug(f"No molecule was gneerated from sdf file: {sdf_file}")
 
-        if only_molecules_below_10_heavy_atoms:
-            if not _below_10_heavy_atoms(mol):
-                continue
+        # skip if molecule is too large
+        if _above_threshold(mol):
+            continue
         # ANI-2x is trained on limited elements, if molecule contains unknown elements skip
         if _contains_unknown_elements(mol):
             continue
