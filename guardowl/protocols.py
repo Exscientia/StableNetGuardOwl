@@ -863,6 +863,7 @@ def run_detect_minimum(
         extract_drugbank_tar_gz,
         _generate_file_list_for_minimization_test,
         _generate_input_for_minimization_test,
+        _IMPLEMENTED_ELEMENTS,
     )
 
     from .setup import generate_molecule_from_sdf
@@ -871,7 +872,7 @@ def run_detect_minimum(
     # test if not implemented elements are in molecule, if yes skip
     def _contains_unknown_elements(mol: Chem.Mol) -> bool:
         for atom in mol.GetAtoms():
-            if atom.GetAtomicNum() >= 15:
+            if atom.atomic_number not in _IMPLEMENTED_ELEMENTS:
                 log.debug(f"Skipping {name} because it contains unknown elements")
                 return True
         return False
@@ -919,6 +920,8 @@ def run_detect_minimum(
 
         sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
         mol = generate_molecule_from_sdf(sdf_file)
+        if not mol:
+            log.debug(f"No molecule was gneerated from sdf file: {sdf_file}")
 
         if only_molecules_below_10_heavy_atoms:
             if not _below_10_heavy_atoms(mol):
