@@ -1,13 +1,14 @@
 # config.yaml
-potential:
+potentials:
   - physicsml-model:
+      - model_name: 'MACE'
       - precision: 64
       - position_scaling: 10.0
       - output_scaling: 4.184 * 627
       - model_path: "path_to_model"
 
   - openmmml:
-      - name: "ANI2x"
+      - model_name: "ANI2x"
 
 tests:
   - protocol: "alanine_dipeptide_protocol"
