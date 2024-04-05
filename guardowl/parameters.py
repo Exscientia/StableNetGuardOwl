@@ -55,7 +55,7 @@ class MinimizationTestParameters(BaseParameters):
 
     convergence_criteria: unit.Quantity = field(
         default_factory=lambda: unit.Quantity(
-            0.5, unit.kilojoule_per_mole / unit.angstrom
+            1 * unit.kilojoule_per_mole / unit.angstrom
         )
     )
     env: Literal["vacuum"] = "vacuum"

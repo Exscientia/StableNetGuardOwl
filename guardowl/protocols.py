@@ -123,7 +123,7 @@ class StabilityTest:
         # Perform energy minimization if requested
         if minimize:
             log.info("Minimizing energy")
-            sim.minimizeEnergy(tolerance=minimization_tolerance)
+            sim.minimizeEnergy(tolerance=minimization_tolerance, maxIterations=1_000)
             log.info("Energy minimization complete.")
 
         # Execute simulated annealing if enabled
@@ -339,6 +339,7 @@ class MinimizationProtocol(StabilityTest):
     def perform_stability_test(
         self, parms: MinimizationTestParameters, minimize: bool = True
     ) -> State:
+
         from openmm.app import PDBFile
 
         self._assert_input(parms)
@@ -890,7 +891,7 @@ def run_detect_minimum(
             )
             return True
         log.debug(
-            f"Using {name} because it has less than 10 heavy atoms: {heavy_atoms} heavy atoms"
+            f"Using {name} because it has less than {skip_molecules_above_heavy_atom_threshold} heavy atoms: {heavy_atoms} heavy atoms"
         )
         return False
 
@@ -922,7 +923,7 @@ def run_detect_minimum(
         sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
         mol = generate_molecule_from_sdf(sdf_file)
         if not mol:
-            log.debug(f"No molecule was gneerated from sdf file: {sdf_file}")
+            log.debug(f"No molecule was generated from sdf file: {sdf_file}")
 
         # skip if molecule is too large
         if _above_threshold(mol):
