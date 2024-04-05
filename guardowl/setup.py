@@ -1,11 +1,10 @@
-from typing import Tuple, Optional
+from io import StringIO
+from typing import Optional
+
 from loguru import logger as log
-
 from openmm.app import PDBFile
-
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from io import StringIO
 
 
 def generate_molecule_from_smiles(smiles: str) -> Optional[Chem.Mol]:
@@ -81,11 +80,48 @@ def generate_molecule_from_sdf(path: str) -> Optional[Chem.Mol]:
     return None
 
 
+from typing import Dict, Union
+
+
 class PotentialFactory:
-    
+
+    # potential:
+    #   - physicsml-model:
+    #       - name: "physicsml_model"
+    #       - precision: 64
+    #       - position_scaling: 10.0
+    #       - output_scaling: 4.184 * 627
+    #       - model_path: "path_to_model"
+
+    #   - openmmml:
+    #       - name: "ANI2x"
+
     def __init__(self) -> None:
         pass
-    
-    def initialize_potential(self, params):
 
-        nnp_instance = MLPotential(nnp)
+    def initialize_potential(self, params: Dict[str, Union[str, float, int]]):
+
+        if "openmmml" in params:
+            from openmmml import MLPotential
+
+            name = params["openmmml"]["name"]
+            log.info(f"Initialize {name} potential from OpenMMML")
+            return MLPotential(name)
+        elif "physicsml-model" in params:
+            from physicsml.plugins.openmm.physicsml_potential import (
+                MLPotential as PhysicsMLPotential,
+            )
+
+            name = "physicsml_model"  # that key word needs to be present
+            precision = params["physicsml-model"]["precision"]
+            position_scaling = params["physicsml-model"]["position_scaling"]
+            output_scaling = params["physicsml-model"]["output_scaling"]
+            model_path = params["physicsml-model"]["model_path"]
+            log.info(f"Initialize {name} potential from PhysicsML")
+            return PhysicsMLPotential(
+                name,
+                model_path=model_path,
+                precision=precision,
+                position_scaling=position_scaling,
+                output_scaling=output_scaling,
+            )

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Type, Optional
+from typing import List, Literal, Optional, Type
 
 from loguru import logger as log
 from openmm import LangevinIntegrator, Platform, System, unit
@@ -8,7 +8,6 @@ from openmmml import MLPotential
 from openmmtools.integrators import BAOABIntegrator
 
 from .constants import collision_rate, stepsize
-from typing import Literal
 
 
 class SimulationFactory:

@@ -3,19 +3,34 @@ import os
 from typing import Tuple, List, Optional, Dict, Iterator
 from loguru import logger as log
 
-available_nnps = ["ani2x"]
-gh_available_nnps = ["ani2x"]
+available_nnps = ["openmmml"]
+gh_available_nnps = ["openmmml"]
 
 _IMPLEMENTED_ELEMENTS = [1, 6, 7, 8, 9, 16, 17]
+
+potentials = {
+    "physicsml-model": {
+        "name": "physicsml_model",
+        "precision": 64,
+        "position_scaling": 10.0,
+        "output_scaling": 4.184 * 627,
+        "model_path": "path_to_model",
+    },
+    "openmmml": {"name": "ani2x"},
+}
 
 
 def get_available_nnps() -> list:
     """Return a list of available neural network potentials"""
     IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
     if IN_GITHUB_ACTIONS:
-        return gh_available_nnps
+        return [
+            {nnp_name: potentials[nnp_name]} for nnp_name in gh_available_nnps
+        ]  # FIXME: this currently only includes the openmmml potentials
     else:
-        return available_nnps
+        return [
+            {nnp_name: potentials[nnp_name]} for nnp_name in available_nnps
+        ]  # FIXME: this currently only includes the openmmml potentials
 
 
 def get_data_filename(relative_path):
