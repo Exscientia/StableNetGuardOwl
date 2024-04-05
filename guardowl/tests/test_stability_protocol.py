@@ -267,8 +267,8 @@ def test_run_pure_liquid_protocol(
     )
 
 
-@pytest.mark.parametrize("nnp", get_available_nnps())
-def test_DOF_protocol(nnp: str) -> None:
+@pytest.mark.parametrize("params", get_available_nnps())
+def test_DOF_protocol(params: Dict[str, Tuple[str, int, float]]) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # ---------------------------#
@@ -277,7 +277,7 @@ def test_DOF_protocol(nnp: str) -> None:
     opt = SmallMoleculeVacuumOption(name="ethanol")
     testsystem = TestsystemFactory().generate_testsystem(opt)
 
-    nnp_instance = MLPotential(nnp)
+    nnp_instance = PotentialFactory().initialize_potential(params)
 
     system = SystemFactory().initialize_system(
         nnp_instance,
@@ -285,7 +285,7 @@ def test_DOF_protocol(nnp: str) -> None:
     )
 
     output_folder = "test_stability_protocol"
-    log_file_name = f"vacuum_{opt.name}_{nnp}"
+    log_file_name = f"vacuum_{opt.name}_{params['name']}"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     stability_test = BondProfileProtocol()
@@ -358,12 +358,12 @@ def test_input_generation_for_minimization_tests():
     reference_testsystem.positions = minimized_position
 
 
-@pytest.mark.parametrize("nnp", get_available_nnps())
-def test_run_detect_minimum(nnp, tmp_dir):
+@pytest.mark.parametrize("params", get_available_nnps())
+def test_run_detect_minimum(params: Dict[str, Tuple[str, int, float]], tmp_dir):
     from guardowl.protocols import run_detect_minimum
 
     platform = get_fastest_platform()
-    nnp_instance = MLPotential(nnp)
+    nnp_instance = PotentialFactory().initialize_potential(params)
 
     run_detect_minimum(
         nnp_instance,
