@@ -1,62 +1,66 @@
-from typing import Tuple
+from typing import Tuple, Optional
 from loguru import logger as log
 
-from openff.toolkit.topology import Molecule, Topology
-from openff.toolkit.typing.engines.smirnoff import ForceField
-from openmm import System
+from openmm.app import PDBFile
+
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from io import StringIO
 
 
-forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
-
-
-def generate_molecule_from_smiles(
-    smiles: str, nr_of_conformations: int = 10
-) -> Molecule:
+def generate_molecule_from_smiles(smiles: str) -> Optional[Chem.Mol]:
     """
-    Generates an OpenFF Molecule instance from a SMILES string and generates conformers for it.
+    Generates an RDKit molecule instance from a SMILES string with added hydrogens and a generated 3D conformer.
 
     Parameters
     ----------
     smiles : str
         The SMILES string representing the molecule.
-    nr_of_conformations : int, optional
-        The number of conformers to generate for the molecule, by default 10.
 
     Returns
     -------
-    Molecule
-        An OpenFF Molecule instance with generated conformers.
+    Optional[Chem.Mol]
+        An RDKit molecule instance with a generated 3D conformer, or None if molecule generation fails.
     """
-    molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
-    molecule.generate_conformers(n_conformers=nr_of_conformations)
+    molecule = Chem.MolFromSmiles(smiles)
+    if molecule is None:
+        log.error(f"Failed to generate molecule from SMILES: {smiles}")
+        return None
+
+    molecule = Chem.AddHs(molecule)
+    if AllChem.EmbedMolecule(molecule) == -1:
+        log.error(f"Failed to generate 3D conformer for molecule: {smiles}")
+        return None
+
     return molecule
 
 
-def create_system_from_mol(mol: Molecule) -> Tuple[System, Topology]:
+def generate_pdbfile_from_mol(molecule: Chem.Mol) -> Optional[PDBFile]:
     """
-    Creates an OpenMM System and Topology from an OpenFF Molecule.
+    Generates a PDBFile object from an RDKit molecule instance.
 
     Parameters
     ----------
-    mol : Molecule
-        The OpenFF Molecule instance to convert into an OpenMM system.
+    molecule : Chem.Mol
+        The RDKit molecule instance.
 
     Returns
     -------
-    Tuple[System, Topology]
-        A tuple containing the generated OpenMM System and the corresponding Topology.
+    Optional[PDBFile]
+        An OpenMM PDBFile object representing the molecule, or None if conversion fails.
     """
-    assert mol.n_conformers > 0, "Molecule must have at least one conformer."
-    log.debug("Generating OpenMM system from OpenFF molecule.")
+    try:
+        pdb_block = Chem.MolToPDBBlock(molecule)
+        pdb_file = StringIO(pdb_block)
+        return PDBFile(pdb_file)
+    except Exception as e:
+        log.error(f"Error generating PDB file from molecule: {e}")
+        return None
 
-    topology = mol.to_topology()
-    system = forcefield.create_openmm_system(topology)
-    return (system, topology.to_openmm())
 
-
-def generate_molecule_from_sdf(path: str) -> Molecule:
+def generate_molecule_from_sdf(path: str) -> Optional[Chem.Mol]:
     """
-    Generates an OpenFF Molecule instance from an SDF file.
+    Generates an RDKit molecule instance from an SDF file.
 
     Parameters
     ----------
@@ -65,9 +69,13 @@ def generate_molecule_from_sdf(path: str) -> Molecule:
 
     Returns
     -------
-    Molecule
-        An OpenFF Molecule instance loaded from the SDF file.
+    Optional[Chem.Mol]
+        An RDKit molecule instance loaded from the SDF file, or None if loading fails.
     """
-    mol = Molecule.from_file(path)
-    log.info(f"Molecule loaded from SDF file: {path}")
-    return mol
+    suppl = Chem.SDMolSupplier(path, removeHs=False)
+    for mol in suppl:
+        if mol is not None:
+            return mol
+
+    log.error(f"Failed to load molecule from SDF file: {path}")
+    return None

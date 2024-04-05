@@ -5,38 +5,15 @@ from loguru import logger as log
 
 
 class PropertyCalculator:
-    """
-    A class for calculating various properties for a molecular dynamics trajectory.
-
-    Attributes
-    ----------
-    md_traj : md.Trajectory
-        The molecular dynamics trajectory.
-
-    Methods
-    -------
-    calculate_water_rdf()
-        Calculate the radial distribution function of water molecules.
-    monitor_water_bond_length()
-        Monitor the bond length between water molecules.
-    monitor_water_angle()
-        Monitor the angle between water molecules.
-    monitor_bond_length(bond_pairs)
-        Monitor the bond length for specific atom pairs.
-    monitor_angle_length(angle_list)
-        Monitor the angles for specific sets of atoms.
-
-    """
 
     def __init__(self, md_traj: md.Trajectory) -> None:
         """
-        Initialize the PropertyCalculator with a molecular dynamics trajectory.
+        Calculates various properties for a molecular dynamics trajectory.
 
         Parameters
         ----------
         md_traj : md.Trajectory
-            The molecular dynamics trajectory to be analyzed.
-
+            The molecular dynamics trajectory for analysis.
         """
         self.md_traj = md_traj
 
@@ -44,10 +21,24 @@ class PropertyCalculator:
         self, total_energy: np.array, volumn: np.array
     ) -> float:
         """
-        Calculate the heat capacity of the trajectory.
-        C_p = <\Delta E^2> / k_B T^2 V
+        Calculates the heat capacity of the system using the trajectory data.
+
+        Parameters
+        ----------
+        total_energy : np.array
+            The total energy for each frame of the trajectory.
+        volume : np.array
+            The volume for each frame of the trajectory.
+
+        Returns
+        -------
+        float
+            The calculated heat capacity of the system.
+
+        Notes
+        -----
+        The formula used for calculation is C_p = <\Delta E^2> / (kB * T^2 * V).
         """
-        from openmm.unit import kelvin, nanometer, kilojoule_per_mole
         from .constants import kB, temperature
 
         mean_energy = np.mean(total_energy)
@@ -68,31 +59,32 @@ class PropertyCalculator:
         kappa_T = md.isothermal_compressability_kappa_T(
             self.md_traj, temperature.value_in_unit(kelvin)
         )
-        print(kappa_T)
         log.debug(f"isothermal_compressability_kappa_T: {kappa_T}")
         return kappa_T
 
-    def calculate_water_rdf(self):  # type: ignore
+    def calculate_water_rdf(self) -> np.ndarray:
         """
-        Calculate the radial distribution function (RDF) for water molecules in the trajectory.
+        Calculates the radial distribution function (RDF) for water molecules within the trajectory.
 
         Returns
         -------
         np.ndarray
-            The RDF values for the water molecules.
+            The RDF values for water molecules.
         """
-        oxygen_pairs = self.md_traj.top.select_pairs(
+        oxygen_pairs = self.md_traj.topology.select_pairs(
             "name O and water", "name O and water"
         )
-        bins = 300
-        r_max = 1
+        r_max = 1.0
         r_min = 0.01
+        bins = 300
 
-        mdtraj_rdf = md.compute_rdf(
-            self.md_traj, oxygen_pairs, (r_min, r_max), n_bins=bins
+        rdf_result = md.compute_rdf(
+            self.md_traj,
+            pairs=oxygen_pairs,
+            r_range=(r_min, r_max),
+            bin_width=(r_max - r_min) / bins,
         )
-
-        return mdtraj_rdf
+        return rdf_result
 
     def _extract_water_bonds(self) -> List[Tuple[int, int]]:
         bond_list = []
@@ -108,81 +100,77 @@ class PropertyCalculator:
                 bond_list.append((bond.atom1.index, bond.atom2.index))
         return bond_list
 
-    def monitor_water_bond_length(self):  # type: ignore
+    def monitor_water_bond_length(self) -> np.ndarray:
         """
-        Monitor the bond length between water molecules in the trajectory.
+        Monitors the bond length between water molecules throughout the trajectory.
 
         Returns
         -------
         np.ndarray
-            The bond lengths between water molecules.
-
+            The bond lengths between water molecules across all frames of the trajectory.
         """
-
         bond_list = self._extract_water_bonds()
         return self.monitor_bond_length(bond_list)
 
-    def monitor_bond_length_except_water(self):  # type: ignore
+    def monitor_bond_length_except_water(self):
+        """
+        This method monitors the bond deviation in molecules that are *not* water molecules throughout the trajectory.
+        """
         bond_list = self._extract_bonds_except_water()
         bond_length = self.monitor_bond_length(bond_list)
         compare_to = bond_length[0]
         bond_diff = np.abs(bond_length - compare_to)
         return bond_diff
 
-    def monitor_water_angle(self):  # type: ignore
+    def monitor_water_angle(self) -> np.ndarray:
         """
-        Monitor the angle between water molecules in the trajectory.
+        Monitors the angle between water molecules throughout the trajectory.
 
         Returns
         -------
         np.ndarray
-            The angles between water molecules.
-
+            The angles between water molecules across all frames of the trajectory.
         """
-
-        def _extract_angles() -> list:
-            """
-            Helper function to extract angles between water molecules.
-
-            Returns
-            -------
-            List[List[int]]
-                A list of atom index triplets representing the angles to monitor.
-
-            """
-
-            angle_list = []
-            for bond_1 in self.md_traj.top.bonds:
-                # skip if bond is not a water molecule
-                if bond_1.atom1.residue.name != "HOH":
-                    continue
-                for bond_2 in self.md_traj.top.bonds:
-                    # skip if bond is not a water molecule
-                    if bond_2.atom1.residue.name != "HOH":
-                        continue
-                    water = {}
-                    for bond in [bond_1, bond_2]:
-                        water[bond.atom1.index] = bond.atom1
-                        water[bond.atom2.index] = bond.atom2
-                    # skip if atoms are not part of the same molecule
-                    if len(water.keys()) != 3:
-                        continue
-
-                    sorted_water = [
-                        water[key].index for key in sorted(water.keys(), reverse=True)
-                    ]  # oxygen is first
-                    angle_list.append(
-                        [sorted_water[1], sorted_water[2], sorted_water[0]]
-                    )
-
-            return [list(x) for x in set(tuple(x) for x in angle_list)]
-
-        angle_list = _extract_angles()
+        angle_list = self._extract_water_angles()
         return self.monitor_angle_length(angle_list)
 
-    def monitor_bond_length(self, bond_pairs: list):  # type: ignore
+    def _extract_water_angles(self) -> List[List[int]]:
         """
-        Monitor the bond length between specific atom pairs in the trajectory.
+        Extracts sets of atom indices to compute angles within water molecules.
+
+        Returns
+        -------
+        List[List[int]]
+            A list of lists, where each inner list contains indices of three atoms forming an angle.
+        """
+
+        angle_list = []
+        for bond_1 in self.md_traj.top.bonds:
+            # skip if bond is not a water molecule
+            if bond_1.atom1.residue.name != "HOH":
+                continue
+            for bond_2 in self.md_traj.top.bonds:
+                # skip if bond is not a water molecule
+                if bond_2.atom1.residue.name != "HOH":
+                    continue
+                water = {}
+                for bond in [bond_1, bond_2]:
+                    water[bond.atom1.index] = bond.atom1
+                    water[bond.atom2.index] = bond.atom2
+                # skip if atoms are not part of the same molecule
+                if len(water.keys()) != 3:
+                    continue
+
+                sorted_water = [
+                    water[key].index for key in sorted(water.keys(), reverse=True)
+                ]  # oxygen is first
+                angle_list.append([sorted_water[1], sorted_water[2], sorted_water[0]])
+
+        return [list(x) for x in set(tuple(x) for x in angle_list)]
+
+    def monitor_bond_length(self, bond_pairs: List[Tuple[int, int]]) -> np.ndarray:
+        """
+        Monitors the bond length for specified pairs of atoms across the trajectory
 
         Parameters
         ----------
@@ -192,31 +180,42 @@ class PropertyCalculator:
         Returns
         -------
         np.ndarray
-            The bond lengths for the specified atom pairs.
+            An array of bond lengths for the specified atom pairs across all frames of the trajectory.
 
         """
-        bond_length = md.compute_distances(self.md_traj, bond_pairs)
-        return bond_length
+        bond_lengths = md.compute_distances(self.md_traj, atom_pairs=bond_pairs)
+        return bond_lengths
 
-    def monitor_angle_length(self, angle_list: list):  # type: ignore
+    def monitor_angle_length(self, angle_list: List[List[int]]) -> np.ndarray:
         """
-        Monitor the angles for specific sets of atoms in the trajectory.
+        Monitors the angles for specified sets of atoms throughout the trajectory.
 
         Parameters
         ----------
         angle_list : List[List[int]]
-            A list of atom index triplets whose angles are to be monitored.
+            A list of lists, where each inner list contains indices of three atoms forming an angle to be monitored.
 
         Returns
         -------
         np.ndarray
-            The angles for the specified sets of atoms.
+            An array of angles in degrees for the specified sets of atoms across all frames of the trajectory.
 
         """
-        angles = md.compute_angles(self.md_traj, angle_list) * (180 / np.pi)
+        angles = md.compute_angles(self.md_traj, angle_indices=angle_list) * (
+            180 / np.pi
+        )
         return angles
 
     def monitor_phi_psi(self) -> Tuple[np.ndarray, np.ndarray]:
-        phi = md.compute_phi(self.md_traj)[1]
-        psi = md.compute_psi(self.md_traj)[1]
-        return (phi, psi)
+        """
+        Monitors the phi and psi dihedral angles throughout the trajectory.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            Two arrays representing the phi and psi angles in radians for each frame of the trajectory.
+
+        """
+        _, phi_angles = md.compute_phi(self.md_traj)
+        _, psi_angle = md.compute_psi(self.md_traj)
+        return (phi_angles, psi_angles)

@@ -100,7 +100,7 @@ class PerformTest(Process):
         print(f"{self.implementation=} {self.platform=}")
         potential = MLPotential(self.nnp)
 
-        system = self.system_factory.initialize_ml_system(
+        system = self.system_factory.initialize_system(
             potential,
             self.testsystem.topology,
             self.remove_constraints,
@@ -139,7 +139,6 @@ class PerformTest(Process):
 
 
 class Benchmark:
-
     """
     A class to benchmark the performance of a neural network potential.
     It creates two processes, one that tracks the GPU memory usage and one that performs the benchmark.

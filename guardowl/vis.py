@@ -20,41 +20,48 @@ class MonitoringPlotter:
     """
 
     def __init__(self, traj_file: str, top_file: str, data_file: str) -> None:
+        """
+        Initializes the MonitoringPlotter with trajectory, topology, and data files.
+
+        Parameters
+        ----------
+        traj_file : str
+            The file path to the trajectory file.
+        top_file : str
+            The file path to the topology file.
+        data_file : str
+            The file path to the CSV file containing observables data.
+        """
+        import pandas as pd
+
         self.data_file = data_file
         self.canvas = widgets.Output()
         self.md_traj_instance = md.load(traj_file, top=top_file)
         self.x_label_names = ['#"Step"', "Time (ps)", "bond distance [A]"]
-        self.data = self._set_data(data_file)
+        self.data = pd.read_csv(data_file)
         self.property_calculator = PropertyCalculator(self.md_traj_instance)
 
         nr_of_waters = len(self.md_traj_instance.top.select("water"))
         nr_of_atoms = self.md_traj_instance.top.n_atoms
 
-        if len(self.md_traj_instance.top.select("water")) > 0:
-            self.water_present = True
-        else:
-            self.water_present = False
-
-        if nr_of_waters == nr_of_atoms:
-            log.debug("water only system")
-            self.water_only_system = True
-        else:
-            self.water_only_system = False
-
-        if len(self.md_traj_instance.top.select("resname ALA")) > 0:
-            self.dipeptide = True
-        else:
-            self.dipeptide = False
+        self.water_present = len(self.md_traj_instance.top.select("water")) > 0
+        self.water_only_system = nr_of_waters == nr_of_atoms
+        self.dipeptide = len(self.md_traj_instance.top.select("resname ALA")) > 0
 
     def set_nglview(
         self, superpose: bool = False, periodic: bool = False, wrap: bool = False
     ) -> None:
-        """generates the nglview trajectory visualizing instance
+        """
+        Generates the nglview trajectory visualization instance.
 
-        Args:
-            superpose (bool, optional): superpose the trajectory. Defaults to False.
-            periodic (bool, optional): show periodic boundary conditions. Defaults to False.
-            wrap (bool, optional): wrap the trajectory. Defaults to False.
+        Parameters
+        ----------
+        superpose : bool, optional
+            Whether to superpose the trajectory, by default False.
+        periodic : bool, optional
+            Whether to show periodic boundary conditions, by default False.
+        wrap : bool, optional
+            Whether to wrap the trajectory, by default False.
         """
         traj = self.md_traj_instance
         if superpose:
@@ -69,18 +76,20 @@ class MonitoringPlotter:
 
         self.nglview = nglview
 
-    def _set_data(self, data_file: str) -> pd.DataFrame:
-        """reads in the data
-
-        Args:
-            data_file (str): csv file
-        """
-        with open(data_file) as f:
-            data = pd.read_csv(f)
-        return data
-
     def _generate_report_data(self, bonded_scan: bool) -> Tuple[list, list]:
-        # read for each observable the label and data
+        """
+        Generates labels and observable data for the report.
+
+        Parameters
+        ----------
+        bonded_scan : bool
+            Whether the report is for a bonded scan.
+
+        Returns
+        -------
+        Tuple[list, list]
+            A tuple containing lists of labels and corresponding observable data.
+        """
         labels = []
         observable_data = []
         for obs in self.data.keys():
@@ -92,6 +101,7 @@ class MonitoringPlotter:
             else:
                 observable_data.append(self.data[obs])
 
+        # Add calculated observables
         if self.water_present is True:
             labels.append("water-rdf")
             observable_data.append(self.property_calculator.calculate_water_rdf())

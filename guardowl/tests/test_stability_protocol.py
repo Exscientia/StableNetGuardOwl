@@ -1,11 +1,6 @@
 from pathlib import Path
 
 import pytest
-from openmm import unit
-from openmm.app import StateDataReporter
-from openmmml import MLPotential
-from openmmtools.utils import get_fastest_platform
-
 from guardowl.protocols import (
     BondProfileProtocol,
     DOFTestParameters,
@@ -15,10 +10,18 @@ from guardowl.protocols import (
 )
 from guardowl.simulation import SystemFactory
 from guardowl.testsystems import (
-    SmallMoleculeTestsystemFactory,
-    WaterboxTestsystemFactory,
+    LiquidOption,
+    SmallMoleculeVacuumOption,
+    TestsystemFactory,
 )
-from guardowl.utils import get_available_nnps_and_implementation
+from guardowl.utils import (
+    get_available_nnps_and_implementation,
+    gpu_memory_constrained_nnps_and_implementation,
+)
+from openmm import unit
+from openmm.app import StateDataReporter
+from openmmml import MLPotential
+from openmmtools.utils import get_fastest_platform
 
 
 @pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
@@ -28,11 +31,14 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str, implementation: str) -
     # ---------------------------#
     platform = get_fastest_platform()
     name = "ZINC00107550"
+    opt = SmallMoleculeVacuumOption(
+        name=name,
+    )
 
-    testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_name(name)
+    testsystem = TestsystemFactory().generate_testsystem(opt)
     nnp_instance = MLPotential(nnp)
 
-    system = SystemFactory().initialize_ml_system(
+    system = SystemFactory().initialize_system(
         nnp_instance,
         testsystem.topology,
         implementation=implementation,
@@ -109,14 +115,12 @@ def test_setup_waterbox_protocol_individual_parts(
 
     # ---------------------------#
     platform = get_fastest_platform()
-
-    edge_size = 5
-    testsystem = WaterboxTestsystemFactory().generate_testsystems(
-        edge_size * unit.angstrom, nr_of_equilibrium_steps=10
-    )
+    edge_length = 5
+    opt = LiquidOption(name="water", edge_length=edge_length * unit.angstrom)
+    testsystem = TestsystemFactory().generate_testsystem(opt)
     nnp_instance = MLPotential(nnp)
 
-    system = SystemFactory().initialize_ml_system(
+    system = SystemFactory().initialize_system(
         nnp_instance,
         testsystem.topology,
         implementation=implementation,
@@ -124,7 +128,7 @@ def test_setup_waterbox_protocol_individual_parts(
 
     output_folder = "test_stability_protocol"
     log_file_name = (
-        f"waterbox_{edge_size}A_{nnp}_{implementation}_{ensemble}_{temperature}K"
+        f"waterbox_{edge_length}A_{nnp}_{implementation}_{ensemble}_{temperature}K"
     )
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
@@ -179,6 +183,7 @@ def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> 
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
+    nnp = MLPotential(nnp)
 
     run_waterbox_protocol(
         5,
@@ -194,10 +199,13 @@ def test_run_waterbox_protocol(ensemble: str, nnp: str, implementation: str) -> 
     )
 
 
+@pytest.mark.parametrize("environment", ["vacuum", "solution"])
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+@pytest.mark.parametrize(
+    "nnp, implementation", gpu_memory_constrained_nnps_and_implementation
+)
 def test_run_alanine_dipeptide_protocol(
-    ensemble: str, nnp: str, implementation: str
+    environment: str, ensemble: str, nnp: str, implementation: str
 ) -> None:
     from guardowl.protocols import run_alanine_dipeptide_protocol
 
@@ -214,7 +222,7 @@ def test_run_alanine_dipeptide_protocol(
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
-
+    nnp = MLPotential(nnp)
     run_alanine_dipeptide_protocol(
         nnp,
         implementation,
@@ -224,7 +232,7 @@ def test_run_alanine_dipeptide_protocol(
         output_folder,
         ensemble=ensemble,
         nr_of_simulation_steps=2,
-        env="vacuum",
+        env=environment,
     )
 
 
@@ -247,6 +255,7 @@ def test_run_pure_liquid_protocol(ensemble: str, nnp: str, implementation: str) 
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
+    nnp = MLPotential(nnp)
 
     run_pure_liquid_protocol(
         nnp=nnp,
@@ -270,20 +279,19 @@ def test_DOF_protocol(nnp: str, implementation: str) -> None:
     # ---------------------------#
     platform = get_fastest_platform()
 
-    testsystem = SmallMoleculeTestsystemFactory().generate_testsystems_from_name(
-        name="ethanol"
-    )
+    opt = SmallMoleculeVacuumOption(name="ethanol")
+    testsystem = TestsystemFactory().generate_testsystem(opt)
 
     nnp_instance = MLPotential(nnp)
 
-    system = SystemFactory().initialize_ml_system(
+    system = SystemFactory().initialize_system(
         nnp_instance,
         testsystem.topology,
         implementation=implementation,
     )
 
     output_folder = "test_stability_protocol"
-    log_file_name = f"vacuum_{testsystem.name}_{nnp}_{implementation}"
+    log_file_name = f"vacuum_{opt.name}_{nnp}_{implementation}"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     stability_test = BondProfileProtocol()
@@ -308,12 +316,12 @@ IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
     IN_GITHUB_ACTIONS, reason="Github Actions does not return the same file order"
 )
 def test_input_generation_for_minimization_tests():
+    import numpy as np
     from guardowl.utils import (
-        _generate_input_for_minimization_test,
         _generate_file_list_for_minimization_test,
+        _generate_input_for_minimization_test,
         extract_drugbank_tar_gz,
     )
-    import numpy as np
 
     # extract tar.gz data
     extract_drugbank_tar_gz()
@@ -339,6 +347,7 @@ def test_input_generation_for_minimization_tests():
     (minimized_file, minimized_position), (start_file, start_position) = next(
         _generate_input_for_minimization_test(files)
     )
+
     assert not (
         "/".join(minimized_file.split("/")[-6:])
         == "guardowl/data/drugbank/owl/49957/orca_input.xyz"
@@ -348,9 +357,9 @@ def test_input_generation_for_minimization_tests():
     )
     # generate mol from sdf file
     sdf_file = "".join(start_file.split(".")[0]) + ".sdf"
-    reference_testsystem = (
-        SmallMoleculeTestsystemFactory().generate_testsystems_from_sdf(sdf_file)
-    )
+    opt = SmallMoleculeVacuumOption(path=sdf_file)
+
+    reference_testsystem = TestsystemFactory().generate_testsystem(opt)
     # set positions
     reference_testsystem.positions = minimized_position
 
@@ -360,12 +369,13 @@ def test_run_detect_minimum(nnp, implementation, tmp_dir):
     from guardowl.protocols import run_detect_minimum
 
     platform = get_fastest_platform()
+    nnp_instance = MLPotential(nnp)
 
     run_detect_minimum(
-        nnp,
+        nnp_instance,
         implementation,
         platform,
         tmp_dir,
         percentage=0.1,
-        only_molecules_below_10_heavy_atoms=True,
+        skip_molecules_above_heavy_atom_threshold=8,
     )

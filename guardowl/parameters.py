@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
+from typing import List, Literal, Optional, Union
+
 from openmm import Platform, System, unit
 from openmm.app import StateDataReporter
 from openmmtools.testsystems import TestSystem
-from typing import List, Union, Optional
 
 
 @dataclass
@@ -41,7 +42,7 @@ class MinimizationTestParameters(BaseParameters):
     ----------
     convergence_criteria : unit.Quantity
         The energy convergence criteria for the minimization process.
-    env : str
+    env : Literal["vacuum", "solution"]
         The environment of the simulation (e.g., 'vacuum', 'solution').
     device_index : int
         Index of the GPU device to use for the simulation.
@@ -54,16 +55,19 @@ class MinimizationTestParameters(BaseParameters):
 
     convergence_criteria: unit.Quantity = field(
         default_factory=lambda: unit.Quantity(
-            0.5, unit.kilojoule_per_mole / unit.angstrom
+            1 * unit.kilojoule_per_mole / unit.angstrom
         )
     )
-    env: str = "vacuum"
+    env: Literal["vacuum"] = "vacuum"
     device_index: int = 0
     temperature: unit.Quantity = field(
         default_factory=lambda: unit.Quantity(300, unit.kelvin)
     )
 
     ensemble: str = "NVT"
+
+
+from typing import Literal
 
 
 @dataclass
@@ -78,7 +82,7 @@ class StabilityTestParameters(BaseParameters):
         The duration of the test protocol.
     temperature : unit.Quantity
         The temperature at which the test is conducted.
-    env : str
+    env : Literal["vacuum", "solution"]
         The environment for the simulation (e.g., 'vacuum', 'solution').
     simulated_annealing : bool
         Flag to indicate if simulated annealing is used.
@@ -93,11 +97,11 @@ class StabilityTestParameters(BaseParameters):
 
     protocol_length: int
     temperature: unit.Quantity
-    env: str
+    env: Literal["vacuum", "solution"]
     simulated_annealing: bool
     state_data_reporter: StateDataReporter
     device_index: int = 0
-    ensemble: Optional[str] = None
+    ensemble: Literal["NVT", "NPT", "NVE", None] = None
 
 
 @dataclass

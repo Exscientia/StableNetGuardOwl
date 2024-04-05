@@ -8,6 +8,7 @@ from openmmml import MLPotential
 from openmmtools.integrators import BAOABIntegrator
 
 from .constants import collision_rate, stepsize
+from typing import Literal
 
 
 class SimulationFactory:
@@ -17,12 +18,12 @@ class SimulationFactory:
         topology: Topology,
         platform: Platform,
         temperature: unit.Quantity,
-        env: str,
+        env: Literal["vacuum", "solution"],
         device_index: int = 0,
         ensemble: str = "NVT",
     ) -> Simulation:
         """
-        Create and return an OpenMM simulation instance using LangevinIntegrator.
+        Creates an OpenMM Simulation object with specified parameters.
 
         Parameters
         ----------
@@ -33,15 +34,18 @@ class SimulationFactory:
         platform : Platform
             The OpenMM Platform object for simulation.
         temperature : unit.Quantity
-            The temperature at which to run the simulation.
-        env: str
-            The environment in which the simulation is run, either "vacuum" or "solution".
+            The temperature for the simulation.
+        env : str
+            The environment of the simulation ("vacuum" or "solution").
+        device_index : int, optional
+            GPU device index for CUDA platform, by default 0.
+        ensemble : str, optional
+            The ensemble for the simulation ("NVT" or "NPT"), by default "NVT".
 
         Returns
         -------
         Simulation
-            The OpenMM simulation instance.
-
+            Configured OpenMM Simulation object.
         """
         from openmm import MonteCarloBarostat
 
@@ -50,70 +54,25 @@ class SimulationFactory:
         else:
             integrator = LangevinIntegrator(temperature, collision_rate, stepsize)
 
-        if ensemble == "npt" and env != "vacuum":  # for NpT add barostat
-            barostate = MonteCarloBarostat(
-                unit.Quantity(1, unit.atmosphere), temperature
+        if ensemble.casefold() == "npt" and env != "vacuum":  # for NpT add barostat
+            barostate_force_id = system.addForce(
+                MonteCarloBarostat(unit.Quantity(1, unit.atmosphere), temperature)
             )
-            barostate_force_id = system.addForce(barostate)
+
+        simulation = Simulation(topology, system, integrator, platform)
 
         if platform.getName() == "CUDA":
-            return Simulation(
-                topology,
-                system,
-                integrator,
-                platform=platform,
-                platformProperties={
-                    "Precision": "mixed",
-                    "DeviceIndex": str(device_index),
-                },
-            )
-        else:
-            return Simulation(
-                topology,
-                system,
-                integrator,
-                platform=platform,
-            )
-
-
-def initialize_ml_system(nnp: str, topology: Topology, implementation: str) -> System:
-    """
-    Initializes a machine learning system with the given neural network potential,
-    topology, and implementation details.
-
-    Parameters
-    ----------
-    nnp : str
-        The name or identifier of the neural network potential.
-    topology : Topology
-        The topology of the system to be initialized.
-    implementation : str
-        The specific implementation to use for the machine learning potential.
-
-    Returns
-    -------
-    system : System
-        The initialized OpenMM System object.
-    """
-
-    from openmmml import MLPotential
-
-    from guardowl.simulation import SystemFactory
-
-    nnp_instance = MLPotential(nnp)
-    system = SystemFactory().initialize_ml_system(
-        nnp_instance, topology, implementation=implementation
-    )
-    return system
+            simulation.context.setPlatformProperty("CudaDeviceIndex", str(device_index))
+            simulation.context.setPlatformProperty("CudaPrecision", "mixed")
+        return simulation
 
 
 class SystemFactory:
     @staticmethod
-    def initialize_ml_system(
+    def initialize_system(
         potential: Type[MLPotential],
         topology: Topology,
-        remove_constraints: bool = True,
-        implementation: str = "",
+        implementation: str = "torchani",
     ) -> System:
         """
         Initialize an OpenMM system using a machine learning potential.
@@ -124,8 +83,6 @@ class SystemFactory:
             The machine learning potential class.
         topology : Topology
             The OpenMM topology object.
-        remove_constraints : bool, optional
-            Whether to remove constraints from the system, by default True.
         implementation : str, optional
             The specific implementation of the ML potential, by default "".
 
@@ -138,80 +95,9 @@ class SystemFactory:
         --------
         >>> potential = MLPotential
         >>> topology = Topology()
-        >>> system = initialize_pure_ml_system(potential, topology)
+        >>> system = SystemFactory.initialize_system(potential, topology)
         """
-        # create system & simulation instance
-        if implementation:
-            return potential.createSystem(
-                topology,
-                implementation=implementation,
-                removeConstraints=remove_constraints,
-                constraints=None,
-                rigidWater=False,
-            )
-
         return potential.createSystem(
             topology,
-            removeConstraints=remove_constraints,
-            constraints=None,
-            rigidWater=False,
-        )
-
-    @staticmethod
-    def initialize_mixed_ml_system(
-        system: System,
-        potential: Type[MLPotential],
-        topology: Topology,
-        interpolate: bool,
-        ml_atoms: List[int],
-        remove_constraints: bool = True,
-        implementation: str = "",
-    ) -> System:
-        """
-        Initialize an OpenMM system using both QML and MM potentials.
-
-        Parameters
-        ----------
-        system : System
-            The existing OpenMM System object.
-        potential : Type[MLPotential]
-            The machine learning potential class.
-        topology : Topology
-            The OpenMM topology object.
-        interpolate : bool
-            Whether to interpolate between the QML and MM potentials.
-        ml_atoms : List[int]
-            List of atom indices for which the ML potential will be applied.
-        remove_constraints : bool, optional
-            Whether to remove constraints from the system, by default True.
-        implementation : str, optional
-            The specific implementation of the ML potential, by default "".
-
-        Returns
-        -------
-        System
-            The OpenMM System object.
-
-        """
-        # create system & simulation instance
-        if implementation:
-            return potential.createMixedSystem(
-                topology=topology,
-                system=system,
-                implementation=implementation,
-                atoms=ml_atoms,
-                removeConstraints=remove_constraints,
-                interpolate=interpolate,
-                constraints=None,
-                rigidWater=False,
-            )
-
-        return potential.createMixedSystem(
-            topology=topology,
-            system=system,
-            atoms=ml_atoms,
-            removeConstraints=remove_constraints,
-            interpolate=interpolate,
-            constraints=None,
-            rigidWater=False,
+            implementation=implementation,
         )
