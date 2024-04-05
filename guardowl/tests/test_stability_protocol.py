@@ -19,6 +19,7 @@ from openmm import unit
 from openmm.app import StateDataReporter
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
+from guardowl.setup import PotentialFactory
 
 
 @pytest.mark.parametrize("nnp", get_available_nnps())
@@ -157,9 +158,14 @@ def test_setup_waterbox_protocol_individual_parts(
     )
 
 
+from typing import Dict, Tuple
+
+
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp", get_available_nnps())
-def test_run_waterbox_protocol(ensemble: str, nnp: str) -> None:
+@pytest.mark.parametrize("params", get_available_nnps())
+def test_run_waterbox_protocol(
+    ensemble: str, params: Dict[str, Tuple[str, int, float]]
+) -> None:
     from guardowl.protocols import run_waterbox_protocol
 
     reporter = StateDataReporter(
@@ -175,7 +181,7 @@ def test_run_waterbox_protocol(ensemble: str, nnp: str) -> None:
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
-    nnp = MLPotential(nnp)
+    nnp = PotentialFactory().initialize_potential(params)
 
     run_waterbox_protocol(
         5,
@@ -192,9 +198,9 @@ def test_run_waterbox_protocol(ensemble: str, nnp: str) -> None:
 
 @pytest.mark.parametrize("environment", ["vacuum", "solution"])
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp", get_available_nnps())
+@pytest.mark.parametrize("params", get_available_nnps())
 def test_run_alanine_dipeptide_protocol(
-    environment: str, ensemble: str, nnp: str
+    environment: str, ensemble: str, params: Dict[str, Tuple[str, int, float]]
 ) -> None:
     from guardowl.protocols import run_alanine_dipeptide_protocol
 
@@ -211,7 +217,7 @@ def test_run_alanine_dipeptide_protocol(
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
-    nnp = MLPotential(nnp)
+    nnp = PotentialFactory().initialize_potential(params)
     run_alanine_dipeptide_protocol(
         nnp,
         300,
@@ -225,8 +231,10 @@ def test_run_alanine_dipeptide_protocol(
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp", get_available_nnps())
-def test_run_pure_liquid_protocol(ensemble: str, nnp: str) -> None:
+@pytest.mark.parametrize("params", get_available_nnps())
+def test_run_pure_liquid_protocol(
+    ensemble: str, params: Dict[str, Tuple[str, int, float]]
+) -> None:
     from guardowl.protocols import run_pure_liquid_protocol
 
     reporter = StateDataReporter(
@@ -243,7 +251,7 @@ def test_run_pure_liquid_protocol(ensemble: str, nnp: str) -> None:
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
-    nnp = MLPotential(nnp)
+    nnp = PotentialFactory().initialize_potential(params)
 
     run_pure_liquid_protocol(
         nnp=nnp,

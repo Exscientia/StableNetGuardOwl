@@ -1,15 +1,15 @@
 # config.yaml
-tests:
-  - physicsml-model: # if requested
+potential:
+  - physicsml-model:
       - precision: 64
       - position_scaling: 10.0
       - output_scaling: 4.184 * 627
       - model_path: "path_to_model"
 
-  - potential:
+  - openmmml:
       - name: "ANI2x"
-      - provider: "openmm-ml" # either 'openmm-ml' or 'physicsml'
 
+tests:
   - protocol: "alanine_dipeptide_protocol"
     env: "solution"
     ensemble: "npt"
