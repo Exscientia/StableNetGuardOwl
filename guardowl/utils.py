@@ -16,7 +16,7 @@ gpu_memory_constrained_nnps_and_implementation = [
     ("ani2x", "torchani"),
 ]
 
-_IMPLEMENTED_ELEMENTS = [1, 6, 7, 8, 9, 15, 16, 17]
+_IMPLEMENTED_ELEMENTS = [1, 6, 7, 8, 9, 16, 17]
 
 
 def get_available_nnps_and_implementation() -> list:
