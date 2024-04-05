@@ -872,7 +872,7 @@ def run_detect_minimum(
     # test if not implemented elements are in molecule, if yes skip
     def _contains_unknown_elements(mol: Chem.Mol) -> bool:
         for atom in mol.GetAtoms():
-            if atom.atomic_number not in _IMPLEMENTED_ELEMENTS:
+            if atom.GetAtomicNum() not in _IMPLEMENTED_ELEMENTS:
                 log.debug(f"Skipping {name} because it contains unknown elements")
                 return True
         return False
