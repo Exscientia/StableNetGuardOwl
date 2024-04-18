@@ -4,7 +4,7 @@ potentials:
     precision: 64
     position_scaling: 10.0
     output_scaling: 4.184 * 627
-    model_path: "/guardowl/tests/data/physics-ml/mace"
+    model_path: "guardowl/tests/data/physics-ml/mace"
 
   - provider: "openmm-ml"
     model_name: "ANI2x"
