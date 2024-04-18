@@ -3,7 +3,7 @@ import os
 from typing import Tuple, List, Optional, Dict, Iterator
 from loguru import logger as log
 
-available_nnps = ["openmmml"]
+available_nnps = ["openmmml", "physicsml-model"]
 gh_available_nnps = ["openmmml"]
 
 _IMPLEMENTED_ELEMENTS = [1, 6, 7, 8, 9, 16, 17]
@@ -14,7 +14,7 @@ potentials = {
         "precision": 64,
         "position_scaling": 10.0,
         "output_scaling": 4.184 * 627,
-        "model_path": "path_to_model",
+        "model_path": "quardowl/tests/data/physics-ml/mace",
     },
     "openmmml": {"name": "ani2x"},
 }
@@ -28,9 +28,7 @@ def get_available_nnps() -> list:
             {nnp_name: potentials[nnp_name]} for nnp_name in gh_available_nnps
         ]  # FIXME: this currently only includes the openmmml potentials
     else:
-        return [
-            {nnp_name: potentials[nnp_name]} for nnp_name in available_nnps
-        ]  # FIXME: this currently only includes the openmmml potentials
+        return [{nnp_name: potentials[nnp_name]} for nnp_name in available_nnps]
 
 
 def get_data_filename(relative_path):

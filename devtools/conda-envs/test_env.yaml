@@ -28,6 +28,7 @@ dependencies:
   - pytest-cov
   - codecov
   - black
+  - rdkit
 
     # Testing
   - pytest

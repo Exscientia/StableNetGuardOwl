@@ -20,10 +20,13 @@ from openmm.app import StateDataReporter
 from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 from guardowl.setup import PotentialFactory
+from typing import Dict, Tuple
 
 
-@pytest.mark.parametrize("nnp", get_available_nnps())
-def test_setup_vacuum_protocol_individual_parts(nnp: str) -> None:
+@pytest.mark.parametrize("params", get_available_nnps())
+def test_setup_vacuum_protocol_individual_parts(
+    params: Dict[str, Tuple[str, int, float]]
+) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # ---------------------------#
@@ -34,14 +37,14 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str) -> None:
     )
 
     testsystem = TestsystemFactory().generate_testsystem(opt)
-    nnp_instance = MLPotential(nnp)
+    nnp_instance = PotentialFactory().initialize_potential(params)
 
     system = SystemFactory().initialize_system(
         nnp_instance,
         testsystem.topology,
     )
     output_folder = "test_stability_protocol"
-    log_file_name = f"vacuum_{name}_{nnp}"
+    log_file_name = f"vacuum_{name}"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
     stability_test = MultiTemperatureProtocol()
 
@@ -73,8 +76,8 @@ def test_setup_vacuum_protocol_individual_parts(nnp: str) -> None:
     stability_test.perform_stability_test(params)
 
 
-@pytest.mark.parametrize("nnp", get_available_nnps())
-def test_run_vacuum_protocol(nnp: str) -> None:
+@pytest.mark.parametrize("params", get_available_nnps())
+def test_run_vacuum_protocol(params: Dict[str, Tuple[str, int, float]]) -> None:
     from guardowl.protocols import run_hipen_protocol
 
     reporter = StateDataReporter(
@@ -90,10 +93,11 @@ def test_run_vacuum_protocol(nnp: str) -> None:
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
+    nnp_instance = PotentialFactory().initialize_potential(params)
 
     run_hipen_protocol(
         1,
-        nnp,
+        nnp_instance,
         300,
         reporter,
         platform,
@@ -103,9 +107,9 @@ def test_run_vacuum_protocol(nnp: str) -> None:
 
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
-@pytest.mark.parametrize("nnp", get_available_nnps())
+@pytest.mark.parametrize("params", get_available_nnps())
 def test_setup_waterbox_protocol_individual_parts(
-    ensemble: str, nnp: str, temperature: int = 300
+    ensemble: str, params: Dict[str, Tuple[str, int, float]], temperature: int = 300
 ) -> None:
     """Test if we can run a simulation for a number of steps"""
 
@@ -114,7 +118,8 @@ def test_setup_waterbox_protocol_individual_parts(
     edge_length = 5
     opt = LiquidOption(name="water", edge_length=edge_length * unit.angstrom)
     testsystem = TestsystemFactory().generate_testsystem(opt)
-    nnp_instance = MLPotential(nnp)
+    nnp_instance = PotentialFactory().initialize_potential(params)
+
 
     system = SystemFactory().initialize_system(
         nnp_instance,
@@ -122,7 +127,7 @@ def test_setup_waterbox_protocol_individual_parts(
     )
 
     output_folder = "test_stability_protocol"
-    log_file_name = f"waterbox_{edge_length}A_{nnp}_{ensemble}_{temperature}K"
+    log_file_name = f"waterbox_{edge_length}A_{ensemble}_{temperature}K"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     stability_test = PropagationProtocol()
@@ -181,12 +186,12 @@ def test_run_waterbox_protocol(
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
-    nnp = PotentialFactory().initialize_potential(params)
+    nnp_instance = PotentialFactory().initialize_potential(params)
 
     run_waterbox_protocol(
         5,
         ensemble,
-        nnp,
+        nnp_instance,
         300,
         reporter,
         platform,
@@ -217,9 +222,9 @@ def test_run_alanine_dipeptide_protocol(
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
-    nnp = PotentialFactory().initialize_potential(params)
+    nnp_instance = PotentialFactory().initialize_potential(params)
     run_alanine_dipeptide_protocol(
-        nnp,
+        nnp_instance,
         300,
         reporter,
         platform,
@@ -251,10 +256,10 @@ def test_run_pure_liquid_protocol(
     )
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
-    nnp = PotentialFactory().initialize_potential(params)
+    nnp_instance = PotentialFactory().initialize_potential(params)
 
     run_pure_liquid_protocol(
-        nnp=nnp,
+        nnp=nnp_instance,
         temperature=300,
         reporter=reporter,
         platform=platform,
@@ -285,7 +290,7 @@ def test_DOF_protocol(params: Dict[str, Tuple[str, int, float]]) -> None:
     )
 
     output_folder = "test_stability_protocol"
-    log_file_name = f"vacuum_{opt.name}_{params['name']}"
+    log_file_name = f"vacuum_{opt.name}"
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     stability_test = BondProfileProtocol()

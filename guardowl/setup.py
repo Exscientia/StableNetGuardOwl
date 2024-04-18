@@ -98,8 +98,9 @@ class PotentialFactory:
 
     def __init__(self) -> None:
         pass
-
-    def initialize_potential(self, params: Dict[str, Union[str, float, int]]):
+    
+    @staticmethod
+    def initialize_potential(params: Dict[str, Union[str, float, int]]):
 
         if "openmmml" in params:
             from openmmml import MLPotential
