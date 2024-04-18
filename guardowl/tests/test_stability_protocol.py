@@ -78,7 +78,7 @@ def test_setup_vacuum_protocol_individual_parts(
 
 @pytest.mark.parametrize("params", get_available_nnps())
 def test_run_vacuum_protocol(params: Dict[str, Tuple[str, int, float]]) -> None:
-    from guardowl.protocols import run_hipen_protocol
+    from guardowl.protocols import run_hipen_test
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -95,7 +95,7 @@ def test_run_vacuum_protocol(params: Dict[str, Tuple[str, int, float]]) -> None:
     output_folder = "test_stability_protocol"
     nnp_instance = PotentialFactory().initialize_potential(params)
 
-    run_hipen_protocol(
+    run_hipen_test(
         1,
         nnp_instance,
         300,
@@ -108,7 +108,7 @@ def test_run_vacuum_protocol(params: Dict[str, Tuple[str, int, float]]) -> None:
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
 @pytest.mark.parametrize("params", get_available_nnps())
-def test_setup_waterbox_protocol_individual_parts(
+def test_setup_waterbox_test_individual_parts(
     ensemble: str, params: Dict[str, Tuple[str, int, float]], temperature: int = 300
 ) -> None:
     """Test if we can run a simulation for a number of steps"""
@@ -119,7 +119,6 @@ def test_setup_waterbox_protocol_individual_parts(
     opt = LiquidOption(name="water", edge_length=edge_length * unit.angstrom)
     testsystem = TestsystemFactory().generate_testsystem(opt)
     nnp_instance = PotentialFactory().initialize_potential(params)
-
 
     system = SystemFactory().initialize_system(
         nnp_instance,
@@ -168,10 +167,10 @@ from typing import Dict, Tuple
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
 @pytest.mark.parametrize("params", get_available_nnps())
-def test_run_waterbox_protocol(
+def test_run_waterbox_test(
     ensemble: str, params: Dict[str, Tuple[str, int, float]]
 ) -> None:
-    from guardowl.protocols import run_waterbox_protocol
+    from guardowl.protocols import run_waterbox_test
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -188,7 +187,7 @@ def test_run_waterbox_protocol(
     output_folder = "test_stability_protocol"
     nnp_instance = PotentialFactory().initialize_potential(params)
 
-    run_waterbox_protocol(
+    run_waterbox_test(
         5,
         ensemble,
         nnp_instance,
@@ -204,10 +203,10 @@ def test_run_waterbox_protocol(
 @pytest.mark.parametrize("environment", ["vacuum", "solution"])
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
 @pytest.mark.parametrize("params", get_available_nnps())
-def test_run_alanine_dipeptide_protocol(
+def test_run_alanine_dipeptide_test(
     environment: str, ensemble: str, params: Dict[str, Tuple[str, int, float]]
 ) -> None:
-    from guardowl.protocols import run_alanine_dipeptide_protocol
+    from guardowl.protocols import run_alanine_dipeptide_test
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -223,7 +222,7 @@ def test_run_alanine_dipeptide_protocol(
     platform = get_fastest_platform()
     output_folder = "test_stability_protocol"
     nnp_instance = PotentialFactory().initialize_potential(params)
-    run_alanine_dipeptide_protocol(
+    run_alanine_dipeptide_test(
         nnp_instance,
         300,
         reporter,
@@ -237,10 +236,10 @@ def test_run_alanine_dipeptide_protocol(
 
 @pytest.mark.parametrize("ensemble", ["NVE", "NVT", "NpT"])
 @pytest.mark.parametrize("params", get_available_nnps())
-def test_run_pure_liquid_protocol(
+def test_run_organic_liquid_test(
     ensemble: str, params: Dict[str, Tuple[str, int, float]]
 ) -> None:
-    from guardowl.protocols import run_pure_liquid_protocol
+    from guardowl.protocols import run_organic_liquid_test
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -258,7 +257,7 @@ def test_run_pure_liquid_protocol(
     output_folder = "test_stability_protocol"
     nnp_instance = PotentialFactory().initialize_potential(params)
 
-    run_pure_liquid_protocol(
+    run_organic_liquid_test(
         nnp=nnp_instance,
         temperature=300,
         reporter=reporter,

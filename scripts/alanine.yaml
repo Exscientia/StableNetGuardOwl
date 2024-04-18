@@ -1,6 +1,6 @@
 # config.yaml
 tests:
-  - protocol: "perform_alanine_dipeptide_protocol"
+  - protocol: "perform_alanine_dipeptide_test"
     env: "solution"
     ensemble: "npt"
     nnp: "ani2x"

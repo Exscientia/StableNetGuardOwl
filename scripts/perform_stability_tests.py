@@ -139,17 +139,17 @@ def process_test(test: Dict[str, Any], platform: Platform, output: str) -> None:
     """
     from guardowl.protocols import (
         run_DOF_scan,
-        run_hipen_protocol,
-        run_waterbox_protocol,
-        run_alanine_dipeptide_protocol,
-        run_pure_liquid_protocol,
+        run_hipen_test,
+        run_waterbox_test,
+        run_alanine_dipeptide_test,
+        run_organic_liquid_test,
     )
 
     protocol_function = {
-        "hipen_protocol": run_hipen_protocol,
-        "waterbox_protocol": run_waterbox_protocol,
-        "alanine_dipeptide_protocol": run_alanine_dipeptide_protocol,
-        "pure_liquid_protocol": run_pure_liquid_protocol,
+        "hipen_test": run_hipen_test,
+        "waterbox_test": run_waterbox_test,
+        "alanine_dipeptide_test": run_alanine_dipeptide_test,
+        "organic_liquid_test": run_organic_liquid_test,
         "DOF_scan": run_DOF_scan,
     }.get(test.get("protocol"))
 

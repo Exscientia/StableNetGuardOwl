@@ -1,6 +1,6 @@
 # config.yaml
 tests:
-  - protocol: "pure_liquid_protocol"
+  - protocol: "organic_liquid_test"
     molecule_name: ["ethane", "butane"]
     nr_of_molecule: [10, 20]
     ensemble: "npt"

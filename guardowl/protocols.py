@@ -398,7 +398,7 @@ class MultiTemperatureProtocol(PropagationProtocol):
             self._run_simulation(_parms, qsim)
 
 
-def run_hipen_protocol(
+def run_hipen_test(
     hipen_idx: Union[int, List[int]],
     nnp: str,
     temperature: Union[int, List[int]],
@@ -438,15 +438,11 @@ def run_hipen_protocol(
     def _run_protocol(hipen_idx: int):
         name = list(TestsystemFactory._HIPEN_SYSTEMS.keys())[hipen_idx]
 
-        log.info(
-            f"Performing vacuum stability test for {name} using {nnp}."
-        )
+        log.info(f"Performing vacuum stability test for {name} using {nnp}.")
         opt = SmallMoleculeVacuumOption(name)
 
         testsystem = TestsystemFactory().generate_testsystem(opt)
-        system = SystemFactory.initialize_system(
-            nnp, testsystem.topology
-        )
+        system = SystemFactory.initialize_system(nnp, testsystem.topology)
         log_file_name = f"vacuum_{name}_{nnp}"
 
         # Select protocol based on whether temperature is a list or a single value
@@ -482,7 +478,7 @@ def run_hipen_protocol(
                 _run_protocol(idx)
 
 
-def run_waterbox_protocol(
+def run_waterbox_test(
     edge_length: int,
     ensemble: str,
     nnp: str,
@@ -565,7 +561,7 @@ def run_waterbox_protocol(
     log.info(f"Simulation files saved to {output_folder}")
 
 
-def run_pure_liquid_protocol(
+def run_organic_liquid_test(
     molecule_name: Union[str, List[str]],
     nr_of_molecule: Union[int, List[int]],
     ensemble: str,
@@ -627,14 +623,14 @@ def run_pure_liquid_protocol(
 
         opt = LiquidOption(name, nr_of_molecules)
         testsystem = TestsystemFactory().generate_testsystem(opt)
-        system = SystemFactory.initialize_system(
-            nnp, testsystem.topology
-        )
+        system = SystemFactory.initialize_system(nnp, testsystem.topology)
 
         temperature_str = (
             f"{temperature}K" if isinstance(temperature, int) else "multi-temp"
         )
-        log_file_name = f"pure_liquid_{name}_{nr_of_molecules}_{nnp}_{ensemble}_{temperature_str}"
+        log_file_name = (
+            f"pure_liquid_{name}_{nr_of_molecules}_{nnp}_{ensemble}_{temperature_str}"
+        )
 
         log.info(f"Simulation output will be written to {log_file_name}")
 
@@ -662,7 +658,7 @@ def run_pure_liquid_protocol(
 from typing import Literal
 
 
-def run_alanine_dipeptide_protocol(
+def run_alanine_dipeptide_test(
     nnp: str,
     temperature: int,
     reporter: StateDataReporter,
@@ -769,9 +765,7 @@ def run_DOF_scan(
         The name of the molecule for simulation, defaults to 'ethanol'.
 
     """
-    log.info(
-        f"Initiating DOF scan for {name} using {nnp}."
-    )
+    log.info(f"Initiating DOF scan for {name} using {nnp}.")
 
     from guardowl.protocols import BondProfileProtocol, DOFTestParameters
     from guardowl.testsystems import TestsystemFactory, SmallMoleculeVacuumOption
@@ -926,9 +920,7 @@ def run_detect_minimum(
             continue
         # set the minimized positions
         reference_testsystem.positions = minimized_position
-        system = SystemFactory.initialize_system(
-            nnp, reference_testsystem.topology
-        )
+        system = SystemFactory.initialize_system(nnp, reference_testsystem.topology)
         log_file_name = f"ref_{name}_{nnp}"
 
         params = MinimizationTestParameters(
@@ -952,9 +944,7 @@ def run_detect_minimum(
         minimize_testsystem = reference_testsystem
         minimize_testsystem.positions = start_position
 
-        system = SystemFactory.initialize_system(
-            nnp, minimize_testsystem.topology
-        )
+        system = SystemFactory.initialize_system(nnp, minimize_testsystem.topology)
         log_file_name = f"minimize_{name}_{nnp}"
 
         params = MinimizationTestParameters(

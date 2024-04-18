@@ -1,7 +1,7 @@
 # config.yaml
 tests:
-  - protocol: "hipen_protocol"
-    hipen_idx: [0,1]
+  - protocol: "hipen_test"
+    hipen_idx: [0, 1]
     nnp: "ani2x"
     temperature: 300
     nr_of_simulation_steps: 5
