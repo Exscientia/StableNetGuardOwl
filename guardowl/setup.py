@@ -98,31 +98,37 @@ class PotentialFactory:
 
     def __init__(self) -> None:
         pass
-    
+
     @staticmethod
     def initialize_potential(params: Dict[str, Union[str, float, int]]):
 
-        if "openmmml" in params:
+        log.info(
+            f"Initialize {params['model_name']} potential from {params['provider']}"
+        )
+
+        if params["provider"] == "openmm-ml":
             from openmmml import MLPotential
 
-            name = params["openmmml"]["name"]
-            log.info(f"Initialize {name} potential from OpenMMML")
-            return MLPotential(name)
-        elif "physicsml-model" in params:
+            name = params["model_name"]
+            return MLPotential(name.lower())
+        elif params["provider"] == "physics-ml":
             from physicsml.plugins.openmm.physicsml_potential import (
                 MLPotential as PhysicsMLPotential,
             )
 
+            print(params)
             name = "physicsml_model"  # that key word needs to be present
-            precision = params["physicsml-model"]["precision"]
-            position_scaling = params["physicsml-model"]["position_scaling"]
-            output_scaling = params["physicsml-model"]["output_scaling"]
-            model_path = params["physicsml-model"]["model_path"]
-            log.info(f"Initialize {name} potential from PhysicsML")
+            precision = params["precision"]
+            position_scaling = params["position_scaling"]
+            output_scaling = params["output_scaling"]
+            model_path = params["model_path"]
+
             return PhysicsMLPotential(
                 name,
                 model_path=model_path,
-                precision=precision,
-                position_scaling=position_scaling,
-                output_scaling=output_scaling,
+                precision=str(precision),  #
+                position_scaling=float(position_scaling),
+                output_scaling=float(eval(output_scaling)),
             )
+        else:
+            raise RuntimeError(f"Unsupported potential type: {params}")

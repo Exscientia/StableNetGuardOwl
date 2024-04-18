@@ -124,6 +124,9 @@ def load_config(config_file_path: str) -> Dict[str, Any]:
         raise
 
 
+from guardowl.testsystems import LiquidOption
+
+
 def process_test(test: Dict[str, Any], platform: Platform, output: str) -> None:
     """
     Processes a single test configuration.
@@ -139,14 +142,14 @@ def process_test(test: Dict[str, Any], platform: Platform, output: str) -> None:
     """
     from guardowl.protocols import (
         run_DOF_scan,
-        run_hipen_test,
+        run_small_molecule_test,
         run_waterbox_test,
         run_alanine_dipeptide_test,
         run_organic_liquid_test,
     )
 
     protocol_function = {
-        "hipen_test": run_hipen_test,
+        "small_molecule_test": run_small_molecule_test,
         "waterbox_test": run_waterbox_test,
         "alanine_dipeptide_test": run_alanine_dipeptide_test,
         "organic_liquid_test": run_organic_liquid_test,
@@ -169,7 +172,6 @@ def main(config: str) -> None:
     config_path : str
         The path to the YAML configuration file.
     """
-    from openmmml import MLPotential
     from guardowl.setup import PotentialFactory
 
     log.info(f"Loaded config from {config}")
@@ -186,9 +188,9 @@ def main(config: str) -> None:
             test["platform"] = platform
 
             test["nnp"] = PotentialFactory().initialize_potential(potential)
-
-            test["nnp"] = MLPotential(test["nnp"])
-
+            test["output_folder"] = (
+                f"{test['output_folder']}/{potential['provider']}_{potential['model_name']}"
+            )
             process_test(test, platform, output)
             print("--------- Test finishs --------- ")
 

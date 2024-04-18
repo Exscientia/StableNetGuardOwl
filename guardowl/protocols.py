@@ -5,7 +5,7 @@ from typing import List, Tuple, Union, Optional, Dict
 
 import numpy as np
 from loguru import logger as log
-from openmm import State, System, unit, Platform
+from openmm import State, unit, Platform
 from openmm.app import Simulation, StateDataReporter, Topology
 
 from .parameters import (
@@ -398,9 +398,10 @@ class MultiTemperatureProtocol(PropagationProtocol):
             self._run_simulation(_parms, qsim)
 
 
-def run_hipen_test(
-    hipen_idx: Union[int, List[int]],
-    nnp: str,
+def run_small_molecule_test(
+    smiles: Union[str, List[str]],
+    names: Union[str, List[str]],
+    nnp,  # intialized NNP
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
     platform: Platform,
@@ -414,10 +415,10 @@ def run_hipen_test(
 
     Parameters
     ----------
-    hipen_idx : Union[int, List[int]]
-        The index or indices of the hipen molecule(s) to simulate.
-    nnp : str
-        The neural network potential to use for the simulation.
+    smiles : Union[str, List[str]]
+        The smiles string of the molecule to simulate.
+    nnp
+        An instance of a NNP.
     temperature : Union[int, List[int]]
         The temperature or list of temperatures at which to perform the simulations.
         Multiple temperatures trigger a multi-temperature protocol.
@@ -435,15 +436,13 @@ def run_hipen_test(
     """
     from guardowl.testsystems import TestsystemFactory, SmallMoleculeVacuumOption
 
-    def _run_protocol(hipen_idx: int):
-        name = list(TestsystemFactory._HIPEN_SYSTEMS.keys())[hipen_idx]
-
-        log.info(f"Performing vacuum stability test for {name} using {nnp}.")
-        opt = SmallMoleculeVacuumOption(name)
+    def _run_protocol(opt: SmallMoleculeVacuumOption):
+        log.info(f"Performing vacuum stability test for {opt.name}.")
 
         testsystem = TestsystemFactory().generate_testsystem(opt)
         system = SystemFactory.initialize_system(nnp, testsystem.topology)
-        log_file_name = f"vacuum_{name}_{nnp}"
+        log_file_name = f"vacuum_{opt.name}"
+        log.info(f"Logging to {output_folder}/{log_file_name}")
 
         # Select protocol based on whether temperature is a list or a single value
         stability_test = (
@@ -470,12 +469,16 @@ def run_hipen_test(
         stability_test.perform_stability_test(params)
         log.info(f"\nSaving {params.log_file_name} files to {params.output_folder}")
 
-        # Run protocol for each specified hipen index
-        if isinstance(hipen_idx, int):
-            _run_protocol(hipen_idx)
-        else:
-            for idx in hipen_idx:
-                _run_protocol(idx)
+    # Run protocol for each specified hipen index
+    from guardowl.testsystems import SmallMoleculeVacuumOption
+
+    if isinstance(smiles, str):
+        opt = SmallMoleculeVacuumOption(smiles=smiles, name=names)
+        _run_protocol(opt)
+    else:
+        for smile, name in zip(smiles, names):
+            opt = SmallMoleculeVacuumOption(smiles=smile, name=name)
+            _run_protocol(opt)
 
 
 def run_waterbox_test(

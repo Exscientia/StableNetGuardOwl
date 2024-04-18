@@ -7,7 +7,6 @@ from guardowl.simulation import SimulationFactory, SystemFactory
 from guardowl.utils import get_available_nnps
 from openmm import unit
 from openmm.app import DCDReporter, PDBFile
-from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
 from typing import Dict, Tuple
