@@ -81,40 +81,50 @@ def generate_molecule_from_sdf(path: str) -> Optional[Chem.Mol]:
 
 
 from typing import Dict, Union
+from openmmml import MLPotential
+from physicsml.plugins.openmm.physicsml_potential import (
+    MLPotential as PhysicsMLPotential,
+)
 
 
 class PotentialFactory:
-
-    # potential:
-    #   - physicsml-model:
-    #       - name: "physicsml_model"
-    #       - precision: 64
-    #       - position_scaling: 10.0
-    #       - output_scaling: 4.184 * 627
-    #       - model_path: "path_to_model"
-
-    #   - openmmml:
-    #       - name: "ANI2x"
 
     def __init__(self) -> None:
         pass
 
     @staticmethod
-    def initialize_potential(params: Dict[str, Union[str, float, int]]):
+    def initialize_potential(
+        params: Dict[str, Union[str, float, int]]
+    ) -> Union["MLPotential", "PhysicsMLPotential"]:
+        """
+        Initializes a potential based on the provided parameters.
+
+        Parameters
+        ----------
+        params : Dict[str, Union[str, float, int]]
+            A dictionary containing the parameters for the potential. The required keys are:
+            - "provider": The provider of the potential, either "openmm-ml" or "physics-ml".
+            - "model_name": The name of the model.
+            - "precision": The precision of the model (only for "physics-ml" provider).
+            - "position_scaling": The scaling factor for the position (only for "physics-ml" provider).
+            - "output_scaling": The scaling factor for the output (only for "physics-ml" provider).
+            - "model_path": The path to the model file (only for "physics-ml" provider).
+
+        Returns
+        -------
+        Union[MLPotential, PhysicsMLPotential]
+            An instance of the appropriate potential class based on the provided parameters.
+        """
 
         log.info(
             f"Initialize {params['model_name']} potential from {params['provider']}"
         )
 
         if params["provider"] == "openmm-ml":
-            from openmmml import MLPotential
 
             name = params["model_name"]
             return MLPotential(name.lower())
         elif params["provider"] == "physics-ml":
-            from physicsml.plugins.openmm.physicsml_potential import (
-                MLPotential as PhysicsMLPotential,
-            )
 
             print(params)
             name = "physicsml_model"  # that key word needs to be present
