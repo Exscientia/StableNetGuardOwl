@@ -1,13 +1,13 @@
 # config.yaml
 potentials:
-  - provider: "physicsml-model"
+  - provider: "physics-ml"
     model_name: "MACE"
     precision: 64
     position_scaling: 10.0
     output_scaling: 4.184 * 627
     model_path: "/guardowl/tests/data/physics-ml/mace"
 
-  - provider: "openmmml"
+  - provider: "openmm-ml"
     model_name: "ANI2x"
 
 
