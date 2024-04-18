@@ -38,14 +38,20 @@ def test_generate_simulation_instance(
         temperature=unit.Quantity(300, unit.kelvin),
     )
     sim.context.setPositions(pdb.positions)
-    e = (
+    e_init = (
         sim.context.getState(getEnergy=True)
         .getPotentialEnergy()
         .value_in_unit(unit.kilojoule_per_mole)
     )
     # test minimization
-    sim.minimizeEnergy(maxIterations=100)
+    sim.minimizeEnergy(maxIterations=5)
     pos = sim.context.getState(getPositions=True).getPositions()
+    e_final = (
+        sim.context.getState(getEnergy=True)
+        .getPotentialEnergy()
+        .value_in_unit(unit.kilojoule_per_mole)
+    )
+    assert e_init > e_final
 
 
 from typing import Any, Dict

@@ -23,7 +23,7 @@ def plot_timing(benchmark_results, title: str):
 
     for benchmark in benchmark_results:
         benchmark_details = benchmark_results[benchmark]["benchmark_details"]
-        label = f"{benchmark_details.nnp}/{benchmark_details.platform}/{benchmark_details.implementation}"
+        label = f"{benchmark_details.nnp}/{benchmark_details.platform}/"
 
         ax1.plot(
             benchmark_results[benchmark]["nr_of_atoms"],
