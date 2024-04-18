@@ -398,10 +398,15 @@ class MultiTemperatureProtocol(PropagationProtocol):
             self._run_simulation(_parms, qsim)
 
 
+from openmmml import MLPotential
+from physicsml.plugins.openmm.physicsml_potential import MLPotential as PhysicsMLPotential
+
+
+
 def run_small_molecule_test(
     smiles: Union[str, List[str]],
     names: Union[str, List[str]],
-    nnp,  # intialized NNP
+    nnp: Union[MLPotential, PhysicsMLPotential],  # intialized NNP
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
     platform: Platform,
@@ -410,30 +415,30 @@ def run_small_molecule_test(
     nr_of_simulation_steps: int = 5_000_000,
 ):
     """
-    Executes stability tests for specified hipen molecules in vacuum using a neural network potential (NNP)
-    at multiple temperatures.
+    Performs a vacuum stability test for one or more small molecules using a given neural network potential (NNP).
 
     Parameters
     ----------
     smiles : Union[str, List[str]]
-        The smiles string of the molecule to simulate.
+        The SMILES string(s) of the small molecule(s) to test.
+    names : Union[str, List[str]]
+        The name(s) of the small molecule(s) to test.
     nnp
-        An instance of a NNP.
+        The initialized neural network potential to use for the stability test.
     temperature : Union[int, List[int]]
-        The temperature or list of temperatures at which to perform the simulations.
-        Multiple temperatures trigger a multi-temperature protocol.
+        The simulation temperature or list of temperatures for multi-temperature protocols.
     reporter : StateDataReporter
         The OpenMM StateDataReporter for logging simulation progress.
     platform : Platform
-        The OpenMM Platform on which to run the simulations.
+        The OpenMM Platform on which to run the simulation.
     output_folder : str
-        The directory path where output files will be saved.
+        Directory where output files will be saved.
     device_index : int, optional
-        The index of the GPU device to use for the simulations, defaults to 0.
+        The index of the GPU device to use, defaults to 0.
     nr_of_simulation_steps : int, optional
-        The total number of simulation steps to perform, defaults to 5,000,000.
-
+        Total number of simulation steps, defaults to 5,000,000.
     """
+
     from guardowl.testsystems import TestsystemFactory, SmallMoleculeVacuumOption
 
     def _run_protocol(opt: SmallMoleculeVacuumOption):
