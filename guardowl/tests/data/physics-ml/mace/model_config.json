@@ -1,0 +1,164 @@
+{
+    "config": {
+        "avg_num_neighbours": 12.0,
+        "compile": false,
+        "compute_forces": false,
+        "correlation": 3,
+        "datamodule": {
+            "atomic_numbers_col": "physicsml_atom_numbers",
+            "cell": null,
+            "coordinates_col": "physicsml_coordinates",
+            "cut_off": 5.0,
+            "edge_attrs_col": "physicsml_bond_features",
+            "edge_idxs_col": "physicsml_bond_idxs",
+            "max_nbins": 1000000,
+            "node_attrs_col": "physicsml_atom_features",
+            "node_idxs_col": "physicsml_atom_idxs",
+            "num_elements": 7,
+            "num_workers": 7,
+            "pbc": null,
+            "pre_batch": null,
+            "pre_batch_in_memory": false,
+            "predict": {
+                "batch_size": 1
+            },
+            "self_interaction": false,
+            "test": {
+                "batch_size": 1,
+                "mode": "max_size"
+            },
+            "total_atomic_energy_col": "physicsml_total_atomic_energy",
+            "train": {
+                "batch_size": 128,
+                "drop_last": true,
+                "mode": "max_size_cycle"
+            },
+            "train_batch_size": null,
+            "use_scaled_positions": false,
+            "validation": {
+                "batch_size": 128,
+                "mode": "max_size"
+            },
+            "validation_batch_size": null,
+            "y_edge_scalars": null,
+            "y_edge_vector": null,
+            "y_graph_scalars": [
+                "energies"
+            ],
+            "y_graph_vector": null,
+            "y_node_scalars": null,
+            "y_node_vector": null
+        },
+        "float32_matmul_precision": null,
+        "hidden_irreps": "128x0e + 128x1o",
+        "max_ell": 3,
+        "mlp_irreps": "16x0e",
+        "num_bessel": 8,
+        "num_edge_feats": 0,
+        "num_interactions": 2,
+        "num_node_feats": 7,
+        "num_polynomial_cutoff": 5,
+        "optimizer": {
+            "config": {
+                "amsgrad": true,
+                "lr": 0.001
+            },
+            "name": "AdamW"
+        },
+        "scaling_mean": 0.2674,
+        "scaling_std": 39.5163,
+        "scheduler": {
+            "config": {
+                "factor": 0.8,
+                "patience": 50
+            },
+            "frequency": 1,
+            "interval": "epoch",
+            "monitor": "val/total/loss",
+            "name": "ReduceLROnPlateau",
+            "strict": true
+        },
+        "train_features": null,
+        "trainer": {
+            "accelerator": "gpu",
+            "accumulate_grad_batches": 1,
+            "barebones": false,
+            "benchmark": null,
+            "callbacks": [
+                {
+                    "name": "LearningRateMonitor"
+                },
+                {
+                    "config": {
+                        "mode": "min",
+                        "monitor": "val/total/loss",
+                        "patience": 100
+                    },
+                    "name": "EarlyStopping"
+                },
+                {
+                    "config": {
+                        "dirpath": "ANI_model_training/checkpoints/mace/",
+                        "every_n_epochs": 5,
+                        "monitor": "val/total/loss",
+                        "save_last": true,
+                        "save_top_k": 1
+                    },
+                    "name": "ModelCheckpoint"
+                }
+            ],
+            "check_val_every_n_epoch": 1,
+            "default_root_dir": "training",
+            "detect_anomaly": false,
+            "deterministic": null,
+            "devices": 1,
+            "enable_checkpointing": true,
+            "enable_model_summary": true,
+            "enable_progress_bar": true,
+            "fast_dev_run": false,
+            "gradient_clip_algorithm": "norm",
+            "gradient_clip_val": 20.0,
+            "inference_mode": true,
+            "limit_predict_batches": null,
+            "limit_test_batches": null,
+            "limit_train_batches": null,
+            "limit_val_batches": null,
+            "log_every_n_steps": 50,
+            "logger": true,
+            "max_epochs": 350,
+            "max_steps": -1,
+            "max_time": null,
+            "min_epochs": null,
+            "min_steps": null,
+            "num_nodes": 1,
+            "num_sanity_val_steps": null,
+            "overfit_batches": 0.0,
+            "precision": 32,
+            "profiler": null,
+            "reload_dataloaders_every_n_epochs": 0,
+            "strategy": "auto",
+            "sync_batchnorm": false,
+            "use_distributed_sampler": true,
+            "val_check_interval": null
+        },
+        "transfer_learning": null,
+        "x_features": [
+            "physicsml_atom_idxs",
+            "physicsml_atom_numbers",
+            "physicsml_coordinates",
+            "physicsml_total_atomic_energy"
+        ],
+        "y_features": [
+            "energies"
+        ],
+        "y_graph_scalars_loss_config": {
+            "name": "WeightedMSELoss"
+        },
+        "y_graph_vector_loss_config": null,
+        "y_node_scalars_loss_config": null,
+        "y_node_vector_loss_config": null
+    },
+    "name": "mace_model",
+    "tag": "mace_model",
+    "version": "0.3.0"
+}

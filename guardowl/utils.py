@@ -11,10 +11,10 @@ _IMPLEMENTED_ELEMENTS = [1, 6, 7, 8, 9, 16, 17]
 potentials = {
     "physicsml-model": {
         "name": "physicsml_model",
-        "precision": 64,
+        "precision": "64",
         "position_scaling": 10.0,
         "output_scaling": 4.184 * 627,
-        "model_path": "quardowl/tests/data/physics-ml/mace",
+        "model_path": "guardowl/tests/data/physics-ml/mace",
     },
     "openmmml": {"name": "ani2x"},
 }
