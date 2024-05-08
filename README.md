@@ -26,10 +26,11 @@ StableNetGuardOwl provides a robust suite for conducting stability tests on Neur
 Since openMM and PhysML use different package managers, obtaining a conda|mamba environment with the correct packages is not trivial.
 The following (note the order of the installation of the packages, this is critical for a working environment) has worked in the past:
 ```bash
-conda create --name owl python=3.11
-conda activate owl
+mamba create --name owl python=3.11
+mamba activate owl
 pip install "physicsml[openmm]"
-conda install openmm-ml pytorch-gpu -c conda-forge
+mamba install openmm-ml pytorch-gpu -c conda-forge
+mamba install openmmtools loguru typer
 ```
 ## Features
 
