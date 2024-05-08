@@ -20,6 +20,15 @@
 
 StableNetGuardOwl provides a robust suite for conducting stability tests on Neural Network Potentials (NNPs) used in molecular simulations. These tests are critical in validating NNPs for research and industrial applications, ensuring accuracy and reliability.
 
+
+## Installation
+
+Since openMM and PhysML use different package managers, obtaining a conda|mamba environment with the correct packages is not trivial.
+The following (note the order of the installation of the packages, this is critical for a working environment) has worked in the past:
+```bash
+pip install "physicsml[openmm]"
+conda install openmm-ml pytorch-gpu -c conda-forge
+```
 ## Features
 
 StableNetGuardOwl supports stability tests for NNPs integrated with `openMM` and those implemented within `openmm-ml` or the Exscientia `physics-ml` package.  
