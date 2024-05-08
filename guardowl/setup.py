@@ -130,6 +130,8 @@ class PotentialFactory:
             kwargs['output_scaling'] = float(eval(params["output_scaling"]))
             kwargs['model_path'] = params.get("model_path", None)
             kwargs['repo_url'] = params.get('repo_url', None)
+            kwargs['rev'] = params.get('rev', None)
+            
 
         else:
             raise RuntimeError(f"Unsupported potential type: {params}")
