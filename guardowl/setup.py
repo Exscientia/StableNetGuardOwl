@@ -112,33 +112,27 @@ class PotentialFactory:
 
         Returns
         -------
-        Union[MLPotential, PhysicsMLPotential]
+        MLPotential
             An instance of the appropriate potential class based on the provided parameters.
         """
 
         log.info(
             f"Initialize {params['model_name']} potential from {params['provider']}"
         )
-
+        kwargs = {}
         if params["provider"] == "openmm-ml":
-
-            name = params["model_name"]
-            return MLPotential(name.lower())
+            kwargs['name'] = params["model_name"].lower()
         elif params["provider"] == "physics-ml":
 
-            print(params)
-            name = "physicsml_model"  # that key word needs to be present
-            precision = params["precision"]
-            position_scaling = params["position_scaling"]
-            output_scaling = params["output_scaling"]
-            model_path = params["model_path"]
+            kwargs['name'] = "physicsml_model"  # that key word needs to be present
+            kwargs['precision'] = params["precision"]
+            kwargs['position_scaling'] = float(params["position_scaling"])
+            kwargs['output_scaling'] = float(eval(params["output_scaling"]))
+            kwargs['model_path'] = params.get(["model_path"], None)
+            kwargs['repo_ulr'] = params.get('repo_ulr', None)
 
-            return PhysicsMLPotential(
-                name,
-                model_path=model_path,
-                precision=str(precision),  #
-                position_scaling=float(position_scaling),
-                output_scaling=float(eval(output_scaling)),
-            )
         else:
             raise RuntimeError(f"Unsupported potential type: {params}")
+
+        return MLPotential(**kwargs)
+        
