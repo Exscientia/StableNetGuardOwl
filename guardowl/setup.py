@@ -128,7 +128,7 @@ class PotentialFactory:
             kwargs['precision'] = params["precision"]
             kwargs['position_scaling'] = float(params["position_scaling"])
             kwargs['output_scaling'] = float(eval(params["output_scaling"]))
-            kwargs['model_path'] = params.get(["model_path"], None)
+            kwargs['model_path'] = params.get("model_path", None)
             kwargs['repo_ulr'] = params.get('repo_ulr', None)
 
         else:
