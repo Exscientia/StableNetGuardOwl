@@ -121,19 +121,19 @@ class PotentialFactory:
         )
         kwargs = {}
         if params["provider"] == "openmm-ml":
-            kwargs['name'] = params["model_name"].lower()
+            kwargs["name"] = params["model_name"].lower()
         elif params["provider"] == "physics-ml":
 
-            kwargs['name'] = "physicsml_model"  # that key word needs to be present
-            kwargs['precision'] = params["precision"]
-            kwargs['position_scaling'] = float(params["position_scaling"])
-            kwargs['output_scaling'] = float(eval(params["output_scaling"]))
-            kwargs['model_path'] = params.get("model_path", None)
-            kwargs['repo_url'] = params.get('repo_url', None)
-            kwargs['rev'] = params.get('rev', None)
-            kwargs['model_path_in_repo'] = params.get('model_path_in_repo', None)
+            kwargs["name"] = "physicsml_model"  # that key word needs to be present
+            kwargs["precision"] = params["precision"]
+            kwargs["position_scaling"] = float(params["position_scaling"])
+            kwargs["output_scaling"] = float(params["output_scaling"])
+            kwargs["model_path"] = params.get("model_path", None)
+            kwargs["repo_url"] = params.get("repo_url", None)
+            kwargs["rev"] = params.get("rev", None)
+            kwargs["device"] = params.get("device", None)
+            kwargs["model_path_in_repo"] = params.get("model_path_in_repo", None)
         else:
             raise RuntimeError(f"Unsupported potential type: {params}")
 
         return MLPotential(**kwargs)
-        
