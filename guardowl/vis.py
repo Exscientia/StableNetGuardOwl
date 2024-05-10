@@ -176,15 +176,23 @@ class MonitoringPlotter:
             if l == "water-rdf":
                 axs[row][column].plot(*d, "o", alpha=0.5, markersize=2)
                 axs[row][column].plot(*d, lw=2)
-                axs[row][column].set_xlabel("$r(nm)$")
+                axs[row][column].set_xlabel(
+                    "$r(nm)$"
+                )  # FIXME: this currently does not plot the length, but the bins
                 axs[row][column].set_ylabel("$g(r)$")
                 axs[row][column].set_title("water-rdf")
             elif l == "water-bond-length":
-                axs[row][column].hist(d.flatten() * 10)
+                axs[row][column].hist(d.flatten() * 10, bins=20)
+                if any(d.flatten() * 10 > 5.0):
+                    log.warning(
+                        f"Water bond larger than 5 Angstrom {max(d.flatten()*10):.2f} detected."
+                    )
+
                 axs[row][column].set_title("water O-H bond length")
                 axs[row][column].set_xlabel("d [A]")
+                axs[row][column].set_xlim((0, 5))
             elif l == "water-angle":
-                axs[row][column].hist(d.flatten())
+                axs[row][column].hist(d.flatten(), bins=20)
                 axs[row][column].set_title("water H-O-H angle")
                 axs[row][column].set_xlabel("angle [degrees]")
             elif l == "bond deviation":
