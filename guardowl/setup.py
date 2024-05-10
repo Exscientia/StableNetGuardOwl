@@ -125,7 +125,7 @@ class PotentialFactory:
         elif params["provider"] == "physics-ml":
 
             kwargs["name"] = "physicsml_model"  # that key word needs to be present
-            kwargs["precision"] = params["precision"]
+            kwargs["precision"] = str(params["precision"]) # NOTE: precision has to be passed as str 
             kwargs["position_scaling"] = float(params["position_scaling"])
             kwargs["output_scaling"] = float(params["output_scaling"])
             kwargs["model_path"] = params.get("model_path", None)
