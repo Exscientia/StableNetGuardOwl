@@ -28,14 +28,13 @@ The following (note the order of the installation of the packages, this is criti
 ```bash
 mamba create --name owl python=3.11
 mamba activate owl
-pip install "physicsml[openmm]"
+pip install "physicsml[openmm, openeye, rdkit]"
 mamba install openmm-ml pytorch-gpu -c conda-forge
-mamba install openmmtools loguru typer
+mamba install openmmtools loguru typer openff-toolkit 
 ```
 ## Features
 
 StableNetGuardOwl supports stability tests for NNPs integrated with `openMM` and those implemented within `openmm-ml` or the Exscientia `physics-ml` package.  
-Currently this supports a range of NNPs including but not limited to `SchNET`, `PaiNN`, `MACE`, and `nequip`.
 
 ## Test Matrix
 
