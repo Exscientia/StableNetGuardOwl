@@ -58,11 +58,12 @@ class SimulationFactory:
                 MonteCarloBarostat(unit.Quantity(1, unit.atmosphere), temperature)
             )
 
-        simulation = Simulation(topology, system, integrator, platform)
-
         if platform.getName() == "CUDA":
-            simulation.context.setPlatformProperty("CudaDeviceIndex", str(device_index))
-            simulation.context.setPlatformProperty("CudaPrecision", "mixed")
+            prop = {"CudaDeviceIndex", str(device_index), "CudaPrecision", "mixed"}
+            simulation = Simulation(topology, system, integrator, platform, prop)
+        else:
+            simulation = Simulation(topology, system, integrator, platform)
+
         return simulation
 
 
