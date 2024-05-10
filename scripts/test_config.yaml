@@ -4,7 +4,7 @@ potentials:
     model_name: "MACE"
     precision: "64"
     position_scaling: 10.0
-    output_scaling: 4.184 * 627
+    output_scaling: 2623368 # 4.184 * 627
     model_path: "/guardowl/tests/data/physics-ml/mace"
     device: "cuda"
 
