@@ -59,7 +59,7 @@ class SimulationFactory:
             )
 
         if platform.getName() == "CUDA":
-            prop = {"CudaDeviceIndex", str(device_index), "CudaPrecision", "mixed"}
+            prop = {"CudaDeviceIndex": str(device_index), "CudaPrecision": "mixed"}
             simulation = Simulation(topology, system, integrator, platform, prop)
         else:
             simulation = Simulation(topology, system, integrator, platform)
