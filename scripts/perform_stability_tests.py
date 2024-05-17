@@ -187,12 +187,40 @@ def main(config: str) -> None:
             test["reporter"] = create_state_data_reporter()
             test["platform"] = platform
 
+            # set the potential as nnp
             test["nnp"] = PotentialFactory().initialize_potential(potential)
+
+            # generate unique output folder based on provider and model name
+            output_folder_suffix = ""
+            if potential["provider"] == "physics-ml":
+                output_folder_suffix = f"_{potential['model_name']}"
+                if potential["rev"] is not None:
+                    output_folder_suffix += f"_{potential['rev']}"
+            elif potential["provider"] == "openmm-ml":
+                output_folder_suffix = (
+                    f"_{potential['model_name']}_{potential['implementation']}"
+                    if potential["implementation"] is not None
+                    else f"_{potential['model_name']}"
+                )
+
             test["output_folder"] = (
-                f"{test['output_folder']}/{potential['provider']}_{potential['model_name']}"
+                f"{test['output_folder']}/{potential['provider']}{output_folder_suffix}"
             )
+
+            # set unique nnp name to avoid using generic pointer for openmmml
+            if potential["provider"] == "physics-ml":
+                test["nnp_name"] = potential["model_name"]
+                if potential["rev"] is not None:
+                    test["nnp_name"] += f"_{potential['rev']}"
+            elif potential["provider"] == "openmm-ml":
+                test["nnp_name"] = (
+                    f"{potential['model_name']}"
+                    if potential["implementation"] is None
+                    else f"{potential['model_name']}_{potential['implementation']}"
+                )
+
             process_test(test, platform, output)
-            print("--------- Test finishs --------- ")
+            print("--------- Test finishes --------- ")
 
 
 def _setup_logging():

@@ -399,8 +399,9 @@ class MultiTemperatureProtocol(PropagationProtocol):
 
 
 from openmmml import MLPotential
-from physicsml.plugins.openmm.physicsml_potential import MLPotential as PhysicsMLPotential
-
+from physicsml.plugins.openmm.physicsml_potential import (
+    MLPotential as PhysicsMLPotential,
+)
 
 
 def run_small_molecule_test(
@@ -490,6 +491,7 @@ def run_waterbox_test(
     edge_length: int,
     ensemble: str,
     nnp: str,
+    nnp_name: str,
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
     platform: Platform,
@@ -530,7 +532,7 @@ def run_waterbox_test(
 
     """
     log.info(
-        f"Initiating waterbox stability test: {edge_length}A edge, {nnp} potential, {ensemble} ensemble."
+        f"Initiating waterbox stability test: {edge_length}A edge, {nnp_name} potential, {ensemble} ensemble."
     )
     from openmm import unit
     from guardowl.testsystems import TestsystemFactory, LiquidOption
@@ -540,7 +542,7 @@ def run_waterbox_test(
     testsystem = TestsystemFactory().generate_testsystem(opt)
     system = SystemFactory.initialize_system(nnp, testsystem.topology)
 
-    log_file_name = f"waterbox_{edge_length}A_{nnp}_{ensemble}"
+    log_file_name = f"waterbox_{edge_length}A_{nnp_name}_{ensemble}"
     if isinstance(temperature, list):
         log_file_name += f"_multi-temp"
     else:
@@ -668,6 +670,7 @@ from typing import Literal
 
 def run_alanine_dipeptide_test(
     nnp: str,
+    nnp_name: str,
     temperature: int,
     reporter: StateDataReporter,
     platform: Platform,
@@ -706,7 +709,7 @@ def run_alanine_dipeptide_test(
 
     """
     log.info(
-        f"Initiating alanine dipeptide stability test in {env} using {nnp} potential."
+        f"Initiating alanine dipeptide stability test in {env} using {nnp_name} potential."
     )
     from guardowl.testsystems import (
         SmallMoleculeVacuumOption,
@@ -724,7 +727,7 @@ def run_alanine_dipeptide_test(
     testsystem = TestsystemFactory().generate_testsystem(opt)
     system = SystemFactory.initialize_system(nnp, testsystem.topology)
     env_str = "vacuum" if env == "vacuum" else f"{env}_{ensemble}"
-    log_file_name = f"alanine_dipeptide_{env_str}_{nnp}_{temperature}K"
+    log_file_name = f"alanine_dipeptide_{env_str}_{nnp_name}_{temperature}K"
 
     log.info(f"Simulation output will be written to {log_file_name}")
 
@@ -751,6 +754,7 @@ def run_alanine_dipeptide_test(
 
 def run_DOF_scan(
     nnp: str,
+    nnp_name: str,
     DOF_definition: Dict[str, list],
     platform: Platform,
     output_folder: str,
@@ -773,7 +777,7 @@ def run_DOF_scan(
         The name of the molecule for simulation, defaults to 'ethanol'.
 
     """
-    log.info(f"Initiating DOF scan for {name} using {nnp}.")
+    log.info(f"Initiating DOF scan for {name} using {nnp_name}.")
 
     from guardowl.protocols import BondProfileProtocol, DOFTestParameters
     from guardowl.testsystems import TestsystemFactory, SmallMoleculeVacuumOption
@@ -783,7 +787,7 @@ def run_DOF_scan(
     testsystem = TestsystemFactory().generate_testsystem(name)
     system = SystemFactory.initialize_system(nnp, testsystem.topology)
 
-    log_file_name = f"DOF_scan_{name}_{nnp}"
+    log_file_name = f"DOF_scan_{name}_{nnp_name}"
 
     if "bond" in DOF_definition:
         protocol = BondProfileProtocol()
@@ -814,6 +818,7 @@ def run_DOF_scan(
 
 def run_detect_minimum(
     nnp: str,
+    nnp_name: str,
     platform: Platform,
     output_folder: str,
     percentage: int = 10,
@@ -890,7 +895,7 @@ def run_detect_minimum(
     counter = 0
 
     log.info(
-        f"Performing minimization for {nr_of_molecules_to_test} molecules using {nnp}."
+        f"Performing minimization for {nr_of_molecules_to_test} molecules using {nnp_name}."
     )
 
     for (_, minimized_position), (
@@ -953,7 +958,7 @@ def run_detect_minimum(
         minimize_testsystem.positions = start_position
 
         system = SystemFactory.initialize_system(nnp, minimize_testsystem.topology)
-        log_file_name = f"minimize_{name}_{nnp}"
+        log_file_name = f"minimize_{name}_{nnp_name}"
 
         params = MinimizationTestParameters(
             platform=platform,
