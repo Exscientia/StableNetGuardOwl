@@ -181,6 +181,20 @@ class MonitoringPlotter:
                 )  # FIXME: this currently does not plot the length, but the bins
                 axs[row][column].set_ylabel("$g(r)$")
                 axs[row][column].set_title("water-rdf")
+
+                # extract experimental water rdf
+                exp_water_rdf_r, exp_water_rdf_den = (
+                    self.property_calculator.experimental_water_rdf()
+                )
+
+                # plot experimental water rdf
+                axs[row][column].plot(
+                    exp_water_rdf_r, exp_water_rdf_den, lw=1.0, color="black"
+                )
+
+                # only plot up to maximum of NNP data
+                axs[row][column].set_xlim((0, max(*d[0])))
+
             elif l == "water-bond-length":
                 axs[row][column].hist(d.flatten() * 10, bins=20)
                 if any(d.flatten() * 10 > 5.0):
