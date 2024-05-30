@@ -5,22 +5,24 @@ prefix = "guardowl/tests/data/stability_testing"
 
 def generate_water_mdtraj_instance() -> md.Trajectory:
     system_name = "waterbox"
-    prefix_path = f"{prefix}/{system_name}/"
     ensemble = "npt"
-    nnp = "ani2x"
+    nnp = "ani2x_nnpops"
+    prefix_path = f"{prefix}/{system_name}"
 
-    traj_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}.dcd"
-    top_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}.pdb"
+    traj_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}_300K_300.dcd"
+    top_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}_300K_300.pdb"
+
     return md.load(traj_file, top=top_file)
 
 
 def get_water_csv_file():
     system_name = "waterbox"
-    prefix_path = f"{prefix}/{system_name}/"
+    prefix_path = f"{prefix}/{system_name}"
     ensemble = "npt"
-    nnp = "ani2x"
+    nnp = "ani2x_nnpops"
 
-    csv_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}.csv"
+    csv_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}_300K_300.csv"
+
     return csv_file
 
 
