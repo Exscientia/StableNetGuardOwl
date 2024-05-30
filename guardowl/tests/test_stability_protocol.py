@@ -78,7 +78,7 @@ def test_setup_vacuum_protocol_individual_parts(
 
 @pytest.mark.parametrize("params", get_available_nnps())
 def test_run_vacuum_protocol(params: Dict[str, Tuple[str, int, float]]) -> None:
-    from guardowl.protocols import run_hipen_test
+    from guardowl.protocols import run_small_molecule_test
 
     reporter = StateDataReporter(
         file=None,  # it is necessary to set this to None since it otherwise can't be passed to mp
@@ -95,13 +95,14 @@ def test_run_vacuum_protocol(params: Dict[str, Tuple[str, int, float]]) -> None:
     output_folder = "test_stability_protocol"
     nnp_instance = PotentialFactory().initialize_potential(params)
 
-    run_hipen_test(
-        1,
-        nnp_instance,
-        300,
-        reporter,
-        platform,
-        output_folder,
+    run_small_molecule_test(
+        smiles="CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1",
+        names=["ZINC00061095"],
+        nnp=nnp_instance,
+        temperature=300,
+        reporter=reporter,
+        platform=platform,
+        output_folder=output_folder,
         nr_of_simulation_steps=2,
     )
 

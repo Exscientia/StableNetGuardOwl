@@ -14,7 +14,7 @@ potentials = [
         "model_name": "physicsml_model",
         "precision": "64",
         "position_scaling": 10.0,
-        "output_scaling": "4.184 * 627",
+        "output_scaling": 4.184,
         "model_path": "guardowl/tests/data/physics-ml/mace",
     },
     {"provider": "openmm-ml", "model_name": "ani2x"},

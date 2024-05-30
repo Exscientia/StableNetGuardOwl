@@ -1,14 +1,8 @@
 # config.yaml
 potentials:
-  - provider: "physics-ml"
-    model_name: "MACE"
-    precision: 64
-    position_scaling: 10.0
-    output_scaling: 2623368 #4.184 * 627
-    model_path: "guardowl/tests/data/physics-ml/mace"
-
   - provider: "openmm-ml"
-    model_name: "ANI2x"
+    model_name: "ani2x"
+    implementation: "nnpops"
 
 tests:
   - protocol: "waterbox_test"

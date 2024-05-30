@@ -33,7 +33,6 @@ def test_rdf():
     assert len(md_traj_instance.top.select("water")) > 0
 
     rdf = property_calculator.calculate_water_rdf()
-    print(rdf)
 
 
 def test_calculate_properties():
@@ -50,4 +49,3 @@ def test_calculate_properties():
     property_calculator = PropertyCalculator(md_traj_instance)
     property_calculator.calculate_heat_capacity(total_energy, volumn)
     property_calculator.calculate_isothermal_compressability_kappa_T()
-    

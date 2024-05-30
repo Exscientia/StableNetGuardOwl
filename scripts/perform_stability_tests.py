@@ -194,7 +194,7 @@ def main(config: str) -> None:
             output_folder_suffix = ""
             if potential["provider"] == "physics-ml":
                 output_folder_suffix = f"_{potential['model_name']}"
-                if potential["rev"] is not None:
+                if "rev" in potential:
                     output_folder_suffix += f"_{potential['rev']}"
             elif potential["provider"] == "openmm-ml":
                 output_folder_suffix = (
@@ -210,7 +210,7 @@ def main(config: str) -> None:
             # set unique nnp name to avoid using generic pointer for openmmml
             if potential["provider"] == "physics-ml":
                 test["nnp_name"] = potential["model_name"]
-                if potential["rev"] is not None:
+                if "rev" in potential:
                     test["nnp_name"] += f"_{potential['rev']}"
             elif potential["provider"] == "openmm-ml":
                 test["nnp_name"] = (
