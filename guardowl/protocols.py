@@ -173,15 +173,18 @@ class DOFTest(ABC):
             env="vacuum",
         )
 
-        # write pdb file
-        pdb_path = f"{parameters.output_folder}/{parameters.log_file_name}.pdb"
-        with open(pdb_path, "w") as pdb_file:
+        # Set initial positions
+        sim.context.setPositions(parameters.testsystem.positions)
 
-            PDBFile.writeFile(
-                parameters.testsystem.topology,
-                parameters.testsystem.positions,
-                pdb_path,
-            )
+        # write pdb file
+        output_file_name = f"{parameters.output_folder}/{parameters.log_file_name}"
+        state = sim.context.getState(getPositions=True, getEnergy=True)
+        PDBFile.writeFile(
+            parameters.testsystem.topology,
+            state.getPositions(),
+            open(f"{output_file_name}.pdb", "w"),
+        )
+
         return sim
 
     def perform_scan(self, parameters: DOFTestParameters) -> None:
@@ -784,7 +787,7 @@ def run_DOF_scan(
 
     opt = SmallMoleculeVacuumOption(name=name)
 
-    testsystem = TestsystemFactory().generate_testsystem(name)
+    testsystem = TestsystemFactory().generate_testsystem(opt)
     system = SystemFactory.initialize_system(nnp, testsystem.topology)
 
     log_file_name = f"DOF_scan_{name}_{nnp_name}"
