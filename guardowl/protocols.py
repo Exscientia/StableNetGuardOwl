@@ -411,6 +411,7 @@ def run_small_molecule_test(
     smiles: Union[str, List[str]],
     names: Union[str, List[str]],
     nnp: Union[MLPotential, PhysicsMLPotential],  # intialized NNP
+    nnp_name: str,
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
     platform: Platform,

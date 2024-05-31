@@ -187,10 +187,10 @@ def main(config: str) -> None:
             test["reporter"] = create_state_data_reporter()
             test["platform"] = platform
 
-            # set the potential as nnp
+            # Set the potential as nnp
             test["nnp"] = PotentialFactory().initialize_potential(potential)
 
-            # generate unique output folder based on provider and model name
+            # Generate unique output folder based on provider and model name
             output_folder_suffix = ""
             if potential["provider"] == "physics-ml":
                 output_folder_suffix = f"_{potential['model_name']}"
@@ -207,7 +207,7 @@ def main(config: str) -> None:
                 f"{test['output_folder']}/{potential['provider']}{output_folder_suffix}"
             )
 
-            # set unique nnp name to avoid using generic pointer for openmmml
+            # Set unique nnp name to avoid using generic pointer for openmmml
             if potential["provider"] == "physics-ml":
                 test["nnp_name"] = potential["model_name"]
                 if "rev" in potential:
@@ -220,7 +220,7 @@ def main(config: str) -> None:
                 )
 
             process_test(test, platform, output)
-            print("--------- Test finishes --------- ")
+            print("--------- Test finishs --------- ")
 
 
 def _setup_logging():
