@@ -99,6 +99,7 @@ def test_run_vacuum_protocol(params: Dict[str, Tuple[str, int, float]]) -> None:
         smiles="CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1",
         names=["ZINC00061095"],
         nnp=nnp_instance,
+        nnp_name=params["model_name"],
         temperature=300,
         reporter=reporter,
         platform=platform,

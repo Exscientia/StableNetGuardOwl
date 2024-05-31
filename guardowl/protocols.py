@@ -580,6 +580,7 @@ def run_organic_liquid_test(
     nr_of_molecule: Union[int, List[int]],
     ensemble: str,
     nnp: str,
+    nnp_name: str,
     temperature: Union[int, List[int]],
     reporter: StateDataReporter,
     platform: Platform,
@@ -642,9 +643,7 @@ def run_organic_liquid_test(
         temperature_str = (
             f"{temperature}K" if isinstance(temperature, int) else "multi-temp"
         )
-        log_file_name = (
-            f"pure_liquid_{name}_{nr_of_molecules}_{nnp}_{ensemble}_{temperature_str}"
-        )
+        log_file_name = f"pure_liquid_{name}_{nr_of_molecules}_{nnp_name}_{ensemble}_{temperature_str}"
 
         log.info(f"Simulation output will be written to {log_file_name}")
 
