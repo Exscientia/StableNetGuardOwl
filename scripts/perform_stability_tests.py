@@ -220,7 +220,7 @@ def main(config: str) -> None:
                 )
 
             process_test(test, platform, output)
-            print("--------- Test finishs --------- ")
+            print("--------- Test finished --------- ")
 
 
 def _setup_logging():

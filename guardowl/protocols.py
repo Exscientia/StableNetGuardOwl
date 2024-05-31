@@ -434,7 +434,7 @@ class MultiTemperatureProtocol(PropagationProtocol):
 
 
 from openmmml import MLPotential
-from exs.physicsml.plugins.openmm.physicsml_potential import (
+from physicsml.plugins.openmm.physicsml_potential import (
     MLPotential as PhysicsMLPotential,
 )
 
