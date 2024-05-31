@@ -18,9 +18,7 @@ from .simulation import SystemFactory
 
 
 class StabilityTest:
-    """
-    Abstract base class for stability tests on molecular systems using OpenMM.
-    """
+    """ """
 
     implemented_ensembles = ["npt", "nvt", "nve"]
 
@@ -106,6 +104,7 @@ class StabilityTest:
         """
 
         from .simulation import SimulationFactory
+        from openmm import MonteCarloBarostat
 
         sim = SimulationFactory.create_simulation(
             parameters.system,
@@ -125,6 +124,36 @@ class StabilityTest:
             log.info("Minimizing energy")
             sim.minimizeEnergy(tolerance=minimization_tolerance, maxIterations=1_000)
             log.info("Energy minimization complete.")
+
+            """
+            log.info("Equilibrating system")
+
+            sim.context.setVelocitiesToTemperature(5*unit.kelvin)
+
+            log.info('Warming up the system...')
+
+            T = 5
+            mdsteps = 50000
+            for i in range(60):
+                sim.step(int(mdsteps/60))
+                temperature = (T+(i*T))*unit.kelvin
+                sim.integrator.setTemperature(temperature)
+
+
+            #NPT equilibration, reducing backbone constraints
+            mdsteps = 500000
+            #barostat = parameters.system.addForce(MonteCarloBarostat(unit.Quantity(1, unit.atmosphere), temperature))
+            
+            parameters.system.addForce(MonteCarloBarostat(unit.Quantity(1, unit.atmosphere), temperature))
+            
+            sim.context.reinitialize(True)
+            
+            log.info('Running NPT equilibration...')
+            
+            for i in range(100):
+                sim.step(int(mdsteps/100))
+                #sim.context.setParameter('k', (float(99.02-(i*0.98))*unit.kilojoule_per_mole/unit.angstrom**2))
+            """
 
         # Execute simulated annealing if enabled
         if getattr(parameters, "simulated_annealing", False):
@@ -178,6 +207,7 @@ class DOFTest(ABC):
 
         # write pdb file
         output_file_name = f"{parameters.output_folder}/{parameters.log_file_name}"
+
         state = sim.context.getState(getPositions=True, getEnergy=True)
         PDBFile.writeFile(
             parameters.testsystem.topology,
@@ -283,7 +313,9 @@ class BondProfileProtocol(DOFTest):
         initial_pos = parameters.testsystem.positions
         conformations, potential_energy, bond_length = [], [], []
 
-        for length in np.linspace(0, 10, 50):  # in angstrom
+        max_bond_stretch = parameters.bond_length_max
+
+        for length in np.linspace(0, max_bond_stretch, 100):  # in angstrom
             new_pos = self.set_bond_length(
                 initial_pos,
                 bond_atom1,
@@ -321,7 +353,7 @@ class PropagationProtocol(StabilityTest):
 
         parms.log_file_name = f"{parms.log_file_name}_{parms.temperature}"
 
-        sim = self._setup_simulation(parms, minimize=False)
+        sim = self._setup_simulation(parms, minimize=True)
         self._run_simulation(parms, sim)
 
 
@@ -402,7 +434,7 @@ class MultiTemperatureProtocol(PropagationProtocol):
 
 
 from openmmml import MLPotential
-from physicsml.plugins.openmm.physicsml_potential import (
+from exs.physicsml.plugins.openmm.physicsml_potential import (
     MLPotential as PhysicsMLPotential,
 )
 
@@ -759,9 +791,11 @@ def run_DOF_scan(
     nnp: str,
     nnp_name: str,
     DOF_definition: Dict[str, list],
+    reporter: StateDataReporter,
     platform: Platform,
     output_folder: str,
     name: str = "ethanol",
+    bond_length_max: Union[int, float] = 10.0,
 ):
     """
     Executes a scan over a specified degree of freedom (DOF) for a given molecule using a neural
@@ -772,13 +806,16 @@ def run_DOF_scan(
         The neural network potential to use for the simulation.
     DOF_definition : Dict[str, list]
         The degrees of freedom to scan. Supported keys are 'bond', 'angle', and 'torsion'. Each key maps to a list of atom indices defining the DOF.
+    reporter : StateDataReporter
+        The OpenMM StateDataReporter for logging simulation progress.
     platform : Platform
         The OpenMM Platform on which to run the simulation.
     output_folder : str
         The directory where output files will be saved.
     name : str, optional
         The name of the molecule for simulation, defaults to 'ethanol'.
-
+    bond_length_max : Union[int, float] = 10.0
+        The maximum distance to stretch the bond too.
     """
     log.info(f"Initiating DOF scan for {name} using {nnp_name}.")
 
@@ -810,12 +847,16 @@ def run_DOF_scan(
         testsystem=testsystem,
         output_folder=output_folder,
         log_file_name=log_file_name,
+        bond_length_max=bond_length_max,
         **DOF_definition,
     )
+
     log.info(
         f"Performing {dof_type} scan with DOF definition: {DOF_definition[dof_type]}"
     )
+
     protocol.perform_scan(params)
+
     log.info(f"Scan results saved to {output_folder}")
 
 
