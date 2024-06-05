@@ -1,11 +1,10 @@
-from typing import Tuple, Optional
+from io import StringIO
+from typing import Optional
+
 from loguru import logger as log
-
 from openmm.app import PDBFile
-
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from io import StringIO
 
 
 def generate_molecule_from_smiles(smiles: str) -> Optional[Chem.Mol]:
@@ -79,3 +78,62 @@ def generate_molecule_from_sdf(path: str) -> Optional[Chem.Mol]:
 
     log.error(f"Failed to load molecule from SDF file: {path}")
     return None
+
+
+from typing import Dict, Union
+from openmmml import MLPotential
+from physicsml.plugins.openmm.physicsml_potential import (
+    MLPotential as PhysicsMLPotential,
+)
+
+
+class PotentialFactory:
+
+    def __init__(self) -> None:
+        pass
+
+    @staticmethod
+    def initialize_potential(
+        params: Dict[str, Union[str, float, int]]
+    ) -> Union["MLPotential", "PhysicsMLPotential"]:
+        """
+        Initializes a potential based on the provided parameters.
+
+        Parameters
+        ----------
+        params : Dict[str, Union[str, float, int]]
+            A dictionary containing the parameters for the potential. The required keys are:
+            - "provider": The provider of the potential, either "openmm-ml" or "physics-ml".
+            - "model_name": The name of the model.
+            - "precision": The precision of the model (only for "physics-ml" provider).
+            - "position_scaling": The scaling factor for the position (only for "physics-ml" provider).
+            - "output_scaling": The scaling factor for the output (only for "physics-ml" provider).
+            - "model_path": The path to the model file (only for "physics-ml" provider).
+
+        Returns
+        -------
+        MLPotential
+            An instance of the appropriate potential class based on the provided parameters.
+        """
+
+        log.info(
+            f"Initialize {params['model_name']} potential from {params['provider']}"
+        )
+        kwargs = {}
+        if params["provider"] == "openmm-ml":
+            kwargs["name"] = params["model_name"].lower()
+        elif params["provider"] == "physics-ml":
+
+            kwargs["name"] = "physicsml_model"  # that key word needs to be present
+            kwargs["precision"] = str(params["precision"]) # NOTE: precision has to be passed as str 
+            kwargs["position_scaling"] = float(params["position_scaling"])
+            kwargs["output_scaling"] = float(params["output_scaling"])
+            kwargs["model_path"] = params.get("model_path", None)
+            kwargs["repo_url"] = params.get("repo_url", None)
+            kwargs["rev"] = params.get("rev", None)
+            kwargs["device"] = params.get("device", None)
+            kwargs["model_path_in_repo"] = params.get("model_path_in_repo", None)
+        else:
+            raise RuntimeError(f"Unsupported potential type: {params}")
+
+        return MLPotential(**kwargs)

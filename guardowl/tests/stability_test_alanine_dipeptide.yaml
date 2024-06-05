@@ -1,10 +1,15 @@
 # config.yaml
+potentials:
+  - provider: "openmm-ml"
+    model_name: "ani2x"
+    implementation: "nnpops"
+
+
 tests:
-  - protocol: "alanine_dipeptide_protocol"
+  - protocol: "alanine_dipeptide_test"
     env: "vacuum"
     ensemble: "npt"
     nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 5
     temperature: 300

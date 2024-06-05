@@ -4,7 +4,7 @@ import pytest
 import os
 
 TEST_TO_PERFORM = [
-    "guardowl/tests/stability_test_hipen.yaml",
+    "guardowl/tests/stability_test_small_molecule.yaml",
     "guardowl/tests/stability_test_waterbox.yaml",
     "guardowl/tests/stability_test_alanine_dipeptide.yaml",
     "guardowl/tests/stability_test_pure_liquid.yaml",

@@ -1,54 +1,59 @@
 # config.yaml
+potentials:
+  - provider: "physics-ml"
+    model_name: "MACE"
+    precision: "64"
+    position_scaling: 10.0
+    output_scaling: 2623.368 # 4.184 * 627
+    model_path: "/guardowl/tests/data/physics-ml/mace"
+    device: "cuda"
+
+  - provider: "openmm-ml"
+    model_name: "ANI2x"
+
 tests:
-  - protocol: "alanine_dipeptide_protocol"
+  - protocol: "alanine_dipeptide_test"
     env: "solution"
     ensemble: "npt"
-    nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     temperature: 300
 
-  - protocol: "alanine_dipeptide_protocol"
+  - protocol: "alanine_dipeptide_test"
     env: "vacuum"
     ensemble: "npt"
-    nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 500
     temperature: 300
 
-  - protocol: "hipen_protocol"
-    hipen_idx: [0, 1, 15]
-    nnp: "ani2x"
-    implementation: "torchani"
+  - protocol: "small_molecule_test"
+    smiles:
+      [
+        r"CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1",
+        r"Cn1cc(Cl)c(/C=N/O)n1",
+        r"S=c1cc(-c2ccc(Cl)cc2)ss1",
+      ]
     temperature: [300, 400, 500]
     nr_of_simulation_steps: 500
 
-  - protocol: "waterbox_protocol"
+  - protocol: "waterbox_test"
     edge_length: 25
     ensemble: "npt"
-    nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     temperature: 300
 
-  - protocol: "waterbox_protocol"
+  - protocol: "waterbox_test"
     edge_length: 25
     ensemble: "npt"
-    nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     temperature: 500
 
-  - protocol: "pure_liquid_protocol"
+  - protocol: "organic_liquid_test"
     molecule_name: ["ethane", "butane", "methanol"]
     nr_of_molecule: [100, 200, 300]
     ensemble: "npt"
-    nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 50
     nr_of_equilibration_steps: 50

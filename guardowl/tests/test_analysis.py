@@ -5,24 +5,24 @@ prefix = "guardowl/tests/data/stability_testing"
 
 def generate_water_mdtraj_instance() -> md.Trajectory:
     system_name = "waterbox"
-    prefix_path = f"{prefix}/{system_name}/"
     ensemble = "npt"
-    nnp = "ani2x"
-    implementation = "torchani"
+    nnp = "ani2x_nnpops"
+    prefix_path = f"{prefix}/{system_name}"
 
-    traj_file = f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.dcd"
-    top_file = f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.pdb"
+    traj_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}_300K_300.dcd"
+    top_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}_300K_300.pdb"
+
     return md.load(traj_file, top=top_file)
 
 
 def get_water_csv_file():
     system_name = "waterbox"
-    prefix_path = f"{prefix}/{system_name}/"
+    prefix_path = f"{prefix}/{system_name}"
     ensemble = "npt"
-    nnp = "ani2x"
-    implementation = "torchani"
+    nnp = "ani2x_nnpops"
 
-    csv_file = f"{prefix_path}/{system_name}_15A_{nnp}_{implementation}_{ensemble}.csv"
+    csv_file = f"{prefix_path}/{system_name}_15A_{nnp}_{ensemble}_300K_300.csv"
+
     return csv_file
 
 
@@ -35,7 +35,6 @@ def test_rdf():
     assert len(md_traj_instance.top.select("water")) > 0
 
     rdf = property_calculator.calculate_water_rdf()
-    print(rdf)
 
 
 def test_calculate_properties():
@@ -52,4 +51,3 @@ def test_calculate_properties():
     property_calculator = PropertyCalculator(md_traj_instance)
     property_calculator.calculate_heat_capacity(total_energy, volumn)
     property_calculator.calculate_isothermal_compressability_kappa_T()
-    

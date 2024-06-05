@@ -1,23 +1,20 @@
 from typing import Literal, Tuple
+
 import numpy as np
-from openmm.openmm import System
 import pytest
+from guardowl.setup import PotentialFactory
+from guardowl.simulation import SimulationFactory, SystemFactory
+from guardowl.utils import get_available_nnps
 from openmm import unit
 from openmm.app import DCDReporter, PDBFile
-from openmmml import MLPotential
 from openmmtools.utils import get_fastest_platform
 
-from guardowl.simulation import SimulationFactory, SystemFactory
-from guardowl.utils import (
-    get_available_nnps_and_implementation,
-    gpu_memory_constrained_nnps_and_implementation,
-)
+from typing import Dict, Tuple
 
 
-@pytest.mark.parametrize("nnp, e_ref", [("ani2x", -2346020.730264931)])
+@pytest.mark.parametrize("params", get_available_nnps())
 def test_generate_simulation_instance(
-    nnp: str,
-    e_ref: float,
+    params: Dict[str, Tuple[str, int, float]],
     single_hipen_system: PDBFile,
 ) -> None:
     """Test if we can generate a simulation instance"""
@@ -25,7 +22,7 @@ def test_generate_simulation_instance(
     # set up system and topology and define ml region
     pdb = single_hipen_system
     platform = get_fastest_platform()
-    nnp = MLPotential(nnp)
+    nnp = PotentialFactory().initialize_potential(params)
     ########################################################
     ########################################################
     # create ML simulation
@@ -41,28 +38,35 @@ def test_generate_simulation_instance(
         temperature=unit.Quantity(300, unit.kelvin),
     )
     sim.context.setPositions(pdb.positions)
-    e = (
+    e_init = (
         sim.context.getState(getEnergy=True)
         .getPotentialEnergy()
         .value_in_unit(unit.kilojoule_per_mole)
     )
-    assert np.isclose(e, e_ref)
     # test minimization
-    sim.minimizeEnergy(maxIterations=1000)
+    sim.minimizeEnergy(maxIterations=50)
     pos = sim.context.getState(getPositions=True).getPositions()
+    e_final = (
+        sim.context.getState(getEnergy=True)
+        .getPotentialEnergy()
+        .value_in_unit(unit.kilojoule_per_mole)
+    )
+    assert e_init > e_final
 
 
-@pytest.mark.parametrize("nnp, implementation", get_available_nnps_and_implementation())
+from typing import Any, Dict
+
+
+@pytest.mark.parametrize("params", get_available_nnps())
 def test_simulating(
-    nnp: str,
-    implementation: str,
+    params: Dict[str, Tuple[str, int, float]],
     single_hipen_system: PDBFile,
 ) -> None:
     """Test if we can run a simulation for a number of steps"""
 
     # set up system and topology and define ml region
     pdb = single_hipen_system
-    qml = MLPotential(nnp)
+    nnp = PotentialFactory().initialize_potential(params)
     platform = get_fastest_platform()
 
     ########################################################
@@ -70,9 +74,8 @@ def test_simulating(
     # generate pure ML simulation
     sim = SimulationFactory.create_simulation(
         SystemFactory().initialize_system(
-            qml,
+            nnp,
             pdb.topology,
-            implementation=implementation,
         ),
         pdb.topology,
         env="vacuum",
@@ -88,20 +91,17 @@ def test_simulating(
     del sim
 
 
-@pytest.mark.parametrize(
-    "nnp, implementation", gpu_memory_constrained_nnps_and_implementation
-)
+@pytest.mark.parametrize("params", get_available_nnps())
 def test_pure_liquid_simulation(
-    nnp: tuple[Literal["ani2x"], Literal["torchani"]],
-    implementation: tuple[Literal["ani2x"], Literal["torchani"]],
+    params: Dict[str, Tuple[str, int, float]],
 ):
-    from guardowl.testsystems import TestsystemFactory, LiquidOption
+    from guardowl.testsystems import LiquidOption, TestsystemFactory
 
     opt = LiquidOption(name="ethane", nr_of_copies=150)
 
     factory = TestsystemFactory()
     liquid_box = factory.generate_testsystem(opt)
-    nnp = MLPotential(nnp)
+    nnp = PotentialFactory().initialize_potential(params)
     platform = get_fastest_platform()
     ########################################################
     # ---------------------------#
@@ -110,7 +110,6 @@ def test_pure_liquid_simulation(
         SystemFactory().initialize_system(
             nnp,
             liquid_box.topology,
-            implementation=implementation,
         ),
         liquid_box.topology,
         env="solution",

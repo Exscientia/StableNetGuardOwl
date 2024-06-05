@@ -40,27 +40,25 @@ def setup_logging_and_output() -> str:
     return output_folder
 
 
-def validate_input(nnp: str, implementation: str):
+def validate_input(nnp: str):
     """
-    Validates the combination of neural network potential and implementation.
+    Validates the combination of neural network potential.
 
     Parameters
     ----------
     nnp : str
         The neural network potential to validate.
-    implementation : str
-        The implementation to validate.
 
     Raises
     ------
     RuntimeError
-        If the combination of NNP and implementation is invalid.
+        If the NNP is invalid.
     """
 
-    from guardowl.utils import available_nnps_and_implementation
+    from guardowl.utils import available_nnps
 
-    if (nnp, implementation) not in available_nnps_and_implementation:
-        error_message = f"Invalid nnp/implementation combination. Valid combinations are: {available_nnps_and_implementation}. Got {nnp}/{implementation}"
+    if nnp not in available_nnps:
+        error_message = f"Invalid nnp. Got {nnp}"
         log.error(error_message)
         raise RuntimeError(error_message)
 
@@ -126,6 +124,9 @@ def load_config(config_file_path: str) -> Dict[str, Any]:
         raise
 
 
+from guardowl.testsystems import LiquidOption
+
+
 def process_test(test: Dict[str, Any], platform: Platform, output: str) -> None:
     """
     Processes a single test configuration.
@@ -141,17 +142,17 @@ def process_test(test: Dict[str, Any], platform: Platform, output: str) -> None:
     """
     from guardowl.protocols import (
         run_DOF_scan,
-        run_hipen_protocol,
-        run_waterbox_protocol,
-        run_alanine_dipeptide_protocol,
-        run_pure_liquid_protocol,
+        run_small_molecule_test,
+        run_waterbox_test,
+        run_alanine_dipeptide_test,
+        run_organic_liquid_test,
     )
 
     protocol_function = {
-        "hipen_protocol": run_hipen_protocol,
-        "waterbox_protocol": run_waterbox_protocol,
-        "alanine_dipeptide_protocol": run_alanine_dipeptide_protocol,
-        "pure_liquid_protocol": run_pure_liquid_protocol,
+        "small_molecule_test": run_small_molecule_test,
+        "waterbox_test": run_waterbox_test,
+        "alanine_dipeptide_test": run_alanine_dipeptide_test,
+        "organic_liquid_test": run_organic_liquid_test,
         "DOF_scan": run_DOF_scan,
     }.get(test.get("protocol"))
 
@@ -171,22 +172,55 @@ def main(config: str) -> None:
     config_path : str
         The path to the YAML configuration file.
     """
-    from openmmml import MLPotential
+    from guardowl.setup import PotentialFactory
 
     log.info(f"Loaded config from {config}")
     config = load_config(config)
     platform = get_fastest_platform()
     output = setup_logging_and_output()
 
-    for test in config.get("tests", []):
-        print("--------- Test starts --------- ")
-        test["output_folder"] = output
-        test["reporter"] = create_state_data_reporter()
-        test["platform"] = platform
-        test["nnp"] = MLPotential(test["nnp"])
+    for potential in config.get("potentials", []):
 
-        process_test(test, platform, output)
-        print("--------- Test finishs --------- ")
+        for test in config.get("tests", []):
+            print("--------- Test starts --------- ")
+            test["output_folder"] = output
+            test["reporter"] = create_state_data_reporter()
+            test["platform"] = platform
+
+            # Set the potential as nnp
+            test["nnp"] = PotentialFactory().initialize_potential(potential)
+
+            # Generate unique output folder based on provider and model name
+            output_folder_suffix = ""
+            if potential["provider"] == "physics-ml":
+                output_folder_suffix = f"_{potential['model_name']}"
+                if "rev" in potential:
+                    output_folder_suffix += f"_{potential['rev']}"
+            elif potential["provider"] == "openmm-ml":
+                output_folder_suffix = (
+                    f"_{potential['model_name']}_{potential['implementation']}"
+                    if potential["implementation"] is not None
+                    else f"_{potential['model_name']}"
+                )
+
+            test["output_folder"] = (
+                f"{test['output_folder']}/{potential['provider']}{output_folder_suffix}"
+            )
+
+            # Set unique nnp name to avoid using generic pointer for openmmml
+            if potential["provider"] == "physics-ml":
+                test["nnp_name"] = potential["model_name"]
+                if "rev" in potential:
+                    test["nnp_name"] += f"_{potential['rev']}"
+            elif potential["provider"] == "openmm-ml":
+                test["nnp_name"] = (
+                    f"{potential['model_name']}"
+                    if potential["implementation"] is None
+                    else f"{potential['model_name']}_{potential['implementation']}"
+                )
+
+            process_test(test, platform, output)
+            print("--------- Test finished --------- ")
 
 
 def _setup_logging():

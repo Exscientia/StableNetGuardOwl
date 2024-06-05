@@ -1,10 +1,20 @@
 # config.yaml
+potentials:
+  - provider: "physics-ml"
+    model_name: "MACE"
+    precision: 64
+    position_scaling: 10.0
+    output_scaling: 4.184 * 627
+    model_path: "/guardowl/tests/data/physics-ml/mace"
+
+  - provider: "openmm-ml"
+    model_name: "ANI2x"
+
+
 tests:
-  - protocol: "perform_alanine_dipeptide_protocol"
+  - protocol: "perform_alanine_dipeptide_test"
     env: "solution"
     ensemble: "npt"
-    nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 500_000
     temperature: 300

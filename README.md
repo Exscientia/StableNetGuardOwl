@@ -20,10 +20,21 @@
 
 StableNetGuardOwl provides a robust suite for conducting stability tests on Neural Network Potentials (NNPs) used in molecular simulations. These tests are critical in validating NNPs for research and industrial applications, ensuring accuracy and reliability.
 
+
+## Installation
+
+Since openMM and PhysML use different package managers, obtaining a conda|mamba environment with the correct packages is not trivial.
+The following (note the order of the installation of the packages, this is critical for a working environment) has worked in the past:
+```bash
+mamba create --name owl python=3.11
+mamba activate owl
+pip install "physicsml[openmm, openeye, rdkit]"
+mamba install openmm-ml pytorch-gpu -c conda-forge
+mamba install openmmtools loguru typer openff-toolkit 
+```
 ## Features
 
 StableNetGuardOwl supports stability tests for NNPs integrated with `openMM` and those implemented within `openmm-ml` or the Exscientia `physics-ml` package.  
-Currently this supports a range of NNPs including but not limited to `SchNET`, `PaiNN`, `MACE`, and `nequip`.
 
 ## Test Matrix
 
@@ -67,16 +78,15 @@ There is an example `test_config.yaml` file provided in the `scripts` directory 
 For a stability test using a pure 15 Angstrom waterbox the `config.yaml` file may look like this
 ```
 tests:
-  - protocol: "waterbox_protocol"  # which protocol is performed
+  - protocol: "waterbox_test"  # which protocol is performed
     edge_length: 15                # waterbox edge length in Angstrom
     ensemble: "NVT"                # thermodynamic esamble that is used. Oter options are 'NpT' and 'NVE'.
     nnp: "ani2x"                   # the NNP used
-    implementation: "nnpops"       # the implementation if multiple are available
     annealing: false               # simulated annealing to slowly reheat the system at the beginning of a simulation
     nr_of_simulation_steps: 10_000 # number of simulation steps
     temperature: 300               # in Kelvin
 ```
-It defines the potential (nnp and implementation), the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_guardowls.py` script runs the tests
+It defines the potential, the number of simulation steps, temperature in Kelvin, and edge length of the waterbox in Angstrom as well as the thermodynamic ensemble (`NVT`). Passing this to the `perform_guardowls.py` script runs the tests
 
 To visualize the results, use the `visualize_results.ipynb` notebook.
 
@@ -105,7 +115,6 @@ To perform a DOF scan over a bond in ethanol you need to generate a yaml file co
 tests:
   - protocol: "perform_DOF_scan"
     nnp: "ani2x"
-    implementation: "torchani"
     DOF_definition: { "bond": [0, 2] }
     molecule_name: "ethanol"
 ```

@@ -2,6 +2,7 @@ import mdtraj as md
 import numpy as np
 from typing import List, Tuple
 from loguru import logger as log
+from pathlib import Path
 
 
 class PropertyCalculator:
@@ -85,6 +86,31 @@ class PropertyCalculator:
             bin_width=(r_max - r_min) / bins,
         )
         return rdf_result
+
+    def experimental_water_rdf(self) -> np.ndarray:
+        """
+        Returns the data for the experimental radial distribution function (RDF) for
+        water molecules. This is taken from the file experimental_water_rdf.txt
+
+        Returns
+        -------
+        np.ndarray
+            The RDF values for water molecules.
+        """
+        # get cwd
+        base_path = Path(__file__).parent
+        exp_rdf_path = (base_path / "data/experimental_water_rdf.txt").resolve()
+
+        # load experimental water rdf data
+        rdf_data = np.loadtxt(exp_rdf_path)
+
+        # convert A to nm for use with mdtraj
+        rdf_x = [pt / 10 for pt in rdf_data[:, [0]]]
+
+        rdf_y = rdf_data[:, [1]]
+
+        # return O-O data
+        return rdf_x, rdf_y
 
     def _extract_water_bonds(self) -> List[Tuple[int, int]]:
         bond_list = []
@@ -217,5 +243,5 @@ class PropertyCalculator:
 
         """
         _, phi_angles = md.compute_phi(self.md_traj)
-        _, psi_angle = md.compute_psi(self.md_traj)
+        _, psi_angles = md.compute_psi(self.md_traj)
         return (phi_angles, psi_angles)

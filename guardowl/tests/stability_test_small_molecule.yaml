@@ -1,0 +1,15 @@
+potentials:
+  - provider: "openmm-ml"
+    model_name: "ani2x"
+    implementation: "nnpops"
+
+tests:
+  - protocol: "small_molecule_test"
+    smiles: [
+        'CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1', # NOTE: we are quoting literally unsing ' instead of "
+        "Cn1cc(Cl)c(/C=N/O)n1",
+        "S=c1cc(-c2ccc(Cl)cc2)ss1",
+      ]
+    names: ["hp1", "hp2", "hp3"]
+    temperature: [300, 400, 500]
+    nr_of_simulation_steps: 500

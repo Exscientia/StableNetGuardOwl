@@ -1,5 +1,5 @@
 import logging
-from typing import List, Type, Optional
+from typing import List, Literal, Optional, Type
 
 from loguru import logger as log
 from openmm import LangevinIntegrator, Platform, System, unit
@@ -8,7 +8,6 @@ from openmmml import MLPotential
 from openmmtools.integrators import BAOABIntegrator
 
 from .constants import collision_rate, stepsize
-from typing import Literal
 
 
 class SimulationFactory:
@@ -59,11 +58,12 @@ class SimulationFactory:
                 MonteCarloBarostat(unit.Quantity(1, unit.atmosphere), temperature)
             )
 
-        simulation = Simulation(topology, system, integrator, platform)
-
         if platform.getName() == "CUDA":
-            simulation.context.setPlatformProperty("CudaDeviceIndex", str(device_index))
-            simulation.context.setPlatformProperty("CudaPrecision", "mixed")
+            prop = {"CudaDeviceIndex": str(device_index), "CudaPrecision": "mixed"}
+            simulation = Simulation(topology, system, integrator, platform, prop)
+        else:
+            simulation = Simulation(topology, system, integrator, platform)
+
         return simulation
 
 
@@ -72,7 +72,6 @@ class SystemFactory:
     def initialize_system(
         potential: Type[MLPotential],
         topology: Topology,
-        implementation: str = "torchani",
     ) -> System:
         """
         Initialize an OpenMM system using a machine learning potential.
@@ -83,8 +82,6 @@ class SystemFactory:
             The machine learning potential class.
         topology : Topology
             The OpenMM topology object.
-        implementation : str, optional
-            The specific implementation of the ML potential, by default "".
 
         Returns
         -------
@@ -97,7 +94,4 @@ class SystemFactory:
         >>> topology = Topology()
         >>> system = SystemFactory.initialize_system(potential, topology)
         """
-        return potential.createSystem(
-            topology,
-            implementation=implementation,
-        )
+        return potential.createSystem(topology, implementation="torchani")

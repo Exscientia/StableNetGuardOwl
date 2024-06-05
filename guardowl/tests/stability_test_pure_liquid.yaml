@@ -1,11 +1,15 @@
 # config.yaml
+potentials:
+  - provider: "openmm-ml"
+    model_name: "ani2x"
+    implementation: "nnpops"
+
+
 tests:
-  - protocol: "pure_liquid_protocol"
+  - protocol: "organic_liquid_test"
     molecule_name: ["ethane", "butane"]
     nr_of_molecule: [10, 20]
     ensemble: "npt"
-    nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 5
     nr_of_equilibration_steps: 5

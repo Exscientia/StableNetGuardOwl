@@ -32,6 +32,14 @@ class SmallMoleculeVacuumOption:
     smiles: str = ""
     path: str = ""
 
+    def __str__(self) -> str:
+        if self.name:
+            return self.name
+        elif self.smiles:
+            return self.smiles
+        else:
+            return self.path
+
 
 @dataclass
 class SolvatedSystemOption:
@@ -142,13 +150,13 @@ class TestsystemFactory:
             return _SmallMoleculeFactory().generate_testsystem_from_smiles(
                 smiles=testsystem_option.smiles
             )
-        elif testsystem_option.name:
-            return _SmallMoleculeFactory().generate_testsystems_from_name(
-                name=testsystem_option.name
-            )
         elif testsystem_option.path:
             return _SmallMoleculeFactory().generate_testsystems_from_sdf(
                 path=testsystem_option.path
+            )
+        elif testsystem_option.name:
+            return _SmallMoleculeFactory().generate_testsystems_from_name(
+                name=testsystem_option.name
             )
         else:
             raise RuntimeError("No valid input provided")

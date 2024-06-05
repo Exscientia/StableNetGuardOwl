@@ -121,5 +121,6 @@ class DOFTestParameters(BaseParameters):
     """
 
     bond: List = field(default_factory=lambda: [])
+    bond_length_max: int = field(default_factory=int)
     angle: List = field(default_factory=lambda: [])
     torsion: List = field(default_factory=lambda: [])

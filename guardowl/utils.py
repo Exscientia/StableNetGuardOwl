@@ -1,31 +1,36 @@
 import os
 
-from typing import Tuple, List, Optional, Dict, Iterator
+from typing import Tuple, List, Dict, Iterator
 from loguru import logger as log
 
-available_nnps_and_implementation = [
-    ("ani2x", "nnpops"),
-    ("ani2x", "torchani"),
-]
-
-gh_available_nnps_and_implementation = [
-    ("ani2x", "torchani"),
-]
-
-gpu_memory_constrained_nnps_and_implementation = [
-    ("ani2x", "torchani"),
-]
+available_nnps = [0, 1]
+gh_available_nnps = [1]
 
 _IMPLEMENTED_ELEMENTS = [1, 6, 7, 8, 9, 16, 17]
 
+potentials = [
+    {
+        "provider": "physics-ml",
+        "model_name": "physicsml_model",
+        "precision": "64",
+        "position_scaling": 10.0,
+        "output_scaling": "4.184",
+        "device": "cuda",
+        "model_path": "guardowl/tests/data/physics-ml/mace",
+    },
+    {"provider": "openmm-ml", "model_name": "ani2x"},
+]
 
-def get_available_nnps_and_implementation() -> list:
-    """Return a list of available neural network potentials and implementations"""
+
+def get_available_nnps() -> list:
+    """Return a list of available neural network potentials"""
     IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
     if IN_GITHUB_ACTIONS:
-        return gh_available_nnps_and_implementation
+        return [
+            potentials[i] for i in gh_available_nnps
+        ]  # FIXME: this currently only includes the openmmml potentials
     else:
-        return available_nnps_and_implementation
+        return [potentials[i] for i in available_nnps]
 
 
 def get_data_filename(relative_path):
@@ -57,7 +62,7 @@ def _logo():
            ^...^                    
           / o,o \
           |):::(|
-        ====w=w===
+        ====w=w====
           """
     return logo
 

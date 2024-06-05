@@ -1,10 +1,13 @@
 # config.yaml
+potentials:
+  - provider: "openmm-ml"
+    model_name: "ani2x"
+    implementation: "nnpops"
+
 tests:
-  - protocol: "waterbox_protocol"
+  - protocol: "waterbox_test"
     edge_length: 5
     ensemble: "npt"
-    nnp: "ani2x"
-    implementation: "torchani"
     annealing: false
     nr_of_simulation_steps: 5
     temperature: 300
