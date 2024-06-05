@@ -160,7 +160,7 @@ class StabilityTest:
             log.info("Running Simulated Annealing MD...")
             # every 100 steps raise the temperature by 10 K, ending at simulation temperatue
             for temp in np.linspace(
-                0, parameters.temperature.unit_in_quantity(unit.kelvin), 10
+                0, parameters.temperature, 10
             ):
                 sim.step(100)
                 temp = unit.Quantity(temp, unit.kelvin)
