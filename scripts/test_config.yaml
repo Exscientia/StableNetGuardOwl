@@ -5,7 +5,7 @@ potentials:
     precision: "64"
     position_scaling: 10.0
     output_scaling: 2623.368 # 4.184 * 627
-    model_path: "/guardowl/tests/data/physics-ml/mace"
+    model_path: "../guardowl/tests/data/physics-ml/mace"
     device: "cuda"
 
   - provider: "openmm-ml"
@@ -44,7 +44,7 @@ tests:
     temperature: 300
 
   - protocol: "waterbox_test"
-    edge_length: 25
+    edge_length: 15
     ensemble: "npt"
     annealing: false
     nr_of_simulation_steps: 50
