@@ -125,47 +125,15 @@ class StabilityTest:
             sim.minimizeEnergy(tolerance=minimization_tolerance, maxIterations=1_000)
             log.info("Energy minimization complete.")
 
-            """
-            log.info("Equilibrating system")
-
-            sim.context.setVelocitiesToTemperature(5*unit.kelvin)
-
-            log.info('Warming up the system...')
-
-            T = 5
-            mdsteps = 50000
-            for i in range(60):
-                sim.step(int(mdsteps/60))
-                temperature = (T+(i*T))*unit.kelvin
-                sim.integrator.setTemperature(temperature)
-
-
-            #NPT equilibration, reducing backbone constraints
-            mdsteps = 500000
-            #barostat = parameters.system.addForce(MonteCarloBarostat(unit.Quantity(1, unit.atmosphere), temperature))
-            
-            parameters.system.addForce(MonteCarloBarostat(unit.Quantity(1, unit.atmosphere), temperature))
-            
-            sim.context.reinitialize(True)
-            
-            log.info('Running NPT equilibration...')
-            
-            for i in range(100):
-                sim.step(int(mdsteps/100))
-                #sim.context.setParameter('k', (float(99.02-(i*0.98))*unit.kilojoule_per_mole/unit.angstrom**2))
-            """
-
         # Execute simulated annealing if enabled
         if getattr(parameters, "simulated_annealing", False):
             log.info("Running Simulated Annealing MD...")
             # every 100 steps raise the temperature by 10 K, ending at simulation temperatue
-            for temp in np.linspace(
-                0, parameters.temperature, 10
-            ):
+            for temp in np.linspace(0, parameters.temperature, 10):
                 sim.step(100)
                 temp = unit.Quantity(temp, unit.kelvin)
                 sim.integrator.setTemperature(temp)
-                if parameters.output_folderensemble == "npt":
+                if parameters.ensemble == "npt":
                     # FIXME
                     barostat = parameters.system.getForce(barostate_force_id)
                     barostat.setDefaultTemperature(temp)
