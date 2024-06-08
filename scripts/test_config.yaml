@@ -29,10 +29,11 @@ tests:
   - protocol: "small_molecule_test"
     smiles:
       [
-        r"CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1",
-        r"Cn1cc(Cl)c(/C=N/O)n1",
-        r"S=c1cc(-c2ccc(Cl)cc2)ss1",
+        'CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1',
+        'Cn1cc(Cl)c(/C=N/O)n1',
+        'S=c1cc(-c2ccc(Cl)cc2)ss1',
       ]
+    names: ["mol1", "mol2", "mol3"]
     temperature: [300, 400, 500]
     nr_of_simulation_steps: 500
 

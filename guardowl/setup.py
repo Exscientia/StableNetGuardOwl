@@ -7,7 +7,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 
 
-def generate_molecule_from_smiles(smiles: str) -> Optional[Chem.Mol]:
+def generate_molecule_from_smiles(smiles: str) -> Chem.Mol:
     """
     Generates an RDKit molecule instance from a SMILES string with added hydrogens and a generated 3D conformer.
 
@@ -24,12 +24,12 @@ def generate_molecule_from_smiles(smiles: str) -> Optional[Chem.Mol]:
     molecule = Chem.MolFromSmiles(smiles)
     if molecule is None:
         log.error(f"Failed to generate molecule from SMILES: {smiles}")
-        return None
+        raise RuntimeError(f"Failed to generate molecule from SMILES: {smiles}")
 
     molecule = Chem.AddHs(molecule)
     if AllChem.EmbedMolecule(molecule) == -1:
         log.error(f"Failed to generate 3D conformer for molecule: {smiles}")
-        return None
+        raise RuntimeError(f"Failed to generate 3D conformer for molecule: {smiles}")
 
     return molecule
 
