@@ -165,7 +165,7 @@ class StabilityTest:
                 sim.step(100)
                 temp = unit.Quantity(temp, unit.kelvin)
                 sim.integrator.setTemperature(temp)
-                if parameters.output_folderensemble == "npt":
+                if parameters.ensemble == "npt":
                     # FIXME
                     barostat = parameters.system.getForce(barostate_force_id)
                     barostat.setDefaultTemperature(temp)
