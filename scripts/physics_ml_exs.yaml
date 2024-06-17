@@ -1,0 +1,27 @@
+# config.yaml
+potentials:
+  - provider: "physics-ml"
+    model_name: "ANI"
+    precision: "32"
+    position_scaling: 10.0
+    output_scaling: 4.184 # 4.184 * 627
+    rev: "8a18da7"
+    model_path_in_repo : 'pipelines/model_training/model'
+    repo_url: 'git@bitbucket.org:exscientia/qmml-experiments.git'
+    device: "cuda"
+
+tests:
+
+  - protocol: "waterbox_test"
+    edge_length: 25
+    ensemble: "nvt"
+    annealing: false
+    nr_of_simulation_steps: 100000
+    temperature: 300
+
+  - protocol: "waterbox_test"
+    edge_length: 25
+    ensemble: "npt"
+    annealing: false
+    nr_of_simulation_steps: 100000
+    temperature: 500
