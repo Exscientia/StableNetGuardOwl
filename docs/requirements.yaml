@@ -1,9 +1,15 @@
 name: docs
 channels:
+  - conda-forge
+  - defaults
 dependencies:
     # Base depends
   - python
   - pip
+  # Documentation
+  - sphinx<7.0
+  - sphinx_rtd_theme
+  - myst-parser
 
 
 
